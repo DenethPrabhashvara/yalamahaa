@@ -89,10 +89,15 @@ async function fetchReadings(id, days) {
     request(`/api/data/reservoir/${id}`),
     request(`/api/data/reservoir/${id}/history?days=${days}`),
   ]);
+  const reservoir = toReservoir(detail.data.const);
+  // Rows from the season CSVs (import-season-history.py) have storage but no percent
+  const withPercent = (r) => (r.percent == null && r.storage != null && reservoir.capacity > 0
+    ? { ...r, percent: Math.round((r.storage / reservoir.capacity) * 1000) / 10 }
+    : r);
   return {
-    reservoir: toReservoir(detail.data.const),
+    reservoir,
     latest: detail.data.latest ? toReading(detail.data.latest) : null,
-    history: history.data.map(toReading).filter((r) => r.percent != null).sort((a, b) => a.date.localeCompare(b.date)),
+    history: history.data.map(toReading).map(withPercent).filter((r) => r.percent != null).sort((a, b) => a.date.localeCompare(b.date)),
   };
 }
 

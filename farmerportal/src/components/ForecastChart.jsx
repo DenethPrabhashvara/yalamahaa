@@ -44,10 +44,10 @@ export default function ForecastChart({ data, selected, onSelect, lang, labels, 
   const indexed = pts.map((p, i) => ({ ...p, i }));
   const histPts = indexed.filter((p) => p.kind === 'h');
   // A new segment ("M") after a gap of more than GAP_DAYS, so missing days aren't drawn as data.
-  const histPath = histPts.map((p, k) => {
-    const gap = k && (Date.parse(p.date) - Date.parse(histPts[k - 1].date)) / 864e5 > GAP_DAYS;
-    return `${k && !gap ? 'L' : 'M'}${x(p.i).toFixed(1)},${y(p.level).toFixed(1)}`;
-  }).join(' ');
+  const gapBefore = (k) => k === 0 || (Date.parse(histPts[k].date) - Date.parse(histPts[k - 1].date)) / 864e5 > GAP_DAYS;
+  const histPath = histPts.map((p, k) => `${gapBefore(k) ? 'M' : 'L'}${x(p.i).toFixed(1)},${y(p.level).toFixed(1)}`).join(' ');
+  // A reading with gaps on both sides is a one-point segment, which a path doesn't show: give it a dot
+  const lonePts = histPts.filter((p, k) => gapBefore(k) && (k === histPts.length - 1 || gapBefore(k + 1)));
   const fcPts = [indexed[hi], ...indexed.filter((p) => p.kind === 'f')].filter(Boolean);
   const fcLast = fcPts.length > 1 ? fcPts[fcPts.length - 1] : null;
 
@@ -92,6 +92,7 @@ export default function ForecastChart({ data, selected, onSelect, lang, labels, 
       )}
       {hi >= 0 && <line x1={x(hi)} x2={x(hi)} y1={pad.t} y2={h - pad.b} stroke="rgba(255,255,255,.35)" strokeDasharray="2 4" />}
       <path d={histPath} fill="none" stroke="#FFFFFF" strokeWidth={compact ? 2 : 2.5} strokeLinejoin="round" strokeLinecap="round" />
+      {lonePts.map((p) => <circle key={p.date} cx={x(p.i)} cy={y(p.level)} r={compact ? 1.5 : 2.5} fill="#FFFFFF" />)}
       {/* Only a guide to the prediction: the model doesn't give the days in between. */}
       {fcLast && (
         <>

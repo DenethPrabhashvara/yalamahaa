@@ -189,12 +189,12 @@ exports.getForecastByReservoirId = async (req, res, next) => {
         usable_storage_now_acft: usableNow,
         usable_predicted_pct: pct(usableNext),
         usable_storage_predicted_acft: Math.round(usableNext),
-        // real readings only, no gap filling or estimates, for the chart
+        // real readings only, no gap filling or estimates, for the chart. Rows from the season CSVs
+        // (import-season-history.py) have storage but no percent, so it is worked out like usable_now_pct
         readings: r.rows
-          .filter((row) => row.usable_storage_percent != null)
           .map((row) => ({
             date: row.date,
-            usable_pct: Number(row.usable_storage_percent),
+            usable_pct: row.usable_storage_percent == null ? pct(Number(row.usable_storage_acft)) : Number(row.usable_storage_percent),
             rain_mm: row.rainfall_prev_day_mm == null ? null : Number(row.rainfall_prev_day_mm)
           }))
       }
