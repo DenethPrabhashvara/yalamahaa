@@ -44,13 +44,18 @@ if (TREES.length !== META.n_trees) {
   throw new Error(`Expected ${META.n_trees} trees, loaded ${TREES.length}`);
 }
 
-// 2. Pure JS inference for scikit-learn RandomForestRegressor: the mean of all trees
+// 2. Pure JS inference for scikit-learn RandomForestRegressor (the mean of all trees)
+// or HistGradientBoostingRegressor (baseline plus the sum of all trees)
+const IS_BOOSTING = META.model === "HistGradientBoostingRegressor";
+
 function predictTreeEnsemble(featureVectorObject) {
   // Ensure exact feature order expected by tank_model.pkl.
-  // scikit-learn compares float32 inputs against the thresholds, so round the same way.
+  // A random forest compares float32 inputs against the thresholds, so round the same way;
+  // gradient boosting compares float64.
   const x = FEATURES.map((name) => {
     const v = featureVectorObject[name];
-    return v === null || v === undefined ? NaN : Math.fround(v);
+    if (v === null || v === undefined) return NaN;
+    return IS_BOOSTING ? v : Math.fround(v);
   });
   let sum = 0;
 
@@ -68,7 +73,7 @@ function predictTreeEnsemble(featureVectorObject) {
     }
     sum += tree.value[idx];
   }
-  return sum / TREES.length;
+  return IS_BOOSTING ? META.baseline + sum : sum / TREES.length;
 }
 
 // Helper: median of a numeric array

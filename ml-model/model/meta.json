@@ -1,5 +1,5 @@
 {
- "model": "RandomForestRegressor",
+ "model": "HistGradientBoostingRegressor",
  "features": [
   "fill",
   "fill_chg3",
@@ -24,8 +24,8 @@
  "horizon_days": 14,
  "tanks": {
   "Akathimuruppu": {
-   "lat": 8.7562884,
-   "lon": 79.990253,
+   "lat": 8.75629,
+   "lon": 79.99025,
    "fill_ref": 7758.0,
    "is_major": 1
   },
@@ -48,8 +48,8 @@
    "is_major": 1
   },
   "Ambalan Oya": {
-   "lat": 7.1510863,
-   "lon": 81.690859,
+   "lat": 7.15109,
+   "lon": 81.69086,
    "fill_ref": 32830.0,
    "is_major": 1
   },
@@ -66,8 +66,8 @@
    "is_major": 0
   },
   "Attaragalla": {
-   "lat": 7.9182476,
-   "lon": 80.296651,
+   "lat": 7.91825,
+   "lon": 80.29665,
    "fill_ref": 3688.0,
    "is_major": 1
   },
@@ -96,8 +96,8 @@
    "is_major": 0
   },
   "Batalagoda": {
-   "lat": 7.5341091,
-   "lon": 80.454728,
+   "lat": 7.53411,
+   "lon": 80.45473,
    "fill_ref": 5447.0,
    "is_major": 1
   },
@@ -108,8 +108,8 @@
    "is_major": 0
   },
   "Dambarawa": {
-   "lat": 7.3152767,
-   "lon": 81.034909,
+   "lat": 7.31528,
+   "lon": 81.03491,
    "fill_ref": 11076.0,
    "is_major": 1
   },
@@ -132,8 +132,8 @@
    "is_major": 0
   },
   "Deduru Oya": {
-   "lat": 7.6925199,
-   "lon": 80.287002,
+   "lat": 7.69252,
+   "lon": 80.287,
    "fill_ref": 62721.0,
    "is_major": 1
   },
@@ -162,32 +162,32 @@
    "is_major": 0
   },
   "Dewahuwa": {
-   "lat": 7.8006388,
-   "lon": 80.552295,
+   "lat": 7.80064,
+   "lon": 80.5523,
    "fill_ref": 11011.25,
    "is_major": 1
   },
   "Ekgal Oya": {
-   "lat": 7.1632656,
-   "lon": 81.611975,
+   "lat": 7.16327,
+   "lon": 81.61198,
    "fill_ref": 22700.0,
    "is_major": 1
   },
   "Ellewela": {
-   "lat": 6.0961853,
-   "lon": 80.601514,
+   "lat": 6.09619,
+   "lon": 80.60151,
    "fill_ref": 864.0,
    "is_major": 1
   },
   "Ethimale": {
-   "lat": 6.8257878,
-   "lon": 81.451126,
+   "lat": 6.82579,
+   "lon": 81.45113,
    "fill_ref": 5060.0,
    "is_major": 1
   },
   "Giants Tank": {
-   "lat": 8.8613865,
-   "lon": 80.037993,
+   "lat": 8.86139,
+   "lon": 80.03799,
    "fill_ref": 31325.0,
    "is_major": 1
   },
@@ -222,8 +222,8 @@
    "is_major": 0
   },
   "Handapanagala": {
-   "lat": 6.6648187,
-   "lon": 81.151402,
+   "lat": 6.66482,
+   "lon": 81.1514,
    "fill_ref": 14409.0,
    "is_major": 1
   },
@@ -246,8 +246,8 @@
    "is_major": 1
   },
   "Inginimitiya": {
-   "lat": 7.9383569,
-   "lon": 80.155285,
+   "lat": 7.93836,
+   "lon": 80.15528,
    "fill_ref": 50833.0,
    "is_major": 1
   },
@@ -271,13 +271,13 @@
   },
   "Kalugaloya": {
    "lat": 7.43191,
-   "lon": 81.528317,
+   "lon": 81.52832,
    "fill_ref": 7868.0,
    "is_major": 1
   },
   "Kande Ela": {
-   "lat": 6.9161373,
-   "lon": 80.789543,
+   "lat": 6.91614,
+   "lon": 80.78954,
    "fill_ref": 1703.0,
    "is_major": 1
   },
@@ -312,14 +312,14 @@
    "is_major": 1
   },
   "Kekiriobada": {
-   "lat": 6.1971373,
-   "lon": 80.658625,
+   "lat": 6.19714,
+   "lon": 80.65863,
    "fill_ref": 2131.0,
    "is_major": 1
   },
   "Kimbulwana": {
-   "lat": 7.6426955,
-   "lon": 80.478437,
+   "lat": 7.6427,
+   "lon": 80.47844,
    "fill_ref": 6475.0,
    "is_major": 1
   },
@@ -366,8 +366,8 @@
    "is_major": 0
   },
   "Mahakandarawa": {
-   "lat": 8.3828353,
-   "lon": 80.552121,
+   "lat": 8.38284,
+   "lon": 80.55212,
    "fill_ref": 34620.0,
    "is_major": 1
   },
@@ -378,8 +378,8 @@
    "is_major": 0
   },
   "Mahawilachchiya": {
-   "lat": 8.4597898,
-   "lon": 80.206182,
+   "lat": 8.45979,
+   "lon": 80.20618,
    "fill_ref": 31800.0,
    "is_major": 1
   },
@@ -396,8 +396,8 @@
    "is_major": 0
   },
   "Manankattiya": {
-   "lat": 8.207229,
-   "lon": 80.664979,
+   "lat": 8.20723,
+   "lon": 80.66498,
    "fill_ref": 4754.099999999997,
    "is_major": 1
   },
@@ -426,8 +426,8 @@
    "is_major": 1
   },
   "Minneriya": {
-   "lat": 8.0268061,
-   "lon": 80.878134,
+   "lat": 8.02681,
+   "lon": 80.87813,
    "fill_ref": 107958.0,
    "is_major": 1
   },
@@ -438,8 +438,8 @@
    "is_major": 1
   },
   "Morana": {
-   "lat": 7.2727281,
-   "lon": 81.165213,
+   "lat": 7.27273,
+   "lon": 81.16521,
    "fill_ref": 13450.0,
    "is_major": 1
   },
@@ -450,8 +450,8 @@
    "is_major": 0
   },
   "Muruthawela": {
-   "lat": 6.2182564,
-   "lon": 80.713933,
+   "lat": 6.21826,
+   "lon": 80.71393,
    "fill_ref": 35229.0,
    "is_major": 1
   },
@@ -468,7 +468,7 @@
    "is_major": 1
   },
   "Nagadeepa": {
-   "lat": 7.2620485,
+   "lat": 7.26205,
    "lon": 81.10314,
    "fill_ref": 22433.0,
    "is_major": 1
@@ -480,14 +480,14 @@
    "is_major": 1
   },
   "Namal Oya": {
-   "lat": 7.2950655,
-   "lon": 81.514778,
+   "lat": 7.29507,
+   "lon": 81.51478,
    "fill_ref": 43750.0,
    "is_major": 1
   },
   "Navakiri": {
-   "lat": 7.4588253,
-   "lon": 81.592413,
+   "lat": 7.45883,
+   "lon": 81.59241,
    "fill_ref": 52000.0,
    "is_major": 1
   },
@@ -498,8 +498,8 @@
    "is_major": 1
   },
   "Padaviya": {
-   "lat": 8.8002956,
-   "lon": 80.760806,
+   "lat": 8.8003,
+   "lon": 80.76081,
    "fill_ref": 82320.0,
    "is_major": 1
   },
@@ -522,14 +522,14 @@
    "is_major": 1
   },
   "Parakrama Samudraya": {
-   "lat": 7.9122657,
-   "lon": 80.976361,
+   "lat": 7.91227,
+   "lon": 80.97636,
    "fill_ref": 100212.5,
    "is_major": 1
   },
   "Pavatkulam": {
-   "lat": 8.6845898,
-   "lon": 80.429652,
+   "lat": 8.68459,
+   "lon": 80.42965,
    "fill_ref": 26500.0,
    "is_major": 1
   },
@@ -576,8 +576,8 @@
    "is_major": 1
   },
   "Rugam": {
-   "lat": 7.640167,
-   "lon": 81.480542,
+   "lat": 7.64017,
+   "lon": 81.48054,
    "fill_ref": 18600.0,
    "is_major": 1
   },
@@ -594,8 +594,8 @@
    "is_major": 1
   },
   "Sorabora": {
-   "lat": 7.364247,
-   "lon": 81.023138,
+   "lat": 7.36425,
+   "lon": 81.02314,
    "fill_ref": 16800.0,
    "is_major": 1
   },
@@ -636,20 +636,20 @@
    "is_major": 0
   },
   "Tissawewa": {
-   "lat": 6.2921663,
-   "lon": 81.282427,
+   "lat": 6.29217,
+   "lon": 81.28243,
    "fill_ref": 3705.0,
    "is_major": 1
   },
   "Unnichchi": {
-   "lat": 7.6002983,
-   "lon": 81.534443,
+   "lat": 7.6003,
+   "lon": 81.53444,
    "fill_ref": 54935.0,
    "is_major": 1
   },
   "Usgala Siyabalan": {
-   "lat": 8.0587778,
-   "lon": 80.324286,
+   "lat": 8.05878,
+   "lon": 80.32429,
    "fill_ref": 21666.0,
    "is_major": 1
   },
@@ -660,8 +660,8 @@
    "is_major": 0
   },
   "Vakaneri": {
-   "lat": 7.9380085,
-   "lon": 81.424102,
+   "lat": 7.93801,
+   "lon": 81.4241,
    "fill_ref": 13500.0,
    "is_major": 1
   },
@@ -672,32 +672,32 @@
    "is_major": 1
   },
   "Viyathikulam": {
-   "lat": 8.5607766,
+   "lat": 8.56078,
    "lon": 79.98328,
    "fill_ref": 1732.0,
    "is_major": 1
   },
   "Wahalkada": {
-   "lat": 8.720537,
-   "lon": 80.830176,
+   "lat": 8.72054,
+   "lon": 80.83018,
    "fill_ref": 43388.439999999995,
    "is_major": 1
   },
   "Wan Ela": {
-   "lat": 8.3801965,
-   "lon": 81.080787,
+   "lat": 8.3802,
+   "lon": 81.08079,
    "fill_ref": 2383.0,
    "is_major": 1
   },
   "Weerawila": {
-   "lat": 6.285519,
-   "lon": 81.234223,
+   "lat": 6.28552,
+   "lon": 81.23422,
    "fill_ref": 11116.0,
    "is_major": 1
   },
   "Weheragala": {
-   "lat": 6.5581258,
-   "lon": 81.257527,
+   "lat": 6.55813,
+   "lon": 81.25753,
    "fill_ref": 52608.0,
    "is_major": 1
   },
@@ -714,7 +714,7 @@
    "is_major": 1
   },
   "Yodawewa": {
-   "lat": 6.2784168,
+   "lat": 6.27842,
    "lon": 81.31104,
    "fill_ref": 9289.25,
    "is_major": 1
@@ -726,10 +726,16 @@
    "is_major": 0
   }
  },
- "n_trees": 150,
+ "n_trees": 400,
  "parts": [
   "trees-1.bin.gz",
   "trees-2.bin.gz",
-  "trees-3.bin.gz"
- ]
+  "trees-3.bin.gz",
+  "trees-4.bin.gz",
+  "trees-5.bin.gz",
+  "trees-6.bin.gz",
+  "trees-7.bin.gz",
+  "trees-8.bin.gz"
+ ],
+ "baseline": -0.002863616902792736
 }
