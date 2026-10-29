@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Add estimated (made-up) daily readings so reservoirs and tanks with missing data can be forecast.
 
-The forecast needs 15 days of recent readings. A reservoir or Mahaweli tank with fewer than
-MIN_REAL real readings in the last --days days, or whose newest reading is over STALE_DAYS old,
-gets every missing day up to yesterday filled in from the pattern of the tanks that do have readings:
+The forecast (ml-model/server.js) fills up to MAX_FILL_GAP missing days in a row itself, then
+needs 15 days of readings. Only a reservoir or Mahaweli tank it would still refuse, or whose
+newest reading is over STALE_DAYS old, gets the missing days of the last --days days (up to
+yesterday) filled in from the pattern of the tanks that do have readings:
 
   - each day it moves by the median daily change (as a share of capacity) of the real tanks of
     the same type, starting from its own newest real reading before the gap
@@ -36,8 +37,9 @@ from psycopg2.extras import execute_values
 HERE = Path(__file__).resolve().parent
 CONFIG_ENV = HERE.parent / "API" / "config.env"
 MODEL_META = HERE.parent / "ml-model" / "model" / "meta.json"
-MIN_REAL = 15    # the forecast needs 15 days of readings
-STALE_DAYS = 7   # newest real reading older than this: fill up to yesterday
+MIN_REAL = 15     # the forecast needs 15 days of readings
+MAX_FILL_GAP = 10 # missing days in a row the forecast fills itself (server.js)
+STALE_DAYS = 7    # newest real reading older than this: fill up to yesterday
 LOOKBACK = 120   # days of real readings read for the pattern and the starting points
 ONE_DAY = timedelta(days=1)
 ACFT_PER_MCM = 810.713
@@ -97,6 +99,27 @@ def build_pattern(series, days):
         if levels:
             fill[d] = statistics.median(levels)
     return change, fill
+
+
+def cannot_forecast(days, today):
+    """Why the forecast would refuse (or be stale for) a tank with readings on these days, else None.
+
+    Same rule as ml-model/server.js: readings from the last 90 days, runs of up to MAX_FILL_GAP
+    missing days are filled, and the 15 days up to the newest reading must then be complete.
+    """
+    recent = sorted(d for d in days if d >= today - timedelta(days=90))
+    if not recent:
+        return "no readings in 90 days"
+    newest = recent[-1]
+    if newest < today - timedelta(days=STALE_DAYS):
+        return f"newest reading is {newest}"
+    if (newest - recent[0]).days < MIN_REAL - 1:
+        return f"only {(newest - recent[0]).days + 1} days of readings"
+    start = newest - timedelta(days=MIN_REAL - 1)
+    for a, b in zip(recent, recent[1:]):
+        if b > start and (b - a).days - 1 > MAX_FILL_GAP:
+            return f"{(b - a).days - 1} days missing before {b}"
+    return None
 
 
 def missing_runs(window, real):
@@ -205,8 +228,8 @@ def save(cur, s, values):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--days", type=int, default=30,
-                        help="Fill missing days in the last N days up to yesterday (default 30, at least 15)")
+    parser.add_argument("--days", type=int, default=MIN_REAL,
+                        help=f"Fill missing days in the last N days up to yesterday (default and minimum {MIN_REAL})")
     parser.add_argument("--apply", action="store_true", help="Save the estimated rows (default: only show them)")
     parser.add_argument("--remove", action="store_true", help="Delete every estimated row and exit")
     args = parser.parse_args()
@@ -236,10 +259,11 @@ def main():
 
             filled, no_model, no_capacity, no_pattern, added = [], [], [], [], 0
             for s in sorted(series, key=lambda s: s["name"]):
+                reason = cannot_forecast(s["real"], today)
+                if reason is None:
+                    continue
                 real_in_window = sum(1 for d in window if d in s["real"])
                 newest = max(s["real"], default=None)
-                if real_in_window >= MIN_REAL and newest >= today - timedelta(days=STALE_DAYS):
-                    continue
                 if s["name"] not in model_tanks:
                     no_model.append(s["name"])
                     continue
@@ -257,12 +281,12 @@ def main():
                 values = estimate(s["real"], window, change_at, statistics.median(fills) if fills else 0.0)
                 added += save(cur, s, values)
                 last = values[max(values)] if values else None
-                filled.append((s["name"], real_in_window, newest, len(values), last))
+                filled.append((s["name"], real_in_window, newest, len(values), last, reason))
 
-            print(f"{'Reservoir / tank':<34} {'real days':>9} {'newest real':>12} {'estimated':>9} {'est. now':>8}")
-            for name, real_n, newest, est_n, last in filled:
-                print(f"{name[:34]:<34} {real_n:>9} {str(newest or '-'):>12} {est_n:>9} "
-                      f"{'-' if last is None else f'{last * 100:.1f}%':>8}")
+            print(f"{'Reservoir / tank':<30} {'real days':>9} {'newest real':>12} {'estimated':>9} {'est. now':>8}  why")
+            for name, real_n, newest, est_n, last, reason in filled:
+                print(f"{name[:30]:<30} {real_n:>9} {str(newest or '-'):>12} {est_n:>9} "
+                      f"{'-' if last is None else f'{last * 100:.1f}%':>8}  {reason}")
             print(f"\n{len(filled)} reservoirs/tanks, {sum(f[3] for f in filled)} estimated days "
                   f"({window[0]} to {window[-1]}).")
             if no_model:
