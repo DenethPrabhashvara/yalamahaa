@@ -286,9 +286,16 @@ smsrouter.route('/send-custom').post(async (req, res, next) => {
 // A Twilio trial account can only call numbers verified in the Twilio console.
 const VOICE_AUDIO_URL = `${process.env.PUBLIC_API_URL || 'https://farmer.yalamaha.aurawebsolution.online'}/api/voice/flood-alert-si.wav`
 
+// API key + secret, or else the account's auth token
+function twilioLogin() {
+  const { TWILIO_ACCOUNT_SID, TWILIO_API_KEY, TWILIO_API_SECRET, TWILIO_AUTH_TOKEN } = process.env
+  if (TWILIO_API_KEY && TWILIO_API_SECRET) return `${TWILIO_API_KEY}:${TWILIO_API_SECRET}`
+  if (TWILIO_AUTH_TOKEN) return `${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`
+  return null
+}
+
 function twilioConfigured() {
-  const { TWILIO_ACCOUNT_SID, TWILIO_API_KEY, TWILIO_API_SECRET, TWILIO_FROM_NUMBER } = process.env
-  return Boolean(TWILIO_ACCOUNT_SID && TWILIO_API_KEY && TWILIO_API_SECRET && TWILIO_FROM_NUMBER)
+  return Boolean(process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_FROM_NUMBER && twilioLogin())
 }
 
 // 0771234567, 771234567 or +94771234567 -> +94771234567
@@ -308,16 +315,16 @@ smsrouter.route('/voice/status').get((req, res) => {
 smsrouter.route('/voice/demo-call').post(async (req, res, next) => {
   try {
     if (!twilioConfigured()) {
-      return res.status(503).json({ status: 'fail', message: 'Twilio is not set up. Add TWILIO_ACCOUNT_SID, TWILIO_API_KEY, TWILIO_API_SECRET and TWILIO_FROM_NUMBER to api/config.env.' })
+      return res.status(503).json({ status: 'fail', message: 'Twilio is not set up. Add TWILIO_ACCOUNT_SID, TWILIO_FROM_NUMBER and TWILIO_AUTH_TOKEN (or TWILIO_API_KEY + TWILIO_API_SECRET) to api/config.env.' })
     }
     const to = toE164(req.body?.phone)
     if (!to) return res.status(400).json({ status: 'fail', message: 'Enter a phone number like 0771234567.' })
 
-    const { TWILIO_ACCOUNT_SID, TWILIO_API_KEY, TWILIO_API_SECRET, TWILIO_FROM_NUMBER } = process.env
+    const { TWILIO_ACCOUNT_SID, TWILIO_FROM_NUMBER } = process.env
     const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Calls.json`, {
       method: 'POST',
       headers: {
-        Authorization: `Basic ${Buffer.from(`${TWILIO_API_KEY}:${TWILIO_API_SECRET}`).toString('base64')}`,
+        Authorization: `Basic ${Buffer.from(twilioLogin()).toString('base64')}`,
         'Content-Type': 'application/x-www-form-urlencoded'
       },
       body: new URLSearchParams({
