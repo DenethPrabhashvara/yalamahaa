@@ -40,11 +40,38 @@ async function sendForecast(res, tank, rows, idField, extend = (fc) => fc) {
     })
   }
 
+  // Days from estimated_readings (see withEstimates): estimates, not measurements
+  const estimated = new Set(rows.filter((row) => row.is_synthetic).map((row) => row.date))
+  fc.estimated_dates = [...estimated]
+  fc.history = fc.history.map((h) => (estimated.has(h.date) ? { ...h, estimated: true } : h))
+
   return res.status(200).json({
     status: 'success',
     ...idField,
     data: extend(fc)
   })
+}
+
+// Estimates from Tank-Reserviour/add-synthetic-readings.py, merged in only for days without a real
+// reading. kind is 'reservoir' or 'mahaweli'. extra(e) adds the fields that kind's rows have.
+async function withEstimates(rows, kind, id, extra = () => ({})) {
+  let est
+  try {
+    est = await db.query(
+      `SELECT to_char(reading_date, 'YYYY-MM-DD') AS date, storage_acft
+       FROM estimated_readings
+       WHERE kind = $1 AND ref_id = $2 AND reading_date >= CURRENT_DATE - INTERVAL '90 days'`,
+      [kind, id]
+    )
+  } catch (err) {
+    if (err.code === '42P01') return rows // no estimated_readings table: no estimates were added
+    throw err
+  }
+  const real = new Set(rows.map((row) => row.date))
+  const added = est.rows
+    .filter((e) => !real.has(e.date))
+    .map((e) => ({ ...e, ...extra(e), is_synthetic: true }))
+  return [...rows, ...added].sort((a, b) => a.date.localeCompare(b.date))
 }
 
 exports.getForecastByTankId = async (req, res, next) => {
@@ -83,24 +110,24 @@ exports.getForecastByTankId = async (req, res, next) => {
       [id, ACFT_PER_MCM]
     )
 
-    if (r.rows.length === 0) {
-      const tank = await db.query(
-        'SELECT id, tank_name FROM mahawelitanks WHERE id = $1',
-        [id]
-      )
-      if (tank.rows.length === 0) {
-        return res.status(404).json({
-          status: 'fail',
-          message: `Tank with ID ${id} not found.`
-        })
-      }
+    const rows = await withEstimates(r.rows, 'mahaweli', id)
+    const tank = r.rows.length > 0
+      ? r.rows[0]
+      : (await db.query('SELECT id, tank_name FROM mahawelitanks WHERE id = $1', [id])).rows[0]
+    if (!tank) {
+      return res.status(404).json({
+        status: 'fail',
+        message: `Tank with ID ${id} not found.`
+      })
+    }
+    if (rows.length === 0) {
       return res.status(404).json({
         status: 'fail',
         message: `Tank with ID ${id} has no stored water-level readings from the last 90 days.`
       })
     }
 
-    return sendForecast(res, r.rows[0].tank_name, r.rows, { tank_id: Number(id) })
+    return sendForecast(res, tank.tank_name, rows, { tank_id: Number(id) })
   } catch (err) {
     next(err)
   }
@@ -137,7 +164,10 @@ exports.getForecastByReservoirId = async (req, res, next) => {
        ORDER BY reading_date ASC`,
       [id]
     )
-    if (r.rows.length === 0) {
+    const rows = await withEstimates(r.rows, 'reservoir', id, (e) => ({
+      usable_storage_acft: e.storage_acft, usable_storage_percent: null, rainfall_prev_day_mm: null
+    }))
+    if (rows.length === 0) {
       return res.status(404).json({
         status: 'fail',
         message: `${resv.rows[0].name} has no stored water-level readings from the last 90 days.`
@@ -147,7 +177,7 @@ exports.getForecastByReservoirId = async (req, res, next) => {
     // portal shows usable % of active capacity (like the irrigation dept); the model's fill is a share
     // of its own fill_ref, so move the latest real usable storage by the model's predicted change
     const cap = Number(resv.rows[0].active_capacity_acft)
-    const last = r.rows[r.rows.length - 1]
+    const last = rows[rows.length - 1]
     const pct = (acft) => Math.round(Math.max(0, acft) / cap * 1000) / 10
     const withUsable = (fc) => {
       const usableNow = Number(last.usable_storage_acft)
@@ -159,7 +189,7 @@ exports.getForecastByReservoirId = async (req, res, next) => {
         usable_storage_now_acft: usableNow,
         usable_predicted_pct: pct(usableNext),
         usable_storage_predicted_acft: Math.round(usableNext),
-        // real readings only, no gap filling, for the chart
+        // real readings only, no gap filling or estimates, for the chart
         readings: r.rows
           .filter((row) => row.usable_storage_percent != null)
           .map((row) => ({
@@ -170,7 +200,7 @@ exports.getForecastByReservoirId = async (req, res, next) => {
       }
     }
 
-    return sendForecast(res, resv.rows[0].name, r.rows, { reservoir_id: Number(id) }, cap > 0 && last.usable_storage_acft != null ? withUsable : undefined)
+    return sendForecast(res, resv.rows[0].name, rows, { reservoir_id: Number(id) }, cap > 0 && last.usable_storage_acft != null ? withUsable : undefined)
   } catch (err) {
     next(err)
   }

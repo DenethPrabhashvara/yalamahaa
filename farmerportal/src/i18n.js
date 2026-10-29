@@ -36,6 +36,7 @@ const dict = {
     noForecastModel: 'No forecast model for this reservoir yet', forecastOffline: 'The forecast service is offline. Try again later.',
     notEnoughReadings: 'Not enough readings yet to forecast this reservoir.', readingsTo: 'Readings to',
     storageNow: 'Storage now', rain7: 'Rain - last 7 days', basedOn: 'based on', fillNote: "% of usable capacity",
+    estimatedDays: 'days estimated, not measured',
     // home
     goodMorning: 'Good morning', goodAfternoon: 'Good afternoon', goodEvening: 'Good evening',
     farmOverview: 'Farm Overview', floodWatch: 'Flood watch', level: 'Level', of: 'of',
@@ -142,6 +143,7 @@ const dict = {
     noForecastModel: 'මෙම ජලාශයට තවම පුරෝකථන ආකෘතියක් නැත', forecastOffline: 'පුරෝකථන සේවාව ක්‍රියා විරහිතයි. පසුව උත්සාහ කරන්න.',
     notEnoughReadings: 'පුරෝකථනයට තවම ප්‍රමාණවත් කියවීම් නැත.', readingsTo: 'කියවීම් දක්වා',
     storageNow: 'දැන් ගබඩාව', rain7: 'වැසි - පසුගිය දින 7', basedOn: 'පදනම', fillNote: "භාවිත කළ හැකි ධාරිතාවේ %",
+    estimatedDays: 'දින ඇස්තමේන්තු කළ ඒවා, මැනූ ඒවා නොවේ',
     goodMorning: 'සුබ උදෑසනක්', goodAfternoon: 'සුබ දහවලක්', goodEvening: 'සුබ සන්ධ්‍යාවක්',
     farmOverview: 'ගොවිපළ සාරාංශය', floodWatch: 'ගංවතුර අවධානය', level: 'මට්ටම', of: '/',
     expectedPeak: 'උපරිමය අපේක්ෂිත', riverGauge: 'ගංගා මිනුම', rising: 'ඉහළ යයි', seeAdvice: 'සම්පූර්ණ උපදෙස්',
@@ -240,6 +242,7 @@ const dict = {
     noForecastModel: 'இந்த நீர்த்தேக்கத்துக்கு இன்னும் முன்னறிவிப்பு மாதிரி இல்லை', forecastOffline: 'முன்னறிவிப்புச் சேவை இயங்கவில்லை. பின்னர் முயற்சிக்கவும்.',
     notEnoughReadings: 'முன்னறிவிப்புக்குப் போதுமான அளவீடுகள் இன்னும் இல்லை.', readingsTo: 'அளவீடுகள் வரை',
     storageNow: 'தற்போதைய சேமிப்பு', rain7: 'மழை - கடந்த 7 நாள்', basedOn: 'அடிப்படை', fillNote: "பயன்படுத்தக்கூடிய கொள்ளளவின் %",
+    estimatedDays: 'நாட்கள் மதிப்பிடப்பட்டவை, அளவிடப்படவில்லை',
     goodMorning: 'காலை வணக்கம்', goodAfternoon: 'மதிய வணக்கம்', goodEvening: 'மாலை வணக்கம்',
     farmOverview: 'பண்ணை கண்ணோட்டம்', floodWatch: 'வெள்ள கண்காணிப்பு', level: 'நிலை', of: '/',
     expectedPeak: 'எதிர்பார்க்கும் உச்சம்', riverGauge: 'ஆற்று அளவு', rising: 'உயர்கிறது', seeAdvice: 'முழு ஆலோசனை',

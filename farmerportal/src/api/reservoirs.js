@@ -128,6 +128,8 @@ async function fetchForecast(id) {
     rain7: f.rain_last_7d_mm,
     // Gauge readings as reported (gaps left as gaps). The model gives one value 14 days ahead.
     history: f.readings.map((h) => ({ date: h.date, level: h.usable_pct, rain: h.rain_mm })),
+    // Days the forecast used estimates for (Tank-Reserviour/add-synthetic-readings.py)
+    estimatedDays: f.estimated_dates?.length ?? 0,
     forecast: [{ date: f.target_date, level: next }],
     thresholds: { low: LOW_PCT, spill: 100 },
   };

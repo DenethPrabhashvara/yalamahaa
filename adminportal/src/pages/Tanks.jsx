@@ -339,6 +339,7 @@ function ReservoirForecast({ reservoir }) {
   const change = data ? next - now : null
   const risk = data ? forecastRisk(next) : null
   const missingDays = data ? data.history.filter((point) => point.fill_pct === null).length : 0
+  const estimatedDays = data?.estimated_dates?.length ?? 0
 
   return (
     <div className="detail-section">
@@ -396,6 +397,7 @@ function ReservoirForecast({ reservoir }) {
             <span><i className="forecast-key observed" />Observed</span>
             <span><i className="forecast-key predicted" />Predicted</span>
             {missingDays > 0 && <span className="forecast-gap">{missingDays} days without readings</span>}
+            {estimatedDays > 0 && <span className="forecast-gap">{estimatedDays} days estimated, not measured</span>}
           </div>
         </>
       )}

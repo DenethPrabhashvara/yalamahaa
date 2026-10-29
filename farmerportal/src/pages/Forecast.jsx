@@ -125,6 +125,7 @@ export default function Forecast() {
 
           <div className="f12 muted center lh">
             {t('liveModel')} - {t('basedOn')} {data.history.length} {t('readings')} - {t('fillNote')}
+            {data.estimatedDays > 0 && <> - {data.estimatedDays} {t('estimatedDays')}</>}
           </div>
         </>
       )}
