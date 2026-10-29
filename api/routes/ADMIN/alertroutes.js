@@ -281,4 +281,62 @@ smsrouter.route('/send-custom').post(async (req, res, next) => {
 
 
 
+// Voice alert demo: phones one number with the hazard tone + Sinhala flood warning
+// (assets/voice/flood-alert-si.wav, made with voice-alerts/ --say-si ... --tone).
+// A Twilio trial account can only call numbers verified in the Twilio console.
+const VOICE_AUDIO_URL = `${process.env.PUBLIC_API_URL || 'https://farmer.yalamaha.aurawebsolution.online'}/api/voice/flood-alert-si.wav`
+
+function twilioConfigured() {
+  const { TWILIO_ACCOUNT_SID, TWILIO_API_KEY, TWILIO_API_SECRET, TWILIO_FROM_NUMBER } = process.env
+  return Boolean(TWILIO_ACCOUNT_SID && TWILIO_API_KEY && TWILIO_API_SECRET && TWILIO_FROM_NUMBER)
+}
+
+// 0771234567, 771234567 or +94771234567 -> +94771234567
+function toE164(phone) {
+  const digits = String(phone || '').replace(/[^\d+]/g, '')
+  if (/^\+\d{8,15}$/.test(digits)) return digits
+  if (/^0\d{9}$/.test(digits)) return `+94${digits.slice(1)}`
+  if (/^7\d{8}$/.test(digits)) return `+94${digits}`
+  if (/^94\d{9}$/.test(digits)) return `+${digits}`
+  return null
+}
+
+smsrouter.route('/voice/status').get((req, res) => {
+  res.json({ status: 'success', data: { configured: twilioConfigured(), audio_url: VOICE_AUDIO_URL } })
+})
+
+smsrouter.route('/voice/demo-call').post(async (req, res, next) => {
+  try {
+    if (!twilioConfigured()) {
+      return res.status(503).json({ status: 'fail', message: 'Twilio is not set up. Add TWILIO_ACCOUNT_SID, TWILIO_API_KEY, TWILIO_API_SECRET and TWILIO_FROM_NUMBER to api/config.env.' })
+    }
+    const to = toE164(req.body?.phone)
+    if (!to) return res.status(400).json({ status: 'fail', message: 'Enter a phone number like 0771234567.' })
+
+    const { TWILIO_ACCOUNT_SID, TWILIO_API_KEY, TWILIO_API_SECRET, TWILIO_FROM_NUMBER } = process.env
+    const r = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Calls.json`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${TWILIO_API_KEY}:${TWILIO_API_SECRET}`).toString('base64')}`,
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({
+        To: to,
+        From: TWILIO_FROM_NUMBER,
+        Twiml: `<Response><Play>${VOICE_AUDIO_URL}</Play></Response>`,
+        Timeout: '30',   // stop ringing after 30 s
+        TimeLimit: '30'  // hang up after 30 s, so at most 1 billed minute
+      })
+    })
+    const body = await r.json()
+    if (!r.ok) {
+      const hint = body.code === 21219 ? ' A Twilio trial account can only call numbers verified in the Twilio console.' : ''
+      return res.status(502).json({ status: 'fail', message: `Twilio: ${body.message || r.status}.${hint}` })
+    }
+    res.json({ status: 'success', data: { sid: body.sid, to } })
+  } catch (e) {
+    next(e)
+  }
+})
+
 module.exports = smsrouter

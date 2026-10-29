@@ -6,8 +6,9 @@ const readline = require("node:readline/promises");
 const { parseArgs } = require("node:util");
 const twilio = require("twilio");
 const { RATE_PER_MINUTE, normalizePhone, readNumberList } = require("./phones.js");
-const { VOICES, audioFileFor, sinhalaAudioFile } = require("./sinhala-tts.js");
+const { VOICES, audioFileFor, sinhalaAudioFile, wavSeconds } = require("./sinhala-tts.js");
 const { publishAudio } = require("./twilio-assets.js");
+const { withHazardTone } = require("./hazard-tone.js");
 
 try {
   process.loadEnvFile(path.join(__dirname, ".env"));
@@ -26,6 +27,7 @@ Message (pick one):
   --say-si "<text>"         Sinhala text, spoken by Dialog's SinhalaVITS. The dry run saves the
                             audio in audio/ to listen to; --live uploads it to Twilio Assets.
   --voice <name>            Voice for --say-si: female1 (default), female2, male1, male2
+  --tone                    Start the --say-si audio with a hazard tone (about 2.5s)
   --repeat <n>              Play the message n times in one call (default 1)
 
 Who to call:
@@ -119,6 +121,7 @@ async function main() {
       lang: { type: "string", default: "en-US" },
       "say-si": { type: "string" },
       voice: { type: "string", default: "female1" },
+      tone: { type: "boolean", default: false },
       repeat: { type: "string", default: "1" },
       "exclude-registered": { type: "boolean", default: false },
       resume: { type: "string" },
@@ -143,6 +146,7 @@ async function main() {
   if (opts.audio && !/^https:\/\//.test(opts.audio)) fail("--audio must be a public https:// URL so Twilio can fetch it.");
   if (opts.say !== undefined && !opts.say.trim()) fail("--say text is empty.");
   if (opts["say-si"] !== undefined && !opts["say-si"].trim()) fail("--say-si text is empty.");
+  if (opts.tone && opts["say-si"] === undefined) fail("--tone works with --say-si.");
   if (!VOICES[opts.voice]) fail(`--voice must be one of: ${Object.keys(VOICES).join(", ")}.`);
   if (opts.resume && !fs.existsSync(opts.resume)) fail(`Log to resume not found: ${opts.resume}`);
 
@@ -214,6 +218,10 @@ async function main() {
     }
     try {
       speech = await sinhalaAudioFile(text, opts.voice);
+      if (opts.tone) {
+        const file = withHazardTone(speech.file, speech.file.replace(/\.wav$/, "-tone.wav"));
+        speech = { file, seconds: wavSeconds(fs.readFileSync(file)) };
+      }
     } catch (err) {
       fail(err.message);
     }

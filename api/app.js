@@ -1,4 +1,5 @@
 const express = require('express')
+const path = require('path')
 const cors = require('cors')
 const apiroute = require('./routes/apiroutes.js')
 const errorHandle = require('./middleware/errorHandles.js')
@@ -84,6 +85,11 @@ const adminLimiter = rateLimit({
     message: {error: 'Too many requests, please try again later.'}
 })
 app.use('/admin', adminLimiter, adminrouter)   // admin portal
+// voice alert audio: public, Twilio fetches it while the call is ringing
+// (cross-origin so the admin portal, on its own domain, can play it too)
+app.use('/api/voice', express.static(path.join(__dirname, 'assets', 'voice'), {
+  setHeaders: (res) => res.set('Cross-Origin-Resource-Policy', 'cross-origin')
+}))
 
 app.use(slowDown)
 app.use(limiter)
