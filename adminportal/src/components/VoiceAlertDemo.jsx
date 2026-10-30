@@ -6,7 +6,7 @@ import { useToast } from '../context/ToastContext'
 import { Badge } from './ui/Badge'
 import { Button } from './ui/Button'
 
-// Phones one number with the voice flood alert: hazard tone, then a short Sinhala warning
+// Phones one number with the voice flood alert: hazard tone, then a short English warning, said twice
 // (API: POST /admin/sms/voice/demo-call)
 export function VoiceAlertDemo() {
   const { canEdit } = useAuth()
@@ -43,7 +43,7 @@ export function VoiceAlertDemo() {
           Voice flood alert{' '}
           <Badge tone={status.configured ? 'success' : 'neutral'} dot>{status.configured ? 'Ready' : 'Not set up'}</Badge>
         </strong>
-        <span>A hazard tone, then in Sinhala: “Attention! A flood may come within the next few days. Go to a safe place.”</span>
+        <span>A hazard tone, then (said twice): “{status.message}”</span>
         <audio controls preload="none" src={status.audio_url} style={{ width: '100%', marginTop: 6 }} />
         {canEdit && status.configured && (
           <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>

@@ -281,10 +281,10 @@ smsrouter.route('/send-custom').post(async (req, res, next) => {
 
 
 
-// Voice alert demo: phones one number with the hazard tone + Sinhala flood warning
-// (assets/voice/flood-alert-si.wav, made with voice-alerts/ --say-si ... --tone).
-// A Twilio trial account can only call numbers verified in the Twilio console.
-const VOICE_AUDIO_URL = `${process.env.PUBLIC_API_URL || 'https://farmer.yalamaha.aurawebsolution.online'}/api/voice/flood-alert-si.wav`
+// Voice alert demo: phones one number with a hazard tone (assets/voice/hazard-tone.wav), then an
+// English flood warning in Twilio's voice. A Twilio trial account can only call verified numbers.
+const VOICE_AUDIO_URL = `${process.env.PUBLIC_API_URL || 'https://farmer.yalamaha.aurawebsolution.online'}/api/voice/hazard-tone.wav`
+const VOICE_MESSAGE = 'Emergency alert from Yala Maha. A flood is expected in your area within the next few days. Please move to a safe place.'
 
 // API key + secret, or else the account's auth token
 function twilioLogin() {
@@ -309,7 +309,7 @@ function toE164(phone) {
 }
 
 smsrouter.route('/voice/status').get((req, res) => {
-  res.json({ status: 'success', data: { configured: twilioConfigured(), audio_url: VOICE_AUDIO_URL } })
+  res.json({ status: 'success', data: { configured: twilioConfigured(), audio_url: VOICE_AUDIO_URL, message: VOICE_MESSAGE } })
 })
 
 smsrouter.route('/voice/demo-call').post(async (req, res, next) => {
@@ -330,7 +330,7 @@ smsrouter.route('/voice/demo-call').post(async (req, res, next) => {
       body: new URLSearchParams({
         To: to,
         From: TWILIO_FROM_NUMBER,
-        Twiml: `<Response><Play>${VOICE_AUDIO_URL}</Play></Response>`,
+        Twiml: `<Response><Play>${VOICE_AUDIO_URL}</Play><Say voice="Polly.Joanna" language="en-US">${VOICE_MESSAGE}</Say><Pause length="1"/><Say voice="Polly.Joanna" language="en-US">${VOICE_MESSAGE}</Say></Response>`,
         Timeout: '30',   // stop ringing after 30 s
         TimeLimit: '30'  // hang up after 30 s, so at most 1 billed minute
       })
