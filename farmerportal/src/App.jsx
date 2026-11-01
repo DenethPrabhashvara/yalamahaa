@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { useApp } from './state/AppContext.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
+import ChatBubble from './components/ChatBubble.jsx';
 import { BottomNav, OfflineBanner, Toast } from './components/UI.jsx';
 import Splash from './pages/Splash.jsx';
 import Welcome from './pages/Welcome.jsx';
@@ -78,6 +79,7 @@ export default function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
+          <ChatBubble />
         </ErrorBoundary>
         {showNav && <BottomNav />}
         <Toast />
