@@ -1,5 +1,8 @@
 {$FARMER_DOMAIN} {
 	encode zstd gzip
+	handle_path /ai/* {
+		reverse_proxy ai:5050
+	}
 	handle /api/* {
 		reverse_proxy api:8005
 	}

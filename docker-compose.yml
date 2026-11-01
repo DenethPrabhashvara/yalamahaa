@@ -22,6 +22,11 @@ services:
     build: { context: ., dockerfile: ml-model/Dockerfile }
     restart: unless-stopped
 
+  ai:                                  # Gemini chat + TTS for the farmer portal bubble
+    build: { context: ., dockerfile: ai-assistant/Dockerfile }
+    restart: unless-stopped
+    env_file: ai-assistant/.env
+
   api:
     build: { context: ., dockerfile: api/Dockerfile }
     restart: unless-stopped
@@ -50,6 +55,7 @@ services:
       args:
         VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY:-}
         VITE_GOOGLE_MAPS_MAP_ID: ${VITE_GOOGLE_MAPS_MAP_ID:-}
+        VITE_AI_API_URL: ${VITE_AI_API_URL:-/ai}
     restart: unless-stopped
     environment:
       FARMER_DOMAIN: ${FARMER_DOMAIN}
@@ -58,7 +64,7 @@ services:
     volumes:
       - caddy_data:/data
       - caddy_config:/config
-    depends_on: [api]
+    depends_on: [api, ai]
 
   jobs:                                # not started by `up`; cron runs it
     build: { context: ., dockerfile: Tank-Reserviour/Dockerfile }

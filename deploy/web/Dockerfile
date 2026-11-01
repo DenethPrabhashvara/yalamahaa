@@ -8,6 +8,7 @@ RUN npm run build
 FROM node:24-alpine AS farmer
 ARG VITE_GOOGLE_MAPS_API_KEY
 ARG VITE_GOOGLE_MAPS_MAP_ID
+ARG VITE_AI_API_URL=/ai
 WORKDIR /src
 COPY farmerportal/package*.json ./
 RUN npm ci
