@@ -67,13 +67,13 @@ yala-maha/
 
 ## Key Features
 
-### 🌊 Real-Time River Monitoring & Flood Prediction
+### Real-Time River Monitoring & Flood Prediction
 - **Live Weather API:** Integrates with Open-Meteo for 7-day precipitation forecasts.
 - **Multi-Source Gauges:** Merges Irrigation Department gauge readings with catchment rainfall data.
 - **Predictive Risk Modeling:** Calculates flood overflow timing and risk level (Safe, Watch, Warning, Critical).
 - **Automated Alert Dispatch:** Trilingual SMS notifications (English, Sinhala, Tamil) when storage thresholds exceed safe limits.
 
-### 📱 Integrated SMS Gateway (Text.lk)
+### Integrated SMS Gateway (Text.lk)
 - **Direct Carrier Delivery:** Integrates directly with Sri Lankan telecom providers (Dialog, Mobitel, Airtel, Hutch) via Text.lk API v3.
 - **Phone Number Normalization:** Automatically standardizes local inputs (`07XXXXXXXX` or `+94...`) into international format `947XXXXXXXX`.
 - **Live OTP Verification:** Dispatches real 6-digit SMS OTP codes with a 5-minute validity window for farmer login.
@@ -81,12 +81,12 @@ yala-maha/
 - **Broadcast Composer:** Trilingual templates, GSM/Unicode segment counter, and live recipient broadcasting.
 - **Dry-Run Safe Mode:** Easily toggle between simulated and live SMS dispatch via environment variables.
 
-### 📞 Voice Alerts (Twilio)
+### Voice Alerts (Twilio)
 - **Calls for unregistered people:** Phones a recorded or text-to-speech alert to a list of numbers that are not registered farmers.
 - **Safe by default:** Dry run first with the maximum cost; live runs need `--live` and a typed confirmation.
 - **Resumable & reported:** Every call is logged; `--resume` skips numbers already called, and `call-report.js` shows answered calls and actual spend.
 
-### 👨‍🌾 Clean, Redesigned Farmer Portal
+### Clean, Redesigned Farmer Portal
 - **Mobile-First Card Layout:** Clean, accessible card interface with trilingual switcher (**English / සිංහල / தமிழ்**).
 - **Instant Agrarian Insights:** Landing view directly displays current tank water levels, next water release date/time, and 3-day local rainfall.
 - **Guided 4-Step Registration:**
@@ -96,7 +96,7 @@ yala-maha/
   4. **Review & Consent:** Summary review card with instant SMS confirmation upon submission.
 - **Canal Maintenance Reports:** Rapid reporting tool for canal blockages, gate damage, and water leaks.
 
-### 🗺️ Schematic GIS Farm Coverage Map
+### Schematic GIS Farm Coverage Map
 - **Vector-Based SVG Infrastructure:** Interactive schematic of the Mahaweli B Zone water distribution network.
 - **Dual-Axis Evaluation:** Simultaneous evaluation of water supply adequacy and cellular/SMS signal reception.
 - **Vulnerability Highlighting:** Instantly pinpoints downstream farms facing water scarcity or poor communication reception.
@@ -243,7 +243,7 @@ npm run ml
 
 ## API Endpoints
 
-### 🔐 Admin API (`/admin`, admin portal only)
+### Admin API (`/admin`, admin portal only)
 
 Admins sign in with a username and password. Farmer tokens are never accepted here: admin tokens are signed with `JWT_ADMIN_SECRET` (which must differ from `JWT_SECRET`), carry `role: "admin-yalamaha"`, and must belong to an open row in `admin_sessions`.
 
@@ -269,7 +269,7 @@ Set up once: run `API/models/add-admin-sessions.sql`, then create the first acco
 
 Password, refresh-token and NIC hashes are never returned or writable through `/admin/db`. Officers (`role = officer`) can view everything but change nothing.
 
-### 🌊 Mahaweli Tanks & Reservoirs (Public CSV & Data API)
+### Mahaweli Tanks & Reservoirs (Public CSV & Data API)
 
 The Mahaweli tanks API is publicly accessible with full CORS support (`Access-Control-Allow-Origin: *`), designed for direct integration with machine learning pipelines (e.g. Google Colab notebooks), GIS dashboards, spreadsheets, and frontend applications.
 
@@ -330,7 +330,7 @@ id,tank_name,tot_capacity_mcm,water_level_msl,storage_mcm,storage_percentage,cov
 3,Dambarawa,15.940,100.620,11.400,71.00,1507,,2026-10-08T18:30:00.000Z
 ```
 
-### 📲 SMS Gateway & OTP Services
+### SMS Gateway & OTP Services
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `POST` | `/api/sms/send-otp` | Generate & dispatch a 6-digit verification code to farmer's phone |
@@ -338,7 +338,7 @@ id,tank_name,tot_capacity_mcm,water_level_msl,storage_mcm,storage_percentage,cov
 | `POST` | `/api/sms/confirm-registration`| Send official registration confirmation SMS with Farm ID |
 | `POST` | `/api/sms/send-custom` | Send custom SMS text to one or multiple recipient numbers |
 
-### ⚠️ Early Warning Flood Alerts
+### Early Warning Flood Alerts
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
 | `GET` | `/api/alerts/preview` | Safe dry-run preview of pending high water level alerts (zero cost) |

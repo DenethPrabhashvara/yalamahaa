@@ -3,6 +3,7 @@ import { IconBtn } from '../components/UI.jsx';
 import Icon from '../components/Icon.jsx';
 import { useFarmConditions } from '../api/farm.js';
 import { useAlerts } from '../api/alerts.js';
+import VoiceDemo from '../components/VoiceDemo.jsx';
 
 const KIND = {
   flood: { icon: 'warn', cls: 'amber' },
@@ -32,6 +33,7 @@ export default function Alerts() {
         {unread > 0 && <button type="button" className="chip-white btn" onClick={markAll}>{t('markAllRead')}</button>}
       </div>
       <h1 className="h1">{t('alerts')}</h1>
+      <VoiceDemo />
       {alerts.length === 0 && (
         <div className="empty">
           <div className="icon-tile soft big"><Icon name="bell" size={30} /></div>

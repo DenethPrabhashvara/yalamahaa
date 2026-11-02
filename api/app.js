@@ -11,6 +11,7 @@ const authrouter = require('./routes/authroutes.js')
 const adminrouter =require('./routes/ADMIN/index.js')
 const reportrouter = require('./routes/reportroutes.js')
 const reminderrouter = require('./routes/reminderroutes.js')
+const voicedemorouter = require('./routes/voicedemoroutes.js')
 
 // security: refuse to start unless farmer + admin jwt secrets are set and different, so tokens can't be swapped
 if (!process.env.JWT_SECRET || !process.env.JWT_ADMIN_SECRET || process.env.JWT_SECRET === process.env.JWT_ADMIN_SECRET) {
@@ -129,6 +130,7 @@ app.use('/api/data', apiroute) // for resevoirs and tanks
 app.use('/api/auth', authrouter)   //for l0gin auth
 app.use('/api/reports', reportrouter)   // canal reports
 app.use('/api/reminders', reminderrouter)   // water issue sms reminders
+app.use('/api/voice-demo', voicedemorouter)   // demo voice alert call to the team's own number
 
 // Error handling middleware
 app.use(errorHandle)

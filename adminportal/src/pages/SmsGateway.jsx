@@ -31,6 +31,7 @@ import { Modal } from '../components/ui/Overlay'
 import { SmsVolumeChart } from '../components/charts'
 import { AutoFloodAlerts } from '../components/AutoFloodAlerts'
 import { VoiceAlertDemo } from '../components/VoiceAlertDemo'
+import { VoiceAlertDemoSi } from '../components/VoiceAlertDemoSi'
 import { Pie, PieChart, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 
 const STATUS_TONE = {
@@ -755,6 +756,7 @@ export function SmsGateway() {
             )}
             <AutoFloodAlerts compact />
             <VoiceAlertDemo />
+            <VoiceAlertDemoSi />
             <div className="gateway-actions">
               <Button variant="secondary" size="sm" icon={BellRing} loading={checkingAlert} onClick={checkTankAlert}>
                 Check high tank alert

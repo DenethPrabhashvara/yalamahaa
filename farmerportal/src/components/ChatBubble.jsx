@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 
 // Floating chat with the Yala Maha AI assistant (ai-assistant/server.js)
-const AI_URL = (import.meta.env.VITE_AI_API_URL || 'http://localhost:5050').replace(/\/$/, '');
+const _raw = (import.meta.env.VITE_AI_API_URL || 'http://localhost:5050').replace(/\/$/, '');
+const AI_URL = /^https?:\/\//.test(_raw) ? _raw : `http://${_raw}`;
 
 export default function ChatBubble() {
   const [open, setOpen] = useState(false);
@@ -30,7 +31,17 @@ export default function ChatBubble() {
         body: JSON.stringify({ message, history: msgs }),
       });
       const data = await res.json();
-      setMsgs((m) => [...m, { role: 'model', text: data.reply || data.error || 'No reply' }]);
+      if (!res.ok) {
+        // Handle server errors gracefully without displaying raw JSON
+        let errText = 'Assistant is currently unavailable. Please try again later.';
+        try {
+          const parsed = typeof data.error === 'string' ? JSON.parse(data.error) : data.error;
+          if (parsed?.error?.message) errText = parsed.error.message;
+        } catch {}
+        setMsgs((m) => [...m, { role: 'model', text: errText }]);
+        return;
+      }
+      setMsgs((m) => [...m, { role: 'model', text: data.reply || 'No reply' }]);                                                             
     } catch {
       setMsgs((m) => [...m, { role: 'model', text: 'Assistant is offline. Try again later.' }]);
     } finally {
