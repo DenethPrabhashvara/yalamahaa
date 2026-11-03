@@ -26,26 +26,22 @@ export default function ChatBubble() {
     setText('');
     setMsgs((m) => [...m, { role: 'user', text: message }]);
     setBusy(true);
+    // Error notices are shown in the chat but never sent back to the model as conversation.
+    const history = msgs.filter((m) => !m.error).map(({ role, text }) => ({ role, text }));
     try {
       const res = await fetch(`${AI_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message, history: msgs }),
+        body: JSON.stringify({ message, history }),
       });
-      const data = await res.json();
-      if (!res.ok) {
-        // Handle server errors gracefully without displaying raw JSON
-        let errText = 'Assistant is currently unavailable. Please try again later.';
-        try {
-          const parsed = typeof data.error === 'string' ? JSON.parse(data.error) : data.error;
-          if (parsed?.error?.message) errText = parsed.error.message;
-        } catch {}
-        setMsgs((m) => [...m, { role: 'model', text: errText }]);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.reply) {
+        setMsgs((m) => [...m, { role: 'model', error: true, text: 'The assistant is busy right now. Please try again in a moment.' }]);
         return;
       }
-      setMsgs((m) => [...m, { role: 'model', text: data.reply || 'No reply' }]);                                                             
+      setMsgs((m) => [...m, { role: 'model', text: data.reply }]);
     } catch {
-      setMsgs((m) => [...m, { role: 'model', text: 'Assistant is offline. Try again later.' }]);
+      setMsgs((m) => [...m, { role: 'model', error: true, text: 'Can’t reach the assistant. Check your connection and try again.' }]);
     } finally {
       setBusy(false);
     }
@@ -84,7 +80,7 @@ export default function ChatBubble() {
             {msgs.map((m, i) => (
               <div key={i} className={`chat-msg ${m.role}`}>
                 <span>{m.text}</span>
-                {m.role === 'model' && (
+                {m.role === 'model' && !m.error && (
                   <button type="button" className="chat-speak" onClick={() => speak(i)} aria-label="Listen">
                     {playing === i ? '■' : '🔊'}
                   </button>

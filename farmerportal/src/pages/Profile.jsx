@@ -33,8 +33,8 @@ export default function Profile() {
       <Card className="row-card static">
         <div className="avatar lg">{initials}</div>
         <div className="grow min0">
-          <div className="f18 fw600 ellipsis">{farm?.name || 'Farmer'}</div>
-          <div className="f14 muted">{formatPhone(user.phone)}</div>
+          <div className="f17 fw600 ellipsis">{farm?.name || 'Farmer'}</div>
+          <div className="f15 muted">{formatPhone(user.phone)}</div>
         </div>
         <span className={`status-pill ${farm ? 's-safe' : 's-low'}`}><span className="sp-dot" />{farm ? farm.id : t('notRegistered')}</span>
       </Card>

@@ -4,6 +4,7 @@ const reservoir = require('../models/reserviorModel.js')
 const forecast = require('../models/forecastModel.js')
 const river = require('../models/riverModel.js')
 const canal = require('../models/canalModel.js')
+const news = require('../models/newsModel.js')
 
 
 const apirouter = express.Router()
@@ -26,5 +27,6 @@ apirouter.route('/reservoir/:id/history').get(reservoir.getReslevels)
 apirouter.route('/reservoir/:id/forecast').get(forecast.getForecastByReservoirId)
 apirouter.route('/rivers').get(river.getRivers)
 apirouter.route('/canals').get(canal.getCanals)
+apirouter.route('/news').get(news.getNews)
 
 module.exports = apirouter

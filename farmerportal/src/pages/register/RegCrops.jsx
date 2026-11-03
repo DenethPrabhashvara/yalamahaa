@@ -130,7 +130,7 @@ export default function RegCrops() {
 
       <div className="grow" />
       <div className="total-bar">
-        <div className="grow"><div className="f12 dim">{t('totalArea')}</div><div className="f24 fw600">{Math.round(total * 100) / 100} {t('acres')}</div></div>
+        <div className="grow"><div className="f12 dim">{t('totalArea')}</div><div className="f22 fw600">{Math.round(total * 100) / 100} {t('acres')}</div></div>
         <button type="button" className="pill-btn accent big-inline" onClick={next}>{t('next')}<span className="round-arrow"><Icon name="arrow" size={18} color="#fff" stroke={2.4} /></span></button>
       </div>
     </div>

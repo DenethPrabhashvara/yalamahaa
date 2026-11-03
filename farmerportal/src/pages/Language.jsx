@@ -21,7 +21,7 @@ export default function Language() {
             className={`lang-option ${lang === l.code ? 'on' : ''}`} onClick={() => update({ lang: l.code })}>
             <span className="lo-short">{l.short}</span>
             <span className="grow" style={{ textAlign: 'left' }}>
-              <span className={`f18 fw600 block font-${l.code}`}>{l.label}</span>
+              <span className={`f17 fw600 block font-${l.code}`}>{l.label}</span>
               <span className={`f13 muted block font-${l.code}`}>{SAMPLE[l.code]}</span>
             </span>
             <span className="radio-dot">{lang === l.code && <Icon name="check" size={14} stroke={3.2} />}</span>

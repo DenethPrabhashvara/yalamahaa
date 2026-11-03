@@ -3,7 +3,6 @@ import { IconBtn } from '../components/UI.jsx';
 import Icon from '../components/Icon.jsx';
 import { useFarmConditions } from '../api/farm.js';
 import { useAlerts } from '../api/alerts.js';
-import VoiceDemo from '../components/VoiceDemo.jsx';
 
 const KIND = {
   flood: { icon: 'warn', cls: 'amber' },
@@ -11,15 +10,19 @@ const KIND = {
   tank: { icon: 'tank', cls: 'soft' },
   report: { icon: 'check', cls: 'green' },
   farm: { icon: 'leaf', cls: 'accent' },
+  advisory: { icon: 'wind', cls: 'red' },
 };
 
 export default function Alerts() {
   const { t, farm, update } = useApp();
   const alerts = useAlerts(useFarmConditions(farm));
   const unread = alerts.filter((a) => !a.read).length;
-  // live alerts remember read ids, the app's own notes carry their read flag
+  // Live alerts remember read ids, the app's own notes carry their read flag. Weather
+  // advisories ("cap:" ids) go in their own list so a run of them can't push real alerts
+  // out of readAlerts' 200-id cap.
   const markRead = (ids) => update((st) => ({
-    readAlerts: [...new Set([...st.readAlerts, ...ids])].slice(-200),
+    readAlerts: [...new Set([...st.readAlerts, ...ids.filter((id) => !id.startsWith('cap:'))])].slice(-200),
+    readNews: [...new Set([...(st.readNews || []), ...ids.filter((id) => id.startsWith('cap:'))])].slice(-100),
     alerts: st.alerts.map((a) => (ids.includes(a.id) ? { ...a, read: true } : a)),
   }));
   const markAll = () => markRead(alerts.map((a) => a.id));
@@ -33,7 +36,6 @@ export default function Alerts() {
         {unread > 0 && <button type="button" className="chip-white btn" onClick={markAll}>{t('markAllRead')}</button>}
       </div>
       <h1 className="h1">{t('alerts')}</h1>
-      <VoiceDemo />
       {alerts.length === 0 && (
         <div className="empty">
           <div className="icon-tile soft big"><Icon name="bell" size={30} /></div>
@@ -48,7 +50,7 @@ export default function Alerts() {
               <div className={`icon-tile ${k.cls}`}><Icon name={k.icon} size={22} /></div>
               <div className="grow" style={{ textAlign: 'left' }}>
                 <div className="row between gap8"><span className="f15 fw600">{a.title}</span><span className="f12 muted nowrap">{a.when}</span></div>
-                <div className="f14 muted lh" style={{ marginTop: 2 }}>{a.body}</div>
+                <div className="f15 muted lh" style={{ marginTop: 2 }}>{a.body}</div>
               </div>
               {!a.read && <span className="unread-dot" aria-label="Unread" />}
             </button>

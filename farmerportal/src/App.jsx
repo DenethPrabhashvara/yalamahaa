@@ -14,6 +14,7 @@ import Water from './pages/Water.jsx';
 import Report from './pages/Report.jsx';
 import Forecast from './pages/Forecast.jsx';
 import Alerts from './pages/Alerts.jsx';
+import News from './pages/News.jsx';
 import Fields from './pages/Fields.jsx';
 import Profile from './pages/Profile.jsx';
 import RegIdentity from './pages/register/RegIdentity.jsx';
@@ -41,7 +42,7 @@ function RequireFarm({ children }) {
 
 const farmOnly = (page) => <RequireAuth><RequireFarm>{page}</RequireFarm></RequireAuth>;
 
-const NAV_ROUTES = ['/home', '/water', '/report', '/fields', '/profile', '/alerts', '/forecast'];
+const NAV_ROUTES = ['/home', '/water', '/report', '/fields', '/profile', '/alerts', '/forecast', '/news'];
 
 export default function App() {
   const { pathname } = useLocation();
@@ -51,7 +52,6 @@ export default function App() {
   return (
     <div className="stage">
       <div className={`device lang-${lang}`} data-theme="light">
-        <div className="ambient-mesh" aria-hidden="true" />
         <OfflineBanner />
         <ErrorBoundary key={pathname}>
           <main className={`viewport ${showNav ? 'has-nav' : ''}`} key={pathname}>
@@ -67,6 +67,8 @@ export default function App() {
               <Route path="/report" element={farmOnly(<Report />)} />
               <Route path="/forecast" element={farmOnly(<Forecast />)} />
               <Route path="/alerts" element={farmOnly(<Alerts />)} />
+
+              <Route path="/news" element={farmOnly(<News />)} />
               <Route path="/fields" element={farmOnly(<Fields />)} />
               <Route path="/profile" element={farmOnly(<Profile />)} />
               <Route path="/register" element={<Navigate to="/register/identity" replace />} />

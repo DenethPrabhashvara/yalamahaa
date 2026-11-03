@@ -113,6 +113,7 @@ app.get('/', (req, res) => {
             resorvoirHistoryByDays: '/api/data/reservoir/:id/history?days=30',
             rivers: '/api/data/rivers',
             canals: '/api/data/canals',
+            news: '/api/data/news?lang=en&district=Polonnaruwa',
             canalReports: '/api/reports (farmer sign-in)',
             waterReminders: '/api/reminders (farmer sign-in)'
         }

@@ -83,17 +83,17 @@ export default function RegReview() {
       </div>
 
       <div className="card">
-        <div className="row between"><span className="label">{t('farmer')}</span><Link to="/register/identity" className="f14 fw600 ink">{t('edit')}</Link></div>
-        <div className="f18 fw600">{draft.name}</div>
-        <div className="f14 muted lh">{[draft.address, draft.division, draft.district].filter(Boolean).join(', ')}</div>
-        <div className="grid2 f14">
+        <div className="row between"><span className="label">{t('farmer')}</span><Link to="/register/identity" className="f15 fw600 ink">{t('edit')}</Link></div>
+        <div className="f17 fw600">{draft.name}</div>
+        <div className="f15 muted lh">{[draft.address, draft.division, draft.district].filter(Boolean).join(', ')}</div>
+        <div className="grid2 f15">
           <div className="soft-tile"><div className="f12 muted">NIC</div><div className="fw600">{info.valid ? info.masked : t('onFile')}</div></div>
           <div className="soft-tile"><div className="f12 muted">{t('mobile')}</div><div className="fw600">{maskPhone(user.phone)}</div></div>
         </div>
       </div>
 
       <div className="card">
-        <div className="row between"><span className="label">{t('crops')}</span><Link to="/register/crops" className="f14 fw600 ink">{t('edit')}</Link></div>
+        <div className="row between"><span className="label">{t('crops')}</span><Link to="/register/crops" className="f15 fw600 ink">{t('edit')}</Link></div>
         {draft.crops.map((c) => (
           <div key={c.id} className="row gap12">
             <span className="cdot" style={{ background: CROP_CATALOG[c.category].color }} />
@@ -108,13 +108,13 @@ export default function RegReview() {
       <div className="card row-card static">
         <div className="icon-tile mint"><Icon name="pin" size={22} color={COLORS.pin} /></div>
         <div className="grow"><div className="f12 muted">{t('location')}</div><div className="f15 fw600">{draft.nearest}</div></div>
-        <Link to="/register/pin" className="f14 fw600 ink">{t('edit')}</Link>
+        <Link to="/register/pin" className="f15 fw600 ink">{t('edit')}</Link>
       </div>
 
       <div className="card row-card static">
         <div className="icon-tile blue"><Icon name="drop" size={22} /></div>
         <div className="grow"><div className="f12 muted">{t('waterSource')}</div><div className="f15 fw600">{waterLabel(draft.water, t) || t('notGiven')}</div></div>
-        <Link to="/register/water" className="f14 fw600 ink">{t('edit')}</Link>
+        <Link to="/register/water" className="f15 fw600 ink">{t('edit')}</Link>
       </div>
 
       <label className="consent">

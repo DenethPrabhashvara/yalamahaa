@@ -51,7 +51,7 @@ export default function Forecast() {
       {!data && !loadError && (
         <div className="card center" style={{ minHeight: 200 }}>
           <Icon name="refresh" size={24} className="spin" />
-          <div className="f14 muted">{t('loadingForecast')}</div>
+          <div className="f15 muted">{t('loadingForecast')}</div>
         </div>
       )}
 
@@ -59,7 +59,7 @@ export default function Forecast() {
         <div className="card center" style={{ minHeight: 160 }}>
           <Icon name="info" size={24} />
           <div className="f15 fw600">{reservoir?.name}</div>
-          <div className="f14 muted lh">{loadError.reason ? t(loadError.reason) : loadError.message}</div>
+          <div className="f15 muted lh">{loadError.reason ? t(loadError.reason) : loadError.message}</div>
           {loadError.reason !== 'noForecastModel' && (
             <button type="button" className="pill-btn outline sm" onClick={() => (tanks.error ? tanks.reload() : reload())}>{t('tryAgain')}</button>
           )}

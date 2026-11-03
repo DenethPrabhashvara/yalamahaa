@@ -19,7 +19,7 @@ function Art({ kind, t }) {
       <Aerial variant="hero" height="100%" radius={32} photo={PHOTOS.flood}>
         <div className="art-float" style={{ left: 16, bottom: 16, right: 16 }}>
           <span className="warn-badge"><Icon name="warn" size={14} stroke={2.6} />{t('floodLevel1').toUpperCase()}</span>
-          <div className="f18 fw600" style={{ marginTop: 8 }}>{t('obFloodCard')}</div>
+          <div className="f17 fw600" style={{ marginTop: 8 }}>{t('obFloodCard')}</div>
           <div className="f13" style={{ color: COLORS.dim }}>{t('obFloodSub')}</div>
         </div>
       </Aerial>

@@ -33,7 +33,7 @@ export default function RegDone() {
 
       <div className="card row-card static">
         <Icon name="sms" size={22} color={COLORS.success} />
-        <div className="grow f14 lh">{t('smsSentTo')} <b>{maskPhone(user.phone)}</b></div>
+        <div className="grow f15 lh">{t('smsSentTo')} <b>{maskPhone(user.phone)}</b></div>
       </div>
 
       <div className="grow" />

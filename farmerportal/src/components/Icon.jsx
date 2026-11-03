@@ -1,8 +1,9 @@
 import {
   ArrowRight, Bell, CircleCheck, CloudSun, Inbox, OctagonAlert, Camera, Carrot, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Clock, Cloud,
-  CloudRain, Construction, Droplet, Droplets, Ellipsis, Fence, Globe, House, Info, Leaf, LocateFixed, Lock, LogOut,
-  Map, MapPin, MessageSquareText, Mic, Plus, RefreshCw, Search, Send, Sparkles, SquarePen, Sun,
-  Trash2, TriangleAlert, User, Waves, WifiOff, X,
+  CloudLightning, CloudRain, Construction, Droplet, Droplets, Ellipsis, ExternalLink, Fence, Globe, House, Info, Leaf,
+  LocateFixed, Lock, LogOut,
+  Map, MapPin, MessageSquareText, Mic, Newspaper, Plus, RefreshCw, Search, Send, Sparkles, SquarePen, Sun,
+  Trash2, TriangleAlert, User, Waves, WifiOff, Wind, X,
 } from 'lucide-react';
 
 // App icon names → Lucide, a standard open-source set close to SF Symbols' outline style.
@@ -53,6 +54,10 @@ const P = {
   checkCircle: CircleCheck,
   stop: OctagonAlert,
   inbox: Inbox,
+  news: Newspaper,
+  wind: Wind,
+  cloudLightning: CloudLightning,
+  external: ExternalLink,
 };
 
 export default function Icon({ name, size = 20, color = 'currentColor', stroke = 2, style, className }) {

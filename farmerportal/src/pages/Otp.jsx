@@ -101,7 +101,7 @@ export default function Otp() {
       </div>
       {error && <div className="err-text" role="alert">{error}</div>}
 
-      <div className="row between f14">
+      <div className="row between f15">
         <span className="muted">{t('didntGet')}</span>
         {left > 0
           ? <span className="chip-white"><Icon name="clock" size={14} stroke={2.2} />{t('resendIn')} 0:{String(left).padStart(2, '0')}</span>

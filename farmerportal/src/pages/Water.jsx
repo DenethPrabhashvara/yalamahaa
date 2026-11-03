@@ -63,13 +63,13 @@ export default function Water() {
         </div>
         {tankList.length > 1 && <TankPicker tanks={tankList} value={reservoirId} onChange={setPicked} dark />}
         {loadError && (
-          <div className="row between gap8 f14">
+          <div className="row between gap8 f15">
             <span className="dim">{loadError.message}</span>
             <button type="button" className="link-btn" onClick={() => (tanks.error ? tanks.reload() : reload())}>{t('tryAgain')}</button>
           </div>
         )}
-        {!loadError && !data && <div className="f14 dim">{t('loadingReadings')}</div>}
-        {data && !week.length && <div className="f14 dim">{t('noReadings')}</div>}
+        {!loadError && !data && <div className="f15 dim">{t('loadingReadings')}</div>}
+        {data && !week.length && <div className="f15 dim">{t('noReadings')}</div>}
         {week.length > 0 && (
           <>
             <div className="chart" role="img" aria-label={`${name} level over the last ${week.length} readings, now ${week[week.length - 1].percent}%`}>
@@ -97,9 +97,9 @@ export default function Water() {
           <span className="round-arrow"><Icon name="arrow" size={18} color="#fff" stroke={2.4} /></span>
         </Link>
         <div className="hr dark" />
-        <div className="f14 fw600">{t('releaseSchedule')}</div>
+        <div className="f15 fw600">{t('releaseSchedule')}</div>
         {!issues.length && (
-          <div className="f14 dim lh">
+          <div className="f15 dim lh">
             {live.canals.error ? live.canals.error.message : !live.canals.data ? t('loadingSchedule') : `${t('noSchedule')}${farm?.water?.name || live.own?.name ? ` - ${farm?.water?.name || live.own?.name}` : ''}`}
           </div>
         )}

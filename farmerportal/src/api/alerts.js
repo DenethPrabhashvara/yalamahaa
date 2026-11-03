@@ -4,15 +4,19 @@ import { useMemo } from 'react';
 import { useApp } from '../state/AppContext.jsx';
 import { fmtDay } from '../components/ForecastChart.jsx';
 import { LOW_PCT } from './reservoirs.js';
+import { useNews, activeNews, instructionSteps } from './news.js';
+import { hhmm } from '../time.js';
 
 const DATE = { day: 'numeric', month: 'short' };
 const daysBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
-const hhmm = (iso) => new Date(iso).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Colombo' });
 
 export function useAlerts(live) {
-  const { t, lang, alerts: notes, readAlerts } = useApp();
+  const { t, lang, farm, alerts: notes, readAlerts, readNews } = useApp();
   const { flood, own, tank, readings, issue, issueStatus, today } = live;
   const latest = readings.data?.latest;
+  // Same arguments as every other caller, so this shares their cached request.
+  const news = useNews(lang, farm?.district);
+  const advisories = news.data;
 
   return useMemo(() => {
     const list = [];
@@ -42,7 +46,22 @@ export function useAlerts(live) {
         list.push({ id: `issue:${issue.id}:on`, kind: 'release', title: `${t('flowing')} - ${issue.name}`, body: `${t('issueUntil')} ${fmtDay(issue.end, lang, DATE)}`, when: fmtDay(issue.start, lang, DATE) });
       }
     }
+    // Only the warnings that earn the home banner reach the bell. Routine advisories
+    // (amber lightning turns up constantly) stay on the news page, because a badge that
+    // is always lit is a badge farmers stop reading.
+    const readAdvisories = new Set(readNews || []);
+    const capAlerts = activeNews(advisories)
+      .filter((n) => n.banner || n.tone === 'red')
+      .map((n) => ({
+        id: `cap:${n.id}`,
+        kind: 'advisory',
+        title: n.headline,
+        body: instructionSteps(n.instruction)[0] || n.body || '',
+        when: hhmm(n.sent),
+        read: readAdvisories.has(`cap:${n.id}`),
+      }));
+
     const read = new Set(readAlerts);
-    return [...list.map((a) => ({ ...a, read: read.has(a.id) })), ...notes];
-  }, [flood, own, tank, latest, issue, issueStatus, today, notes, readAlerts, t, lang]);
+    return [...capAlerts, ...list.map((a) => ({ ...a, read: read.has(a.id) })), ...notes];
+  }, [flood, own, tank, latest, issue, issueStatus, today, notes, readAlerts, readNews, advisories, t, lang]);
 }

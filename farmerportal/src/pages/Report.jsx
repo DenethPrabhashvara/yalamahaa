@@ -32,14 +32,14 @@ function CanalSheet({ open, onClose, value, onPick, pin, t }) {
         <Icon name="search" size={20} />
         <input aria-label={t('searchCanal')} placeholder={t('searchCanal')} value={q} onChange={(e) => setQ(e.target.value)} enterKeyHint="search" />
       </div>
-      {canals.loading && !canals.data && <div className="f14 muted">{t('loadingCanals')}</div>}
+      {canals.loading && !canals.data && <div className="f15 muted">{t('loadingCanals')}</div>}
       {canals.error && !canals.data && (
-        <div className="row gap8 f14 muted">
+        <div className="row gap8 f15 muted">
           {t('canalsOffline')}
           <button type="button" className="pill-btn outline sm" onClick={canals.reload}>{t('tryAgain')}</button>
         </div>
       )}
-      {query && canals.data && list.length === 0 && <div className="f14 muted">{t('noCanalMatch')}</div>}
+      {query && canals.data && list.length === 0 && <div className="f15 muted">{t('noCanalMatch')}</div>}
       <div className="col gap6">
         {list.map((c) => (
           <button key={c.id} type="button" className={`option-row tank-row ${value?.id === c.id ? 'on' : ''}`}
@@ -225,7 +225,7 @@ export default function Report() {
           <div className="f12 muted">{t('where')}</div>
           <div className="f15 fw600 ellipsis">{canal?.name || t('pickCanal')}</div>
         </div>
-        <span className="f14 fw600 underline">{t('change')}</span>
+        <span className="f15 fw600 underline">{t('change')}</span>
       </button>
 
       <div className="row gap8 f13 muted">
@@ -269,7 +269,7 @@ export default function Report() {
 
       <Sheet open={listOpen} onClose={() => { setListOpen(false); setOpenId(null); }} title={t('myReports')}>
         <div className="col gap8">
-          {reports?.length === 0 && <div className="f14 muted">{t('noReports')}</div>}
+          {reports?.length === 0 && <div className="f15 muted">{t('noReports')}</div>}
           {reports?.map((r) => (
             <div key={r.id} className="col gap8">
               <button type="button" className="report-row" onClick={() => setOpenId(openId === r.id ? null : r.id)} aria-expanded={openId === r.id}>

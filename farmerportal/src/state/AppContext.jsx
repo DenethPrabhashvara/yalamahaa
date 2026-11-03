@@ -55,6 +55,9 @@ const defaults = {
   draft: emptyDraft(),
   alerts: [], // the app's own notes (farm registered); live alerts are in api/alerts.js
   readAlerts: [], // ids of live alerts the farmer has opened
+  // Weather advisories are tracked separately from readAlerts: that list is capped at the
+  // last 200 ids, and a run of routine advisories would push real alerts out of it.
+  readNews: [],
 };
 
 const AppContext = createContext(null);

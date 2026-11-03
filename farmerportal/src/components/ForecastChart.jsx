@@ -1,11 +1,14 @@
 import { useMemo, useRef } from 'react';
 import { COLORS } from '../theme.js';
+import { LOCALES } from '../time.js';
 
 const W = 350;
 const H = 210;
 const PAD = { l: 30, r: 10, t: 14, b: 24 };
 
-export const LOCALES = { en: 'en-GB', si: 'si-LK', ta: 'ta-LK' };
+// Re-exported for the callers that already import it from here; defined in time.js so
+// there is one copy.
+export { LOCALES };
 export function fmtDay(dateStr, lang, opts = { weekday: 'short', day: 'numeric' }) {
   const d = new Date(`${dateStr}T00:00:00`);
   try { return d.toLocaleDateString(LOCALES[lang] || 'en-GB', opts); } catch { return dateStr; }

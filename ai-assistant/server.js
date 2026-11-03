@@ -12,48 +12,89 @@ app.use(express.json());
 
 const SYSTEM = `You are the Yala Maha assistant for Sri Lankan farmers and irrigation officers.
 Help with paddy cultivation, Yala/Maha seasons, reservoir levels, flood alerts and farmer registration.
-Reply in the user's language (Sinhala, Tamil or English). Keep answers short and practical.`;
+Reply in the user's language (Sinhala, Tamil or English). Keep answers short and practical.
+Write plain text for a phone chat bubble: no Markdown, no asterisks or headings; use short lines or "-" for lists.`;
+
+// Tried in order: when Gemini is overloaded (503), rate-limited (429), retires a model (404) or times out,
+// the next model answers instead of the farmer seeing an error.
+const CHAT_MODELS = [...new Set([
+  process.env.GEMINI_CHAT_MODEL || "gemini-3.5-flash",
+  "gemini-3.5-flash-lite",
+  "gemini-flash-lite-latest",
+])];
+const RETRYABLE = /\b(429|500|503|504|404)\b|UNAVAILABLE|RESOURCE_EXHAUSTED|NOT_FOUND|overloaded|high demand|timed? ?out|abort/i;
 
 // POST /chat { message, history?: [{role:"user"|"model", text}] }
 app.post("/chat", async (req, res) => {
-  try {
-    const { message, history = [] } = req.body;
-    if (!message) return res.status(400).json({ error: "message required" });
-    const contents = [
-      ...history.map((h) => ({ role: h.role, parts: [{ text: h.text }] })),
-      { role: "user", parts: [{ text: message }] },
-    ];
-    const r = await ai.models.generateContent({
-      model: process.env.GEMINI_CHAT_MODEL || "gemini-3.8-flash",
-      contents,
-      config: { systemInstruction: SYSTEM },
-    });
-    res.json({ reply: r.text });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
+  const { message, history = [] } = req.body || {};
+  if (!message) return res.status(400).json({ error: "message required" });
+  // Gemini needs alternating turns that start with the user; keep the last 12.
+  const turns = history
+    .filter((h) => (h.role === "user" || h.role === "model") && typeof h.text === "string" && h.text.trim())
+    .slice(-12);
+  while (turns.length && turns[0].role !== "user") turns.shift();
+  const contents = [
+    ...turns.map((h) => ({ role: h.role, parts: [{ text: h.text }] })),
+    { role: "user", parts: [{ text: message }] },
+  ];
+  let last;
+  for (const model of CHAT_MODELS) {
+    try {
+      const r = await ai.models.generateContent({
+        model,
+        contents,
+        config: { systemInstruction: SYSTEM, httpOptions: { timeout: 25000 } },
+      });
+      if (r.text) return res.json({ reply: r.text, model });
+      last = new Error("empty reply");
+    } catch (e) {
+      last = e;
+      console.warn(`chat: ${model} failed: ${e.message}`);
+      if (!RETRYABLE.test(e.message)) break;
+    }
   }
+  res.status(503).json({ error: "busy", detail: last?.message });
 });
 
 // POST /tts { text, voice? } -> audio/wav
 app.post("/tts", async (req, res) => {
   try {
-    const { text, voice = "Kore" } = req.body;
+    const { text, voice = "Kore" } = req.body || {};
     if (!text) return res.status(400).json({ error: "text required" });
-    const r = await ai.models.generateContent({
-      model: "gemini-2.5-flash-preview-tts",
-      contents: [{ parts: [{ text }] }],
-      config: {
-        responseModalities: ["AUDIO"],
-        speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
-      },
-    });
-    const b64 = r.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    if (!b64) return res.status(502).json({ error: "no audio returned" });
-    res.type("audio/wav").send(pcmToWav(Buffer.from(b64, "base64")));
+    let last;
+    for (const model of TTS_MODELS) {
+      try {
+        // Without an explicit "read aloud", short texts make the TTS model try to answer them, which it refuses (400).
+        const r = await ai.models.generateContent({
+          model,
+          contents: [{ parts: [{ text: `Read this aloud exactly as written:\n${text}` }] }],
+          config: {
+            responseModalities: ["AUDIO"],
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: voice } } },
+            httpOptions: { timeout: 45000 },
+          },
+        });
+        const audio = r.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+        if (!audio?.data) { last = new Error("no audio returned"); continue; }
+        const bytes = Buffer.from(audio.data, "base64");
+        // Newer models send a finished WAV; older ones raw PCM ("audio/L16;codec=pcm;rate=24000").
+        if (/wav/i.test(audio.mimeType || "")) return res.type("audio/wav").send(bytes);
+        const rate = Number(/rate=(\d+)/.exec(audio.mimeType || "")?.[1]) || 24000;
+        return res.type("audio/wav").send(pcmToWav(bytes, rate));
+      } catch (e) {
+        last = e;
+        console.warn(`tts: ${model} failed: ${e.message}`);
+      }
+    }
+    res.status(503).json({ error: "busy", detail: last?.message });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
 });
+const TTS_MODELS = [...new Set([
+  process.env.GEMINI_TTS_MODEL || "gemini-2.5-flash-preview-tts",
+  "gemini-3.8-flash-tts",
+])];
 
 // Gemini TTS returns raw 16-bit PCM mono at 24 kHz; wrap it in a WAV header
 function pcmToWav(pcm, rate = 24000) {

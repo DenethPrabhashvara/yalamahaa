@@ -37,7 +37,7 @@ function TankChooser({ value, isOther, pin, onPick, t }) {
         {q && <button type="button" className="icon-btn soft sm" aria-label="Clear" onClick={() => setQ('')}><Icon name="close" size={14} /></button>}
       </div>
       {!query && pin && <div className="label">{t('nearestTanks')}</div>}
-      {query && list.length === 0 && <div className="f14 muted">{t('noTankMatch')}</div>}
+      {query && list.length === 0 && <div className="f15 muted">{t('noTankMatch')}</div>}
       <div className="col gap6" role="radiogroup" aria-label={t('which_tank')}>
         {list.map((tk) => (
           <button key={tk.id} type="button" role="radio" aria-checked={value === tk.name}
@@ -81,15 +81,15 @@ function ApiSourceChooser({ data, items, value, isOther, pin, onPick, t, keys })
         <input aria-label={t(keys.search)} placeholder={t(keys.search)} value={q} onChange={(e) => setQ(e.target.value)} enterKeyHint="search" />
         {q && <button type="button" className="icon-btn soft sm" aria-label="Clear" onClick={() => setQ('')}><Icon name="close" size={14} /></button>}
       </div>
-      {data.loading && !data.data && <div className="f14 muted">{t(keys.loading)}</div>}
+      {data.loading && !data.data && <div className="f15 muted">{t(keys.loading)}</div>}
       {data.error && !data.data && (
-        <div className="row gap8 f14 muted">
+        <div className="row gap8 f15 muted">
           {t(keys.offline)}
           <button type="button" className="pill-btn outline sm" onClick={data.reload}>{t('tryAgain')}</button>
         </div>
       )}
       {!query && pin && list.length > 0 && <div className="label">{t(keys.nearest)}</div>}
-      {query && data.data && list.length === 0 && <div className="f14 muted">{t(keys.noMatch)}</div>}
+      {query && data.data && list.length === 0 && <div className="f15 muted">{t(keys.noMatch)}</div>}
       <div className="col gap6" role="radiogroup" aria-label={t(keys.which)}>
         {list.map((it) => (
           <button key={it.name} type="button" role="radio" aria-checked={value === it.name}

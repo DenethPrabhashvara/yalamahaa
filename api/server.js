@@ -9,6 +9,7 @@ const logger =require('./utils/logger.js')
 const app = require('./app.js')
 const { startReminderJob } = require('./services/reminderJob.js')
 const { startFloodAlertJob } = require('./services/floodAlertJob.js')
+const { startWeatherFeedJob } = require('./services/weatherFeedJob.js')
 
 const PORT = process.env.API_PORT || 8005
 
@@ -18,6 +19,7 @@ try{
         logger.info(`API Running on PORT ${PORT}`)
         startReminderJob()
         startFloodAlertJob()
+        startWeatherFeedJob()
     })
 
 } catch(error) {
