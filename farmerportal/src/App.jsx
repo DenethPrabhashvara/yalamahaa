@@ -50,7 +50,8 @@ export default function App() {
 
   return (
     <div className="stage">
-      <div className={`device lang-${lang}`}>
+      <div className={`device lang-${lang}`} data-theme="light">
+        <div className="ambient-mesh" aria-hidden="true" />
         <OfflineBanner />
         <ErrorBoundary key={pathname}>
           <main className={`viewport ${showNav ? 'has-nav' : ''}`} key={pathname}>

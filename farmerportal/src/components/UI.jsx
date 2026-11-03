@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { forwardRef, useEffect, useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Glass, TabBar as GlisseTabBar } from 'glisse';
 import Icon from './Icon.jsx';
 import { useApp } from '../state/AppContext.jsx';
 import { LANGS } from '../i18n.js';
@@ -105,26 +106,28 @@ export function StepHeader({ step, total = 4, title, backTo, closeTo, onClose, c
   );
 }
 
+// Glisse renders tabs with an `href` through this, so they navigate inside the router.
+const RouterLink = forwardRef(function RouterLink({ href, ...props }, ref) {
+  return <Link ref={ref} to={href} {...props} />;
+});
+
 export function BottomNav() {
   const { t } = useApp();
+  const { pathname } = useLocation();
   const items = [
-    { to: '/home', icon: 'home', label: t('home') },
-    { to: '/water', icon: 'drop', label: t('water') },
-    { to: '/report', icon: 'pencil', label: t('report') },
-    { to: '/fields', icon: 'map', label: t('fields') },
-    { to: '/profile', icon: 'user', label: t('profile') },
-  ];
+    { value: '/home', icon: 'home', label: t('home') },
+    { value: '/water', icon: 'drop', label: t('water') },
+    { value: '/report', icon: 'pencil', label: t('report') },
+    { value: '/fields', icon: 'map', label: t('fields') },
+    { value: '/profile', icon: 'user', label: t('profile') },
+  ].map((it) => ({ ...it, href: it.value, icon: <Icon name={it.icon} size={24} stroke={2} /> }));
   // Every item is a section people navigate to; the bar never carries actions.
+  // Glisse's iOS 26 tab bar: the selection springs between tabs, follows a drag and lifts into a lens while held.
   return (
-    <nav className="bottom-nav" aria-label="Main">
-      {items.map((it) => (
-        <NavLink key={it.to} to={it.to}
-          className={({ isActive }) => `bn-item ${isActive ? 'active' : ''}`}>
-          <Icon name={it.icon} size={22} stroke={2} />
-          <span className="bn-label">{it.label}</span>
-        </NavLink>
-      ))}
-    </nav>
+    <div className="bottom-nav">
+      <GlisseTabBar aria-label="Main" items={items} link={RouterLink}
+        value={items.some((it) => it.value === pathname) ? pathname : null} />
+    </div>
   );
 }
 
@@ -167,6 +170,12 @@ export function Aerial({ variant = 'a', height = 110, plot = 'accent', tag, tagT
       {children}
     </div>
   );
+}
+
+// Liquid Glass is for the controls layer that floats over content (bars, floating buttons, sheets),
+// as in Apple's design. Content cards stay solid so text on them stays easy to read.
+export function LiquidGlass({ children, className = '', ...props }) {
+  return <Glass className={`liquid ${className}`} {...props}>{children}</Glass>;
 }
 
 export function Card({ children, className = '', dark, style }) {

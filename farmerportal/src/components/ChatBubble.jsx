@@ -1,4 +1,6 @@
+import { Button, Glass } from 'glisse';
 import { useEffect, useRef, useState } from 'react';
+import Icon from './Icon.jsx';
 
 // Floating chat with the Yala Maha AI assistant (ai-assistant/server.js)
 const _raw = (import.meta.env.VITE_AI_API_URL || 'http://localhost:5050').replace(/\/$/, '');
@@ -72,7 +74,7 @@ export default function ChatBubble() {
   return (
     <>
       {open && (
-        <section className="chat-panel" aria-label="AI assistant">
+        <Glass className="chat-panel" role="dialog" aria-label="AI assistant">
           <header className="chat-head">
             <strong>Yala Maha Assistant</strong>
             <button type="button" onClick={() => setOpen(false)} aria-label="Close">✕</button>
@@ -95,11 +97,10 @@ export default function ChatBubble() {
             <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Type a message" />
             <button type="submit" disabled={busy || !text.trim()}>Send</button>
           </form>
-        </section>
+        </Glass>
       )}
-      <button type="button" className="chat-fab" onClick={() => setOpen((o) => !o)} aria-label="Open AI assistant">
-        💬
-      </button>
+      <Button className="chat-fab" icon={<Icon name={open ? 'close' : 'sms'} size={24} stroke={2} />}
+        onClick={() => setOpen((o) => !o)} aria-label={open ? 'Close AI assistant' : 'Open AI assistant'} aria-expanded={open} />
     </>
   );
 }
