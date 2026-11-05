@@ -4,7 +4,8 @@ import Icon from './Icon.jsx';
 
 // Floating chat with the Yala Maha AI assistant (ai-assistant/server.js)
 const _raw = (import.meta.env.VITE_AI_API_URL || 'http://localhost:5050').replace(/\/$/, '');
-const AI_URL = /^https?:\/\//.test(_raw) ? _raw : `http://${_raw}`;
+// A relative base ('/ai' behind the Caddy proxy) must stay relative; only a bare host:port needs a scheme.
+const AI_URL = /^https?:\/\//.test(_raw) || _raw.startsWith('/') ? _raw : `http://${_raw}`;
 
 export default function ChatBubble() {
   const [open, setOpen] = useState(false);

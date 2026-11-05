@@ -66,6 +66,29 @@ services:
       - caddy_config:/config
     depends_on: [api, ai]
 
+  agi:                                 # phone IVR logic: Asterisk hands every pbx.im call here
+    build: { context: ./ivr }
+    restart: unless-stopped
+    env_file: ai-assistant/.env        # GEMINI_API_KEY
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    ports: ["127.0.0.1:4573:4573"]   # only Asterisk on this host can reach it
+    volumes: [ivrsounds:/sounds]
+    depends_on:
+      db: { condition: service_healthy }
+
+  asterisk:                            # registers to pbx.im as an endpoint and answers its calls
+    build: { context: ./ivr, dockerfile: asterisk/Dockerfile }
+    restart: unless-stopped
+    network_mode: host                 # SIP and RTP break behind Docker's NAT
+    env_file: ivr/.env
+    volumes: [ivrsounds:/var/lib/asterisk/sounds/ivr]
+    depends_on: [agi]
+
   jobs:                                # not started by `up`; cron runs it
     build: { context: ., dockerfile: Tank-Reserviour/Dockerfile }
     profiles: [jobs]
@@ -84,3 +107,4 @@ volumes:
   apiuploads:
   caddy_data:
   caddy_config:
+  ivrsounds:

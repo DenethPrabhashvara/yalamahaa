@@ -1,0 +1,11 @@
+{
+  "name": "yala-maha-ivr",
+  "private": true,
+  "description": "Phone IVR for pbx.im calls: water levels by caller ID and the Gemini assistant",
+  "main": "agi.js",
+  "scripts": { "start": "node agi.js" },
+  "dependencies": {
+    "@google/genai": "^2.32.0",
+    "pg": "^8.23.1"
+  }
+}
