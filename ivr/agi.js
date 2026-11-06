@@ -10,10 +10,11 @@ const { GoogleGenAI } = require('@google/genai')
 
 const SOUNDS = process.env.SOUNDS_DIR || '/sounds'             // the same volume is sounds/ivr inside Asterisk
 const AST_SOUNDS = '/var/lib/asterisk/sounds/ivr'
-const CHAT_MODELS = [...new Set([process.env.GEMINI_CHAT_MODEL || 'gemini-3.5-flash', 'gemini-3.5-flash-lite'])]
-// Free tier allows ~3 TTS requests a minute per model, so the others take over when one is used up
-const TTS_MODELS = [...new Set([process.env.GEMINI_TTS_MODEL || 'gemini-2.5-flash-preview-tts',
-  'gemini-3.8-flash-tts', 'gemini-3.1-flash-tts-preview', 'gemini-3.8-flash-lite-tts'])]
+// Flash-Lite: cheapest with a published price ($0.30 in / $2.50 out per 1M), 500 free requests a day
+const CHAT_MODELS = [...new Set([process.env.IVR_CHAT_MODEL || 'gemini-3.5-flash-lite', 'gemini-3.5-flash'])]
+// Cheapest first. Each model has its own quota, so the next takes over when one is used up.
+const TTS_MODELS = [...new Set([process.env.IVR_TTS_MODEL || 'gemini-3.8-flash-tts',
+  'gemini-3.8-flash-lite-tts', 'gemini-2.5-flash-preview-tts', 'gemini-3.1-flash-tts-preview'])]
 const VOICE = process.env.GEMINI_VOICE || 'Kore'
 const THRESHOLD = Number(process.env.ALERT_THRESHOLD) || 90
 const MAX_TURNS = 5                                                // questions per call
@@ -30,14 +31,66 @@ const db = new Pool({
   max: 4
 })
 
+// First thing every caller hears; each line in its own language
+const LANG_MENU = 'සිංහල සඳහා එක ඔබන්න. தமிழுக்கு இரண்டை அழுத்தவும். For English, press three.'
+const LANGS = { 1: 'si', 2: 'ta', 3: 'en' }
+const LANG_NAME = { si: 'Sinhala', ta: 'Tamil', en: 'English' }
+
 const SAY = {
-  menu: 'ආයුබෝවන්, මේ යාල මහ. ඔබේ ජලාශයේ ජල මට්ටම දැනගැනීමට එක ඔබන්න. සහායකයාගෙන් ප්‍රශ්නයක් ඇසීමට දෙක ඔබන්න.',
-  afterAlert: 'සහායකයාගෙන් ප්‍රශ්නයක් ඇසීමට දෙක ඔබන්න.',
-  ask: 'බීප් හඬෙන් පසු ඔබේ ප්‍රශ්නය අසන්න.',
-  askMore: 'තවත් ප්‍රශ්නයක් ඇත්නම් බීප් හඬෙන් පසු අසන්න.',
-  notHeard: 'සමාවන්න, මට ඇසුණේ නැහැ.',
-  busy: 'සමාවන්න, සහායකයා දැන් කාර්යබහුලයි. පසුව නැවත අමතන්න.',
-  bye: 'ස්තූතියි. ආයුබෝවන්.'
+  si: {
+    menu: 'ආයුබෝවන්, මේ යාල මහ. ඔබේ ජලාශයේ ජල මට්ටම දැනගැනීමට එක ඔබන්න. සහායකයාගෙන් ප්‍රශ්නයක් ඇසීමට දෙක ඔබන්න.',
+    afterAlert: 'සහායකයාගෙන් ප්‍රශ්නයක් ඇසීමට දෙක ඔබන්න.',
+    ask: 'බීප් හඬෙන් පසු ඔබේ ප්‍රශ්නය අසන්න.',
+    askMore: 'තවත් ප්‍රශ්නයක් ඇත්නම් බීප් හඬෙන් පසු අසන්න.',
+    notHeard: 'සමාවන්න, මට ඇසුණේ නැහැ.',
+    busy: 'සමාවන්න, සහායකයා දැන් කාර්යබහුලයි. පසුව නැවත අමතන්න.',
+    bye: 'ස්තූතියි. ආයුබෝවන්.'
+  },
+  ta: {
+    menu: 'வணக்கம், இது யால மஹா. உங்கள் நீர்த்தேக்கத்தின் நீர் மட்டத்தை அறிய ஒன்றை அழுத்தவும். உதவியாளரிடம் கேள்வி கேட்க இரண்டை அழுத்தவும்.',
+    afterAlert: 'உதவியாளரிடம் கேள்வி கேட்க இரண்டை அழுத்தவும்.',
+    ask: 'பீப் ஒலிக்குப் பிறகு உங்கள் கேள்வியைக் கேளுங்கள்.',
+    askMore: 'வேறு கேள்வி இருந்தால் பீப் ஒலிக்குப் பிறகு கேளுங்கள்.',
+    notHeard: 'மன்னிக்கவும், எனக்குக் கேட்கவில்லை.',
+    busy: 'மன்னிக்கவும், உதவியாளர் இப்போது பிஸியாக இருக்கிறார். பின்னர் மீண்டும் அழைக்கவும்.',
+    bye: 'நன்றி. வணக்கம்.'
+  },
+  en: {
+    menu: 'Welcome to Yala Maha. To hear your reservoir water level, press one. To ask the assistant a question, press two.',
+    afterAlert: 'To ask the assistant a question, press two.',
+    ask: 'Ask your question after the beep.',
+    askMore: 'If you have another question, ask it after the beep.',
+    notHeard: 'Sorry, I did not hear that.',
+    busy: 'Sorry, the assistant is busy right now. Please call again later.',
+    bye: 'Thank you. Goodbye.'
+  }
+}
+
+const ALERT = {
+  si: {
+    level: (n, p) => `${n} ජලාශය සියයට ${p} ක් පිරී ඇත.`,
+    spilling: ' වාන් දමමින් පවතී.',
+    danger: ' පහළ ප්‍රදේශවල සිටින අය අවදානමෙන් සූදානම්ව සිටින්න.',
+    unregistered: 'ඔබේ අංකය යාල මහ හි ලියාපදිංචි කර නැත. ',
+    allClear: 'දැනට කිසිදු ජලාශයක් අවදානම් මට්ටමක නැත.',
+    high: 'ඉහළ ජල මට්ටම්: '
+  },
+  ta: {
+    level: (n, p) => `${n} நீர்த்தேக்கம் ${p} சதவீதம் நிரம்பியுள்ளது.`,
+    spilling: ' வான் பாய்கிறது.',
+    danger: ' தாழ்வான பகுதிகளில் உள்ளவர்கள் எச்சரிக்கையாக இருக்கவும்.',
+    unregistered: 'உங்கள் எண் யால மஹாவில் பதிவு செய்யப்படவில்லை. ',
+    allClear: 'தற்போது எந்த நீர்த்தேக்கமும் அபாய நிலையில் இல்லை.',
+    high: 'அதிக நீர் மட்டங்கள்: '
+  },
+  en: {
+    level: (n, p) => `${n} is ${p} percent full.`,
+    spilling: ' It is spilling.',
+    danger: ' People in low areas downstream should be ready.',
+    unregistered: 'Your number is not registered with Yala Maha. ',
+    allClear: 'No reservoir is at a dangerous level right now.',
+    high: 'High water levels: '
+  }
 }
 
 const SYSTEM = `You are the Yala Maha assistant answering a phone call from a Sri Lankan farmer.
@@ -81,21 +134,22 @@ async function highTanks() {
   return rows
 }
 
-function levelLine(name, pct, spilling) {
-  const p = Math.round(Number(pct))
-  let s = `${name} ජලාශය සියයට ${p} ක් පිරී ඇත.`
-  if (/yes|spill/i.test(spilling || '')) s += ' වාන් දමමින් පවතී.'
-  if (p >= THRESHOLD) s += ' පහළ ප්‍රදේශවල සිටින අය අවදානමෙන් සූදානම්ව සිටින්න.'
+function levelLine(lang, name, pct, spilling) {
+  const a = ALERT[lang], p = Math.round(Number(pct))
+  let s = a.level(name, p)
+  if (/yes|spill/i.test(spilling || '')) s += a.spilling
+  if (p >= THRESHOLD) s += a.danger
   return s
 }
 
-async function alertText(farmer) {
-  if (farmer?.tank_name && farmer.tank_pct != null) return levelLine(farmer.tank_name, farmer.tank_pct)
-  if (farmer?.res_name && farmer.res_pct != null) return levelLine(farmer.res_name, farmer.res_pct, farmer.is_spilling)
+async function alertText(farmer, lang) {
+  const a = ALERT[lang]
+  if (farmer?.tank_name && farmer.tank_pct != null) return levelLine(lang, farmer.tank_name, farmer.tank_pct)
+  if (farmer?.res_name && farmer.res_pct != null) return levelLine(lang, farmer.res_name, farmer.res_pct, farmer.is_spilling)
   const high = await highTanks()
-  const intro = farmer ? '' : 'ඔබේ අංකය යාල මහ හි ලියාපදිංචි කර නැත. '
-  if (!high.length) return intro + 'දැනට කිසිදු ජලාශයක් අවදානම් මට්ටමක නැත.'
-  return intro + 'ඉහළ ජල මට්ටම්: ' + high.map(t => levelLine(t.tank_name, t.pct)).join(' ')
+  const intro = farmer ? '' : a.unregistered
+  if (!high.length) return intro + a.allClear
+  return intro + a.high + high.map((t) => levelLine(lang, t.tank_name, t.pct)).join(' ')
 }
 
 // ---------- audio ----------
@@ -172,7 +226,7 @@ async function tts(text) {
   return 'ivr/' + id
 }
 
-async function askGemini(recording, history, context) {
+async function askGemini(recording, history, context, lang) {
   const audio = { inlineData: { mimeType: 'audio/wav', data: fs.readFileSync(recording).toString('base64') } }
   let last
   for (const model of CHAT_MODELS) {
@@ -181,7 +235,7 @@ async function askGemini(recording, history, context) {
         model,
         contents: [...history, { role: 'user', parts: [audio] }],
         config: {
-          systemInstruction: `${SYSTEM}\nCaller's water level right now: ${context}`,
+          systemInstruction: `${SYSTEM}\nThe caller chose ${LANG_NAME[lang]}; answer in it unless they speak another language.\nCaller's water level right now: ${context}`,
           responseMimeType: 'application/json',
           responseSchema: {
             type: 'OBJECT',
@@ -298,45 +352,56 @@ async function handleCall(agi, v) {
   await agi.cmd('ANSWER')
   const farmerP = lookupCaller(phone).catch((e) => (console.error('lookup:', e.message), null))
 
-  let key = ''
-  for (let i = 0; i < 2 && !key; i++) key = await menu(SAY.menu, 6000)
+  // Language first. A language whose prompts aren't made yet (TTS quota) falls back to Sinhala.
+  let lang = 'si'
+  if (isCached(LANG_MENU)) {
+    let k = ''
+    for (let i = 0; i < 2 && !LANGS[k]; i++) k = await menu(LANG_MENU, 5000)
+    lang = LANGS[k] || 'si'
+  }
+  if (!ready(lang)) lang = 'si'
+  const S = SAY[lang]
+  console.log(`  ${uid} language: ${lang}`)
 
-  const context = await alertText(await farmerP).catch((e) => (console.error('alert:', e.message), 'unknown'))
+  let key = ''
+  for (let i = 0; i < 2 && !key; i++) key = await menu(S.menu, 6000)
+
+  const context = await alertText(await farmerP, lang).catch((e) => (console.error('alert:', e.message), 'unknown'))
 
   if (key !== '2') {
-    if (context === 'unknown') await say(SAY.busy)
+    if (context === 'unknown') await say(S.busy)
     else await say(context)
-    key = await menu(SAY.afterAlert, 5000)
+    key = await menu(S.afterAlert, 5000)
   }
   if (key === '2') {
-    if (!allowAssistant(phone)) await say(SAY.busy)
+    if (!allowAssistant(phone)) await say(S.busy)
     else {
       aiCalls++
-      try { await assistant(agi, say, hold, uid, context) } finally { aiCalls-- }
+      try { await assistant(agi, say, hold, uid, context, lang) } finally { aiCalls-- }
     }
   }
-  await say(SAY.bye)
+  await say(S.bye)
   await agi.cmd('HANGUP')
 }
 
-async function assistant(agi, say, hold, uid, context) {
-  const history = []
+async function assistant(agi, say, hold, uid, context, lang) {
+  const S = SAY[lang], history = []
   let silent = 0
   for (let turn = 0; turn < MAX_TURNS && silent < 2; turn++) {
-    await say(turn ? SAY.askMore : SAY.ask)
+    await say(turn ? S.askMore : S.ask)
     const rec = `rec-${uid}-${turn}`, file = path.join(SOUNDS, rec + '.wav')
     // up to 15 s, stops after 3 s of silence or on #
     await agi.cmd(`RECORD FILE ${AST_SOUNDS}/${rec} wav "#" 15000 0 BEEP s=3`)
     if (!fs.existsSync(file) || fs.statSync(file).size < 8000) { // under half a second
       silent++
-      await say(SAY.notHeard)
+      await say(S.notHeard)
       continue
     }
     silent = 0
     await hold(true)
     let ans
     try {
-      ans = await askGemini(file, history, context)
+      ans = await askGemini(file, history, context, lang)
     } finally {
       fs.rm(file, () => {})
     }
@@ -360,7 +425,7 @@ net.createServer(async (sock) => {
       console.error('call failed:', e.message)
       try {
         await agi.cmd(`EXEC StopMusicOnHold ""`)
-        await agi.cmd(`STREAM FILE ${await tts(SAY.busy)} ""`)
+        await agi.cmd(`STREAM FILE ${await tts(SAY.si.busy)} ""`)
       } catch {}
     }
   } finally {
@@ -369,11 +434,14 @@ net.createServer(async (sock) => {
 }).listen(Number(process.env.AGI_PORT) || 4573, () => console.log(`IVR FastAGI on :${Number(process.env.AGI_PORT) || 4573}`))
 
 // Make the fixed prompts ahead so the first caller doesn't wait; drop day-old audio (alerts change daily)
-const PROMPTS = new Set(Object.values(SAY).map((t) => ttsId(t) + '.wav'))
+// Sinhala first: it is the fallback for everything
+const ALL_PROMPTS = [...Object.values(SAY.si), LANG_MENU, ...Object.values(SAY.ta), ...Object.values(SAY.en)]
+const PROMPTS = new Set(ALL_PROMPTS.map((t) => ttsId(t) + '.wav'))
+const ready = (lang) => Object.values(SAY[lang]).every(isCached)
 async function warm() {
-  const missing = Object.values(SAY).filter((t) => !isCached(t))
+  const missing = ALL_PROMPTS.filter((t) => !isCached(t))
   for (const text of missing) await tts(text).catch(() => {})
-  const left = Object.values(SAY).filter((t) => !isCached(t)).length
+  const left = ALL_PROMPTS.filter((t) => !isCached(t)).length
   if (left) { console.warn(`warm: ${left} prompts left, retrying in a minute`); setTimeout(warm, 60e3).unref() }
   else if (missing.length) console.log('warm: all prompts ready')
 }
