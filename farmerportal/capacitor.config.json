@@ -1,0 +1,9 @@
+{
+  "appId": "lk.yalamaha.farmer",
+  "appName": "Yala-Maha",
+  "webDir": "dist",
+  "server": {
+    "url": "https://farmer.yalamaha.aurawebsolution.online",
+    "cleartext": false
+  }
+}

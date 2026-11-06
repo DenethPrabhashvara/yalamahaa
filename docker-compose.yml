@@ -1,0 +1,86 @@
+services:
+  db:
+    image: postgres:18-alpine          # same major version as your PC (18)
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql     # Postgres 18 images mount here, not .../data
+      - ./api/models/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro   # runs only on an empty volume
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  ml:
+    build: { context: ., dockerfile: ml-model/Dockerfile }
+    restart: unless-stopped
+
+  ai:                                  # Gemini chat + TTS for the farmer portal bubble
+    build: { context: ., dockerfile: ai-assistant/Dockerfile }
+    restart: unless-stopped
+    env_file: ai-assistant/.env
+
+  api:
+    build: { context: ., dockerfile: api/Dockerfile }
+    restart: unless-stopped
+    env_file: api/config.env
+    environment:                       # overrides config.env so it points at the containers
+      NODE_ENV: production
+      APIDBHOST: db
+      APIDBPORT: "5432"
+      APIDATABASE: ${DB_NAME}
+      APIDBUSERN: ${DB_USER}
+      APIDBPASSWORD: ${DB_PASSWORD}
+      REDIS_URL: redis://redis:6379
+      FORECAST_API_URL: http://ml:5000
+    volumes:
+      - apilogs:/app/logs
+      - apiuploads:/app/uploads         # canal report photos
+    depends_on:
+      db: { condition: service_healthy }
+      redis: { condition: service_started }
+      ml: { condition: service_started }
+
+  web:
+    build:
+      context: .
+      dockerfile: deploy/web/Dockerfile
+      args:
+        VITE_GOOGLE_MAPS_API_KEY: ${VITE_GOOGLE_MAPS_API_KEY:-}
+        VITE_GOOGLE_MAPS_MAP_ID: ${VITE_GOOGLE_MAPS_MAP_ID:-}
+        VITE_AI_API_URL: ${VITE_AI_API_URL:-/ai}
+    restart: unless-stopped
+    environment:
+      FARMER_DOMAIN: ${FARMER_DOMAIN}
+      ADMIN_DOMAIN: ${ADMIN_DOMAIN}
+    ports: ["${HTTP_PORT:-80}:80", "443:443", "443:443/udp"]
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: [api, ai]
+
+  jobs:                                # not started by `up`; cron runs it
+    build: { context: ., dockerfile: Tank-Reserviour/Dockerfile }
+    profiles: [jobs]
+    environment:
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      db: { condition: service_healthy }
+
+volumes:
+  pgdata:
+  apilogs:
+  apiuploads:
+  caddy_data:
+  caddy_config:

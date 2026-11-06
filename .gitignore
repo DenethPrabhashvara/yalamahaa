@@ -1,2 +1,20 @@
 *.env
 node_modules
+dist/
+*.log
+# ML model: the 188 MB original stays local; model/ holds the exported parts (export-model.py)
+ml-model/tank_model.pkl
+ml-model/.venv/
+# Database dumps contain farmer data
+*.dump
+
+# Local tool settings
+.ua/
+
+# Photos attached to canal reports (never commit farmers' photos)
+api/uploads/
+
+# flood model downloads (dmc pdfs, rain history, datasets)
+flood-model/data/
+__pycache__/
+.env.production
