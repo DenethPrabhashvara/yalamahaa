@@ -1,0 +1,218 @@
+.ym-reports .ss-stage {
+  --gutter: 32px;
+  overflow: hidden;
+  background: var(--ss-well);
+}
+
+/* Pinned top-left, off the right and the bottom */
+.ym-rwin {
+  position: absolute;
+  top: var(--gutter);
+  left: var(--gutter);
+  width: 680px;
+  height: 520px;
+  background: var(--ss-surface);
+  border-radius: 10px;
+  box-shadow: var(--ss-shadow-hero);
+}
+
+.ym-rbody {
+  padding: 18px 22px;
+}
+
+.ym-rhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 60px;
+  margin-bottom: 12px;
+}
+
+.ym-rtitle {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ss-text-strong);
+}
+
+.ym-rrow {
+  display: grid;
+  grid-template-columns: 1.1fr 1.5fr 0.9fr 0.7fr;
+  align-items: center;
+  gap: 12px;
+  height: 40px;
+  padding: 0 10px;
+  border-radius: var(--ss-radius-sm);
+  border-bottom: 1px solid var(--ss-line-faint);
+  font-size: 12.5px;
+  color: var(--ss-text);
+  transition: background-color 220ms ease;
+}
+
+.ym-rrow--head {
+  height: 28px;
+  border-bottom: 1px solid var(--ss-line);
+  color: var(--ss-text-faint);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.ym-rrow--focus[data-hover] {
+  background: var(--ss-well);
+}
+
+.ym-rrow--focus[data-open] {
+  background: var(--ss-accent-soft);
+  border-bottom-color: transparent;
+}
+
+.ym-rname {
+  color: var(--ss-text-strong);
+  font-weight: 500;
+}
+
+.ym-rmuted { color: var(--ss-text-faint); }
+
+/* Opens below its row, anchored to it, on the one right gutter,
+   over placeholder rows only */
+.ym-rpanel {
+  position: absolute;
+  top: 215px;
+  right: var(--gutter);
+  width: 292px;
+  padding: 16px;
+  border-radius: var(--ss-radius-lg);
+  --ss-popover-bg: var(--ss-surface);
+  --ss-popover-shadow: var(--ss-shadow-satellite), 0 28px 48px -20px rgba(9, 9, 11, 0.32);
+}
+
+.ym-rpanel__title {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ss-text-strong);
+}
+
+.ym-rpanel__label {
+  display: block;
+  margin-top: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--ss-text-faint);
+}
+
+.ym-rpanel__quote {
+  display: block;
+  white-space: normal;
+  margin-top: 4px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ss-text);
+}
+
+.ym-rpanel__photos {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 14px;
+}
+
+/* Photo plates: drawn canal scenes (sky, bank, water), never real photos */
+.ym-rphoto {
+  position: relative;
+  overflow: hidden;
+  width: 72px;
+  height: 52px;
+  border-radius: var(--ss-radius-md);
+  box-shadow: inset 0 0 0 1px rgba(9, 9, 11, 0.06);
+}
+
+/* The gate: a concrete sluice across the channel, water spilling past it */
+.ym-rphoto--gate {
+  background:
+    linear-gradient(#6b7176, #6b7176) 50% 58% / 16px 15px no-repeat,
+    linear-gradient(#848a8f, #848a8f) 50% 44% / 30px 4px no-repeat,
+    linear-gradient(
+      to bottom,
+      #d6e4ef 0 38%,
+      #a9bd8e 38% 52%,
+      #6f97b8 52% 78%,
+      #94ad7c 78% 100%
+    );
+}
+
+/* The paddy: flooded rows under a low bank */
+.ym-rphoto--field {
+  background:
+    repeating-linear-gradient(
+      100deg,
+      rgba(255, 255, 255, 0) 0 7px,
+      rgba(140, 170, 110, 0.55) 7px 9px
+    ) 0 100% / 100% 48% no-repeat,
+    linear-gradient(
+      to bottom,
+      #dae6ee 0 30%,
+      #9fb784 30% 46%,
+      #86a9c4 46% 100%
+    );
+}
+
+.ym-rname--quiet {
+  font-weight: 450;
+  color: var(--ss-text);
+}
+
+.ym-rcount {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ss-text-faint);
+}
+
+.ym-rbtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 32px;
+  border-radius: var(--ss-radius-md);
+  background: var(--ss-accent);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 500;
+  transition: background-color 180ms ease;
+  white-space: nowrap;
+}
+
+.ym-rbtn[data-sent] {
+  background: var(--ss-success);
+}
+
+/* Narrow: the canal column goes; the panel keeps its true size */
+.ym-reports .ss-stage[data-layout='compact'] {
+  --gutter: 16px;
+}
+
+.ym-reports .ss-stage[data-layout='compact'] .ym-rcanal {
+  display: none;
+}
+
+.ym-reports .ss-stage[data-layout='compact'] .ym-rrow {
+  grid-template-columns: 1fr 0.9fr 0.8fr;
+}
+
+/* Compact is a redesign: the window ends inside the stage so it reads wide,
+   and the detail straddles its lower edge instead of sitting inside it */
+.ym-reports .ss-stage[data-layout='compact'] .ym-rwin {
+  width: 400px;
+  height: 260px;
+  overflow: hidden;
+}
+
+.ym-reports .ss-stage[data-layout='compact'] .ym-rrow--wide-only {
+  display: none;
+}
+
+.ym-reports .ss-stage[data-layout='compact'] .ym-rpanel {
+  top: 188px;
+}

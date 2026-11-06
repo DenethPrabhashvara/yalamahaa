@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
 import { AlertTriangle, ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, ShieldCheck, UserRound } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
+import TanksShowcase from '../components/showcase/TanksShowcase'
 
 export function Login() {
   const [showPassword, setShowPassword] = useState(false)
@@ -41,6 +42,11 @@ export function Login() {
             <span className="login-eyebrow">COMMAND CENTER</span>
             <h1>Building the future of Sri Lankan farmers</h1>
             <p>Sign in to access your operations dashboard</p>
+          </div>
+
+          {/* Stageshow demo: an illustration of the command centre, not live data */}
+          <div className="login-showcase" aria-hidden="true">
+            <TanksShowcase />
           </div>
 
           <div className="login-trust-note">

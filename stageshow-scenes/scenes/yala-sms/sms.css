@@ -1,0 +1,212 @@
+/* The section background is the stage: the product's canvas, no box. One
+   gutter for the window's top and left and the phone's right. */
+.ym-sms .ss-stage {
+  --gutter: 32px;
+  overflow: hidden;
+  background: var(--ss-well);
+}
+
+/* Pinned top-left, runs about a quarter past the bottom */
+.ym-window {
+  position: absolute;
+  top: var(--gutter);
+  left: var(--gutter);
+  width: 496px;
+  height: 460px;
+  background: var(--ss-surface);
+  border-radius: 10px;
+  box-shadow: var(--ss-shadow-hero);
+}
+
+.ym-window .ss-window__body {
+  display: flex;
+}
+
+/* The product's own collapsed sidebar: a 56px rail of its lucide icons */
+.ym-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 4px;
+  width: 56px;
+  padding: 14px 0;
+  border-right: 1px solid var(--ss-line);
+  background: var(--ss-canvas);
+  color: var(--ss-icon);
+}
+
+.ym-rail__item {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--ss-radius-sm);
+}
+
+.ym-rail__item[data-active] {
+  background: var(--ss-surface);
+  box-shadow: 0 0 0 1px var(--ss-line);
+  color: var(--ss-accent);
+}
+
+/* Left padding puts the composer on the URL's text edge: one left line */
+.ym-main {
+  flex: 1;
+  min-width: 0;
+  padding: 18px 20px 18px 28.5px;
+}
+
+/* The composer sits left of the phone's straddle line (x ~ 340 of the window) */
+.ym-head,
+.ym-chips,
+.ym-field,
+.ym-sent {
+  max-width: 252px;
+}
+
+.ym-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.ym-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ss-text-strong);
+}
+
+/* Template over audience, stacked on purpose: one per line */
+.ym-chips {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.ym-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--ss-well);
+  box-shadow: inset 0 0 0 1px var(--ss-line);
+  color: var(--ss-text);
+  font-size: 11.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.ym-chip--accent {
+  background: var(--ss-accent-soft);
+  box-shadow: none;
+  color: var(--ss-accent-text);
+}
+
+/* The message field, at the product's input radius */
+.ym-field {
+  padding: 10px 12px;
+  border-radius: var(--ss-radius-md);
+  box-shadow: inset 0 0 0 1px var(--ss-line);
+  background: var(--ss-surface);
+}
+
+.ym-field__text {
+  display: block;
+  white-space: normal;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ss-text-strong);
+}
+
+.ym-sent {
+  display: flex;
+  margin-top: 12px;
+}
+
+/* The send button, confirmed on itself */
+.ym-sent__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: var(--ss-radius-md);
+  background: var(--ss-success);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* The send log: placeholder rows the phone straddles */
+.ym-log {
+  margin-top: 22px;
+  border-top: 1px solid var(--ss-line);
+}
+
+.ym-log__row {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  border-bottom: 1px solid var(--ss-line-faint);
+}
+
+/* Straddles the window's right edge, about half outside, over the send log
+   and empty margin; its top sits in the upper half and the stage crops its
+   base. Stronger shadow than the window: a level above. */
+.ym-phone {
+  position: absolute;
+  top: 84px;
+  right: var(--gutter);
+  box-shadow: var(--ss-shadow-satellite), 0 30px 50px -20px rgba(9, 9, 11, 0.35);
+}
+
+/* Compact: the phone leads, centred; the window behind it bleeds off the
+   right and bottom and keeps only the page and its sent state */
+.ym-sms .ss-stage[data-layout='compact'] {
+  --gutter: 16px;
+}
+
+.ym-sms .ss-stage[data-layout='compact'] .ym-rail {
+  display: none;
+}
+
+.ym-sms .ss-stage[data-layout='compact'] .ym-window {
+  width: 420px;
+  height: 400px;
+}
+
+/* One line above the phone: the page title and its sent state */
+.ym-sms .ss-stage[data-layout='compact'] .ym-main {
+  display: flex;
+  align-self: flex-start;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  max-width: 326px;
+}
+
+.ym-sms .ss-stage[data-layout='compact'] .ym-head,
+.ym-sms .ss-stage[data-layout='compact'] .ym-sent {
+  margin: 0;
+  max-width: none;
+}
+
+.ym-sms .ss-stage[data-layout='compact'] .ym-phone {
+  top: 124px;
+  right: auto;
+  left: 34px;
+}
+
+/* At the column's width the lock-screen timestamp falls under the type
+   floor and says nothing the story needs, so compact drops it */
+.ym-sms .ss-stage[data-layout='compact'] .ss-notification__time {
+  display: none;
+}

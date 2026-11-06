@@ -294,3 +294,17 @@
 }
 [data-theme='dark'] .login-error { color: #fca5a5; }
 .login-submit:disabled { opacity: 0.75; cursor: progress; }
+
+/* Stageshow demo in the intro panel: an illustration, hidden on small screens */
+.login-showcase {
+  position: relative;
+  z-index: 1;
+  margin: 20px 0 8px;
+  border-radius: 12px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+@media (max-width: 900px) {
+  .login-showcase { display: none; }
+}

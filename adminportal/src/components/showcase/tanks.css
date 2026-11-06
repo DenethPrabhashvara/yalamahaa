@@ -1,0 +1,266 @@
+.ym-tanks .ss-stage {
+  --gutter: 32px;
+  overflow: hidden;
+  background: var(--ss-well);
+}
+
+/* Pinned top-left, off the right and the bottom */
+.ym-twin {
+  position: absolute;
+  top: var(--gutter);
+  left: var(--gutter);
+  width: 680px;
+  height: 460px;
+  background: var(--ss-surface);
+  border-radius: 10px;
+  box-shadow: var(--ss-shadow-hero);
+}
+
+.ym-tbody {
+  padding: 18px 22px;
+}
+
+.ym-thead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-right: 60px;
+  margin-bottom: 12px;
+}
+
+.ym-ttitle {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ss-text-strong);
+}
+
+.ym-trow {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.25fr 1fr 0.7fr 1.15fr 0.85fr;
+  align-items: center;
+  gap: 12px;
+  height: 40px;
+  padding: 0 10px;
+  border-radius: var(--ss-radius-sm);
+  border-bottom: 1px solid var(--ss-line-faint);
+  font-size: 12.5px;
+  color: var(--ss-text);
+  transition: background-color 600ms ease;
+}
+
+.ym-trow--head {
+  height: 28px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--ss-line);
+  color: var(--ss-text-faint);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* At risk: the row keeps a quiet tint; the wash is one brighter pass over it */
+.ym-trow[data-lead] {
+  background: var(--ss-danger-soft);
+  border-bottom-color: transparent;
+}
+
+.ym-trow::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--ss-danger);
+  opacity: 0;
+  transition: opacity 700ms ease;
+  pointer-events: none;
+}
+
+.ym-trow[data-wash]::after {
+  opacity: 0.14;
+  transition-duration: 160ms;
+}
+
+.ym-tname {
+  color: var(--ss-text-strong);
+  font-weight: 500;
+}
+
+.ym-tmuted { color: var(--ss-text-faint); }
+
+.ym-tnum { font-variant-numeric: tabular-nums; }
+
+/* A placeholder line at a name's length */
+.ym-tline {
+  display: block;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ss-ink-3, rgba(9, 9, 11, 0.08));
+}
+
+.ym-tspill {
+  font-size: 11.5px;
+  color: var(--ss-text-faint);
+}
+
+/* Storage: the figure, then a bar that fills toward the spill-line tick */
+.ym-tstore {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ym-tstore__num {
+  width: 30px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ym-tbar {
+  position: relative;
+  flex: 1;
+  max-width: 64px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ss-well);
+}
+
+.ym-tbar__fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: var(--ss-accent);
+  transition: width 700ms cubic-bezier(0.3, 0.7, 0.2, 1), background-color 400ms ease;
+}
+
+.ym-tbar[data-over] .ym-tbar__fill {
+  background: var(--ss-danger);
+}
+
+.ym-tbar__tick {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  width: 1.5px;
+  margin-left: -0.75px;
+  border-radius: 1px;
+  background: var(--ss-text-faint);
+}
+
+/* The alert: bottom-right on the one gutter, over placeholder rows only */
+.ym-talert {
+  position: absolute;
+  right: var(--gutter);
+  bottom: var(--gutter);
+  width: 284px;
+  padding: 14px 16px;
+  border-radius: var(--ss-radius-lg);
+  --ss-popover-bg: var(--ss-surface);
+  --ss-popover-shadow: var(--ss-shadow-satellite), 0 28px 48px -20px rgba(9, 9, 11, 0.32);
+}
+
+.ym-talert__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ym-talert__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--ss-danger);
+}
+
+.ym-talert__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ss-text-strong);
+}
+
+.ym-talert__time {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--ss-text-faint);
+}
+
+.ym-talert__body {
+  display: block;
+  white-space: normal;
+  margin: 6px 0 12px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ss-text);
+}
+
+.ym-talert__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ym-talert__meta {
+  font-size: 11.5px;
+  color: var(--ss-text-faint);
+}
+
+/* The product's primary button; it confirms on itself, no toast */
+.ym-tbtn {
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  height: 28px;
+  padding: 0 12px;
+  border-radius: var(--ss-radius-md);
+  background: var(--ss-accent);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  transition: background-color 180ms ease;
+}
+
+.ym-tbtn[data-sent] {
+  background: var(--ss-success);
+}
+
+/* Narrow: District goes, the window keeps its true row size */
+.ym-tanks .ss-stage[data-layout='compact'] {
+  --gutter: 16px;
+}
+
+.ym-tanks .ss-stage[data-layout='compact'] .ym-tdistrict {
+  display: none;
+}
+
+/* Fixed columns that end inside the crop; the row itself bleeds right */
+.ym-tanks .ss-stage[data-layout='compact'] .ym-tbody {
+  padding: 16px 14px;
+}
+
+.ym-tanks .ss-stage[data-layout='compact'] .ym-trow {
+  grid-template-columns: 90px 56px 74px 58px;
+  gap: 8px;
+  padding: 0 8px;
+}
+
+.ym-tanks .ss-stage[data-layout='compact'] .ym-tbar {
+  max-width: 38px;
+}
+
+/* Title over its spill-line note, and the grid sized to what the crop shows */
+.ym-tanks .ss-stage[data-layout='compact'] .ym-thead {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding-right: 0;
+}
+
+
+.ym-tanks .ss-stage[data-layout='compact'] .ym-twin {
+  width: 400px;
+}
+
+.ym-tanks .ss-stage[data-layout='compact'] .ym-trow--wide-only {
+  display: none;
+}

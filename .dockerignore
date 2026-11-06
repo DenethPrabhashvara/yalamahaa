@@ -10,3 +10,8 @@ voice-alerts
 ml-model/tank_model.pkl
 farmerportal/android
 farmerportal/ios
+
+# Agent skills + staged demo scenes: never needed inside any service image
+.claude
+.agents
+stageshow-scenes

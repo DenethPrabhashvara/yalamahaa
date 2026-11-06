@@ -1,0 +1,297 @@
+/* Wide hero: the page is the ground, so no plate under the window. */
+.ym-dash .ss-stage {
+  overflow: hidden;
+  background: var(--ss-well);
+}
+
+/* Inset top and left (the chrome says what this is), off right and bottom */
+.ym-dwindow {
+  position: absolute;
+  top: 40px;
+  left: 40px;
+  width: 1060px;
+  height: 640px;
+  background: var(--ss-surface);
+  border-radius: 10px;
+  box-shadow: var(--ss-shadow-hero);
+}
+
+.ym-dwindow .ss-window__body {
+  display: flex;
+}
+
+.ym-dside {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: 2px;
+  width: 196px;
+  padding: 18px 12px;
+  border-right: 1px solid var(--ss-line);
+  background: var(--ss-canvas);
+}
+
+.ym-dlogo {
+  display: flex;
+  align-items: center;
+  height: 22px;
+  margin: 0 0 14px 8px;
+  color: var(--ss-text-strong);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.ym-dnav {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 30px;
+  padding: 0 8px;
+  border-radius: var(--ss-radius-sm);
+}
+
+.ym-dnav__label {
+  font-size: 12.5px;
+  color: var(--ss-text);
+}
+
+.ym-dnav[data-active] {
+  background: var(--ss-surface);
+  box-shadow: 0 0 0 1px var(--ss-line);
+}
+
+.ym-dnav[data-active] .ym-dnav__label {
+  color: var(--ss-text-strong);
+  font-weight: 500;
+}
+
+.ym-dmain {
+  flex: 1;
+  min-width: 0;
+  padding: 22px 26px;
+}
+
+.ym-dhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.ym-dtitle {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ss-text-strong);
+}
+
+/* Three figures in one band, hairline rules between them, not boxed */
+.ym-dstats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  padding: 14px 0;
+  border-top: 1px solid var(--ss-line);
+  border-bottom: 1px solid var(--ss-line);
+}
+
+.ym-dstat {
+  padding-left: 20px;
+  border-left: 1px solid var(--ss-line);
+}
+
+.ym-dstat:first-child { padding-left: 0; border-left: 0; }
+
+.ym-dstat__label {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--ss-text-faint);
+}
+
+.ym-dstat__figure {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 7px 0 0;
+}
+
+.ym-dstat__value {
+  font-size: 26px;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.15;
+  color: var(--ss-text-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.ym-dchart {
+  display: block;
+  margin-top: 10px;
+}
+
+.ym-dtable {
+  margin-top: 16px;
+}
+
+.ym-dtable__title {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ss-text-strong);
+}
+
+.ym-drow {
+  display: grid;
+  grid-template-columns: 1.5fr 1.3fr 0.8fr 0.8fr 0.9fr;
+  align-items: center;
+  gap: 12px;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: var(--ss-radius-sm);
+  border-bottom: 1px solid var(--ss-line-faint);
+  font-size: 12.5px;
+}
+
+/* The one row the story is about: tinted, not boxed */
+.ym-drow[data-lead] {
+  background: var(--ss-danger-soft);
+  border-bottom-color: transparent;
+}
+
+.ym-drow--head {
+  height: 28px;
+  border-bottom: 1px solid var(--ss-line);
+  color: var(--ss-text-faint);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ym-dcell {
+  color: var(--ss-text);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ym-dcell--name {
+  color: var(--ss-text-strong);
+  font-weight: 500;
+}
+
+.ym-dcell--muted { color: var(--ss-text-faint); }
+
+.ym-dcell--num { font-variant-numeric: tabular-nums; }
+
+/* Satellite: hung on the window's lower edge, a level above it */
+.ym-dalert {
+  position: absolute;
+  right: 40px;
+  bottom: 40px;
+  width: 300px;
+  padding: 14px 16px 15px;
+  border-radius: var(--ss-radius-lg);
+  background: var(--ss-surface);
+  box-shadow: var(--ss-shadow-satellite), 0 28px 48px -20px rgba(9, 9, 11, 0.32);
+}
+
+.ym-dalert__head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ym-dalert__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--ss-danger);
+}
+
+.ym-dalert__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ss-text-strong);
+}
+
+.ym-dalert__time {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--ss-text-faint);
+}
+
+.ym-dalert__body {
+  display: block;
+  margin: 7px 0 11px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ss-text);
+}
+
+.ym-dalert__foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ym-dalert__meta {
+  font-size: 11.5px;
+  color: var(--ss-text-faint);
+}
+
+.ym-dalert__action {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ss-accent);
+}
+
+/* Compact is a redesign, not the hero shrunk: at a phone column the story is
+   the watchlist and its alert, so the sidebar, header and indicator band give
+   way; the window ends inside the stage so it reads wide, and the alert
+   straddles its lower edge over the placeholder rows */
+.ym-dash .ss-stage[data-layout='compact'] .ym-dwindow {
+  top: 16px;
+  left: 16px;
+  width: 420px;
+  height: 270px;
+  overflow: hidden;
+}
+
+.ym-dash .ss-stage[data-layout='compact'] .ym-dside,
+.ym-dash .ss-stage[data-layout='compact'] .ym-dhead,
+.ym-dash .ss-stage[data-layout='compact'] .ym-dstats {
+  display: none;
+}
+
+.ym-dash .ss-stage[data-layout='compact'] .ym-dmain {
+  padding: 18px 18px;
+}
+
+.ym-dash .ss-stage[data-layout='compact'] .ym-dtable {
+  margin-top: 0;
+}
+
+/* Reservoir, Storage and Status carry the story; District and Depth go */
+.ym-dash .ss-stage[data-layout='compact'] .ym-drow {
+  grid-template-columns: 1.4fr 0.7fr 1fr;
+}
+
+.ym-dash .ss-stage[data-layout='compact'] .ym-drow > :nth-child(2),
+.ym-dash .ss-stage[data-layout='compact'] .ym-drow > :nth-child(4) {
+  display: none;
+}
+
+/* One gutter on both sides, its top on the window's lower edge */
+.ym-dash .ss-stage[data-layout='compact'] .ym-dalert {
+  right: 16px;
+  bottom: 16px;
+  width: 326px;
+}
+
+/* Two placeholder rows are all the shorter window holds */
+.ym-dash .ss-stage[data-layout='compact'] .ym-dtable > :nth-child(n + 7) {
+  display: none;
+}

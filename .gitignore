@@ -18,3 +18,9 @@ api/uploads/
 flood-model/data/
 __pycache__/
 .env.production
+
+# Stageshow: filmed stills/video stay local, scene source is committed
+stageshow-scenes/out/
+
+# Playground copies of stageshow-scenes/scenes (synced by film.sh)
+.claude/skills/stageshow/examples/yala-*/
