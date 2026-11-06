@@ -293,6 +293,7 @@ smsrouter.route('/storm-calls')
           mode: s.mode,
           lang: s.lang,
           sources: s.sources,
+          public_url: s.publicUrl,
           twilio_configured: twilioConfigured(),
           verified_numbers: s.verified.size,
           max_per_run: s.maxPerRun,

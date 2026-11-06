@@ -32,6 +32,7 @@ import { SmsVolumeChart } from '../components/charts'
 import { AutoFloodAlerts } from '../components/AutoFloodAlerts'
 import { VoiceAlertDemo } from '../components/VoiceAlertDemo'
 import { VoiceAlertDemoSi } from '../components/VoiceAlertDemoSi'
+import { WarningCalls } from '../components/WarningCalls'
 import { Pie, PieChart, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 
 const STATUS_TONE = {
@@ -816,6 +817,8 @@ export function SmsGateway() {
             </div>
           </div>
         </Card>
+
+        <WarningCalls />
 
         <Card className="span-12 campaigns-card">
           <CardHeader
