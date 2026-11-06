@@ -24,3 +24,6 @@ stageshow-scenes/out/
 
 # Playground copies of stageshow-scenes/scenes (synced by film.sh)
 .claude/skills/stageshow/examples/yala-*/
+
+# SinhalaVITS audio made for warning calls (api/services/sinhalaTts.js)
+api/assets/voice/generated/

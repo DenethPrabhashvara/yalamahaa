@@ -9,6 +9,11 @@ const {
   sendRegistrationConfirmation
 } = require('../../services/smsService.js')
 const { sendCampaign } = require('../../services/campaignService.js')
+const stormCalls = require('../../services/stormCallJob.js')
+const stormForecast = require('../../services/stormForecast.js')
+const tankForecastAlerts = require('../../services/tankForecastAlerts.js')
+const alertMessages = require('../../services/alertMessages.js')
+const { placeCall } = require('../../services/twilioVoice.js')
 
 // Text.lk statuses that won't change any more
 const FINAL = ['Delivered', 'Undelivered', 'Failed', 'Rejected', 'Expired', 'Dry run']
@@ -264,6 +269,92 @@ smsrouter.route('/auto-alerts')
       next(e)
     }
   })
+
+// automatic storm warning calls (services/stormCallJob.js)
+//   GET  /storm-calls          mode, switch, thresholds, last 100 calls
+//   PUT  /storm-calls          { enabled }
+//   POST /storm-calls/check    { dryRun?, simulate?, sources? }  run the check now
+//   POST /storm-calls/test     { phone, kind?: 'weather' | 'ml' }  ring one number with a sample warning
+// The check and the test can take a minute when SinhalaVITS has to wake up.
+smsrouter.route('/storm-calls')
+  .get(async (req, res, next) => {
+    try {
+      const s = stormCalls.settings()
+      const calls = await db.query(
+        `SELECT c.id, f.full_name, c.phone, c.source, c.alert_key, c.subject, c.event_date, c.event_end, c.kinds,
+                c.max_rain_mm, c.max_gust_kmh, c.predicted_pct, c.lead_days, c.mode, c.lang, c.status, c.call_sid, c.error, c.attempts, c.called_at, c.updated_at
+         FROM storm_calls c JOIN farmers f ON f.farmer_id = c.farmer_id
+         ORDER BY c.updated_at DESC LIMIT 100`
+      )
+      res.json({
+        status: 'success',
+        data: {
+          enabled: await stormCalls.callsOn(),
+          mode: s.mode,
+          lang: s.lang,
+          sources: s.sources,
+          twilio_configured: twilioConfigured(),
+          verified_numbers: s.verified.size,
+          max_per_run: s.maxPerRun,
+          calling_hours: `${s.firstHour}:00-${s.lastHour}:00`,
+          thresholds: { weather: stormForecast.thresholds(), ml: tankForecastAlerts.thresholds() },
+          calls: calls.rows
+        }
+      })
+    } catch (e) {
+      next(e)
+    }
+  })
+  .put(async (req, res, next) => {
+    try {
+      const { enabled } = req.body || {}
+      if (typeof enabled !== 'boolean') {
+        return res.status(400).json({ status: 'fail', message: 'enabled must be true or false.' })
+      }
+      await db.query(
+        `INSERT INTO app_settings (key, value, updated_by, updated_at) VALUES ('storm_calls', $1, $2, now())
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_by = EXCLUDED.updated_by, updated_at = now()`,
+        [JSON.stringify(enabled), req.admin.admin_id]
+      )
+      res.json({ status: 'success', data: { enabled } })
+    } catch (e) {
+      next(e)
+    }
+  })
+
+smsrouter.route('/storm-calls/check').post(async (req, res, next) => {
+  try {
+    const { dryRun, simulate, sources } = req.body || {}
+    res.json({ status: 'success', data: await stormCalls.checkStorms({
+      dryRun: dryRun === true, simulate: simulate === true, sources: Array.isArray(sources) ? sources : undefined
+    }) })
+  } catch (e) {
+    next(e)
+  }
+})
+
+smsrouter.route('/storm-calls/test').post(async (req, res, next) => {
+  try {
+    const to = toE164(req.body?.phone)
+    if (!to) return res.status(400).json({ status: 'fail', message: 'Enter a phone number like 0771234567.' })
+    const s = stormCalls.settings()
+    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Colombo' })
+    let alert
+    if (req.body?.kind === 'ml') {
+      const o = { name: req.body?.tank || 'Minneriya', predictedPct: 104, horizon: 14 }
+      alert = { key: `test:ml:${o.name}`, en: alertMessages.tankEnglish(o), si: alertMessages.tankSinhala(o) }
+    } else {
+      const storm = stormForecast.simulatedStorm(today, stormForecast.thresholds())
+      alert = { key: `test:weather:${storm.start}`, en: alertMessages.weatherEnglish(storm), si: alertMessages.weatherSinhala(storm) }
+    }
+    const call = await stormCalls.buildCall(alert, s)
+    const sid = await placeCall({ to, twiml: call.twiml, timeLimit: call.timeLimit })
+    res.json({ status: 'success', data: { sid, to, lang: call.lang, audio: call.audio, note: call.note, english: alert.en, sinhala: alert.si } })
+  } catch (e) {
+    if (e.code || e.fatal) return res.status(502).json({ status: 'fail', message: e.message })
+    next(e)
+  }
+})
 
 // custom sms / direct message
 smsrouter.route('/send-custom').post(async (req, res, next) => {
