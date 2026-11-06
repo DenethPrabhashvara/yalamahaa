@@ -12,7 +12,9 @@ const { sendDbError } = require('./dbErrors.js')
 const farmerrouter = express.Router()
 
 const F_COLUMNS = FARMER_COLUMNS.split(',').map(col => `f.${col.trim()}`).join(', ')
-const FARM_FIELDS = ['water_source', 'water_name', 'location_label', 'crops']
+// field size, boundary and flood history keep their saved value unless sent (farmService.validateFieldDetails)
+const FIELD_DETAILS = ['total_acres', 'boundary', 'flood_history', 'flood_depth', 'flood_last_year']
+const FARM_FIELDS = ['water_source', 'water_name', 'location_label', 'crops', ...FIELD_DETAILS]
 const MAX_PAGE_SIZE = 200
 
 function paging(query) {
@@ -142,6 +144,9 @@ farmerrouter.patch('/:farmerId', canEdit, async (req, res, next) => {
           merged[f] = body[f] !== undefined ? body[f] : saved[f] ?? null
         }
         if (body.crops !== undefined) merged.crops = body.crops
+        for (const f of FIELD_DETAILS) {
+          if (body[f] !== undefined) merged[f] = body[f]
+        }
         const chk = validateFarm(merged)
         if (chk.error) {
           const e = new Error(chk.error)

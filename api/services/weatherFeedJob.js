@@ -153,7 +153,12 @@ async function pollFeed() {
 
   const listed = parseRssIds(index.body)
   if (!listed.length) {
-    logger.warn('weather feed: index had no usable items')
+    // An empty channel is the normal state when no advisory is in force, so only a feed
+    // that has items we can't read, or isn't RSS at all, is worth a warning.
+    const body = index.body || ''
+    if (/<item[\s>]/i.test(body)) logger.warn('weather feed: index has items but none with a usable id')
+    else if (!/<channel[\s>]/i.test(body)) logger.warn('weather feed: index is not an RSS feed')
+    else logger.debug('weather feed: no advisories in force')
     return []
   }
 

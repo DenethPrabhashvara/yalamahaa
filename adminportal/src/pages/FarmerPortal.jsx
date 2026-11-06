@@ -21,7 +21,7 @@ import {
   Wheat,
   X,
 } from 'lucide-react'
-import { WATER_SOURCE_LABELS, cropName, csvPhone, farmerFromApi, formatPhone } from '../data/farmers'
+import { FLOOD_DEPTH_LABELS, FLOOD_HISTORY_LABELS, WATER_SOURCE_LABELS, cropName, csvPhone, farmerFromApi, formatPhone } from '../data/farmers'
 import { useData } from '../context/DataContext'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
@@ -943,6 +943,23 @@ export function FarmerPortal() {
                     : 'Not pinned'}
                 </strong>
                 <small>{selected.farm?.location_label || 'GPS pin from registration'}</small>
+              </div>
+              <div className="farmer-meta">
+                <span>Field</span>
+                <strong>
+                  {selected.farm?.boundary_acres != null ? `${Number(selected.farm.boundary_acres)} acres marked` : 'Not marked on map'}
+                </strong>
+                <small>
+                  {selected.farm?.total_acres != null ? `Farmer says ${Number(selected.farm.total_acres)} acres in all` : 'Total land not given'}
+                </small>
+              </div>
+              <div className="farmer-meta">
+                <span>Past floods (5 years)</span>
+                <strong>{FLOOD_HISTORY_LABELS[selected.farm?.flood_history] || 'Not answered'}</strong>
+                <small>
+                  {[FLOOD_DEPTH_LABELS[selected.farm?.flood_depth], selected.farm?.flood_last_year && `last in ${selected.farm.flood_last_year}`]
+                    .filter(Boolean).join(', ') || 'From registration'}
+                </small>
               </div>
               <div className="farmer-meta">
                 <span>Address</span>

@@ -21,6 +21,8 @@ import RegIdentity from './pages/register/RegIdentity.jsx';
 import RegCrops from './pages/register/RegCrops.jsx';
 import RegPin from './pages/register/RegPin.jsx';
 import RegWater from './pages/register/RegWater.jsx';
+import RegField from './pages/register/RegField.jsx';
+import RegFlood from './pages/register/RegFlood.jsx';
 import RegReview from './pages/register/RegReview.jsx';
 import RegDone from './pages/register/RegDone.jsx';
 import NotFound from './pages/NotFound.jsx';
@@ -75,7 +77,9 @@ export default function App() {
               <Route path="/register/identity" element={<RequireAuth><RegIdentity /></RequireAuth>} />
               <Route path="/register/crops" element={<RequireAuth><RegCrops /></RequireAuth>} />
               <Route path="/register/pin" element={<RequireAuth><RegPin /></RequireAuth>} />
+              <Route path="/register/field" element={<RequireAuth><RegField /></RequireAuth>} />
               <Route path="/register/water" element={<RequireAuth><RegWater /></RequireAuth>} />
+              <Route path="/register/flood" element={<RequireAuth><RegFlood /></RequireAuth>} />
               <Route path="/register/review" element={<RequireAuth><RegReview /></RequireAuth>} />
               <Route path="/register/done" element={<RequireAuth><RegDone /></RequireAuth>} />
               <Route path="/error" element={<ErrorScreen />} />

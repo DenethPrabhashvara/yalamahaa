@@ -230,6 +230,9 @@ authrouter.post('/register', async (req, res, next) => {
     if (error.code === '23505') {
       return res.status(409).json({ status: 'fail', message: 'A farmer with this phone or NIC already exists.' })
     }
+    if (error.status === 400) {   // farm details that don't fit the pin (farmService.saveFarm)
+      return res.status(400).json({ status: 'fail', message: error.message })
+    }
     return next(error)
   }
 
@@ -298,6 +301,9 @@ authrouter.route('/farm')
       }
       return res.status(200).json({ status: 'success', message: 'Farm updated.', data: farm })
     } catch (error) {
+      if (error.status === 400) {
+        return res.status(400).json({ status: 'fail', message: error.message })
+      }
       return next(error)
     }
   })

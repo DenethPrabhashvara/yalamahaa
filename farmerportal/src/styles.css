@@ -544,11 +544,17 @@ a { color: inherit; }
 .gmap-wrap { position: relative; border-radius: 28px; overflow: hidden; flex: none; background: var(--map-bg); height: 380px; isolation: isolate; }
 .gmap { position: absolute; inset: 0; }
 /* Free Leaflet map: keep its panes (z 400–1000) inside the card, and our overlays above them. */
-.gmap-wrap > .tap-hint, .gmap-wrap > .gps-btn, .gmap-wrap > .map-base { z-index: 1001; }
+.gmap-wrap > .tap-hint, .gmap-wrap > .gps-btn, .gmap-wrap > .map-base, .gmap-wrap > .corner-tools { z-index: 1001; }
 .gmap .leaflet-container, .gmap.leaflet-container { font-family: var(--font); background: var(--map-bg); }
 .map-base { position: absolute; left: 12px; top: 12px; box-shadow: 0 4px 14px rgba(0,0,0,.2); background: rgba(249,250,252,.92); }
 .map-base button { height: 36px; }
 .lf-pin { cursor: grab; }
+.gmap-wrap.tall { height: 440px; }
+/* field boundary corners (FieldBoundaryMap) */
+.lf-corner span { display: flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 50%; background: #fff; border: 3px solid var(--brand); color: var(--ink); font: 700 13px/1 var(--font-system); box-shadow: 0 2px 8px rgba(0,0,0,.35); cursor: grab; }
+.corner-tools { position: absolute; right: 10px; top: 90px; display: flex; flex-direction: column; gap: 8px; } /* under the zoom buttons, clear of the GPS button */
+.corner-tool { height: 44px; width: 44px; padding: 0; border-radius: 22px; border: 0; background: rgba(249,250,252,.95); color: var(--ink); font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+.corner-tool:disabled { opacity: .5; }
 .lf-tank .gm-tank-label { position: absolute; transform: translate(-50%, -50%); }
 .lf-tank .gm-tank-label.mine { background: var(--accent); color: var(--ink); font-size: 13px; padding: 7px 12px; } /* the farmer's own tank */
 .gmap-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600; color: var(--map-ink); }

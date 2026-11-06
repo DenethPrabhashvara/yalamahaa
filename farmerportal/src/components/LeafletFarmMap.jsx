@@ -10,13 +10,16 @@ import { MAPPED_TANKS, PIN_SVG } from './GoogleFarmMap.jsx';
 // Usage rules: keep the attribution visible; Nominatim allows at most 1 search per second
 // and no search-as-you-type, so we only search when the farmer presses Search.
 // Fresh tile layers per map (a Leaflet layer can only belong to one map at a time).
+// Esri has no zoom-19 imagery for most of rural Sri Lanka and sends a grey "Map data not yet
+// available" tile instead, so zoom 19 enlarges the zoom-18 tiles rather than requesting them.
+const ESRI_NATIVE_ZOOM = 18;
 export const makeBaseLayers = () => ({
   satellite: [
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 19, attribution: 'Imagery © Esri, Maxar, Earthstar Geographics',
+      maxZoom: 19, maxNativeZoom: ESRI_NATIVE_ZOOM, attribution: 'Imagery © Esri, Maxar, Earthstar Geographics',
     }),
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 19,
+      maxZoom: 19, maxNativeZoom: ESRI_NATIVE_ZOOM,
     }),
   ],
   map: [

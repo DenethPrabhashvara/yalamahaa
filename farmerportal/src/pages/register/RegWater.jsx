@@ -177,9 +177,9 @@ export default function RegWater() {
 
   return (
     <div className="screen">
-      <StepHeader step={2.5} backTo="/register/pin" />
+      <StepHeader step={2.5} backTo="/register/field" />
       <div>
-        <div className="eyebrow">{t('step')} 2c - {t('waterStep')}</div>
+        <div className="eyebrow">{t('step')} 2d - {t('waterStep')}</div>
         <h1 className="h1 sm">{t('waterTitle')}</h1>
       </div>
 
@@ -212,7 +212,7 @@ export default function RegWater() {
       )}
 
       <div className="grow" />
-      <PrimaryBtn onClick={() => { set(water); navigate('/register/review'); }} disabled={!ok}>{t('continue')}</PrimaryBtn>
+      <PrimaryBtn onClick={() => { set(water); navigate('/register/flood'); }} disabled={!ok}>{t('continue')}</PrimaryBtn>
     </div>
   );
 }

@@ -2,38 +2,42 @@
 // schedule, rain) comes from the API and Open-Meteo: see src/api/.
 
 
+// Sri Lankan Department of Agriculture varieties. Paddy is grouped by age because that is how a
+// variety is picked for the season: in a name like Bg 352 the first digit is the months to harvest
+// and a second digit of 5-9 adds half a month (Bg = Batalagoda, At = Ambalantota, Bw = Bombuwela,
+// Ld = Labuduwa). Every type ends with 'Other / local seed' for anything not listed.
+const OTHER = 'Other / local seed';
 export const CROP_CATALOG = {
   paddy: {
     label: 'Paddy (Rice)', color: '#6E8F3A',
     types: {
-      'White Rice (BG)': ['BG 352 (3.5 months)', 'BG 300 (3 months)', 'BG 359 (3.5 months)', 'BG 366 (3.5 months)'],
-      'Red Rice (AT)': ['AT 362 (3.5 months)', 'AT 307 (3 months)', 'AT 373 (3.5 months)'],
-      Samba: ['Keeri Samba', 'Suwandel', 'BG 358 Samba'],
+      '3.5 months': ['Bg 352', 'Bg 359', 'Bg 360', 'Bg 366', 'Bg 357', 'Bg 358', 'Bg 94-1', 'At 362', 'At 353', 'At 373', 'Bw 361', 'Ld 365', 'Ld 368', OTHER],
+      '3 months': ['Bg 300', 'Bg 304', 'Bg 305', 'Bg 310', 'At 306', 'At 307', 'At 308', OTHER],
+      '2.5 months': ['Bg 250', OTHER],
+      '4-4.5 months': ['Bg 379-2', 'Bg 403', 'Bg 406', 'Bg 450', 'Bg 454', 'At 405', 'Ld 408', OTHER],
+      Traditional: ['Suwandel', 'Pachchaperumal', 'Kalu Heenati', 'Madathawalu', 'Kuruluthudu', 'Rathdel', 'Herath Banda', 'Kahata Samba', 'Murungakayan', OTHER],
     },
   },
   vegetables: {
     label: 'Vegetables', color: '#E08A1E',
     types: {
-      Tomato: ['Thilina', 'KWR', 'Padmini'],
-      'Green Chilli': ['MI-2', 'MI Hot', 'KA-2'],
-      Brinjal: ['Lena Iri', 'Padagoda', 'Thinnaveli Purple'],
-      Okra: ['MI-5', 'Haritha'],
+      Tomato: ['Thilina', 'Maheshi', 'T-245', 'Rashmi', 'Padmini', 'Bhathiya', OTHER],
+      'Green Chilli': ['MI 1', 'MI 2', 'MI Hot', 'KA 2', 'Arunalu', OTHER],
+      Brinjal: ['Lena Iri', 'Padagoda', 'Thinnaveli Purple', 'SM 164', 'Amanda', OTHER],
+      'Okra (Bandakka)': ['MI 5', 'MI 7', 'Haritha', OTHER],
+      'Bitter gourd (Karawila)': ['MC 43', 'Matale Green', 'Thinnaveli White', OTHER],
+      'Long bean (Me)': ['Polon Me', 'Hawari Me', OTHER],
+      'Red onion': ['Vethalan', OTHER],
     },
   },
   fruit: {
     label: 'Fruit', color: '#D93B2B',
     types: {
-      Banana: ['Ambul', 'Kolikuttu', 'Cavendish'],
-      Papaya: ['Red Lady', 'Rathna'],
-      Mango: ['TJC', 'Karthakolomban', 'Villard'],
-    },
-  },
-  ofc: {
-    label: 'Other Field Crops', short: 'OFC', color: '#C8A227',
-    types: {
-      Maize: ['Pacific 999', 'Pacific 984', 'Ruwan'],
-      'Mung bean': ['MI 6', 'Ari'],
-      Cowpea: ['Bombay', 'Waruni'],
+      Banana: ['Ambul', 'Kolikuttu', 'Seeni', 'Anamalu', 'Rathambala', 'Cavendish', OTHER],
+      Papaya: ['Red Lady', 'Rathna', OTHER],
+      Mango: ['Karthakolomban', 'Willard', 'TJC', OTHER],
+      Pineapple: ['Mauritius', 'Kew', OTHER],
+      Watermelon: ['Sugar Baby', OTHER],
     },
   },
   mixed: {

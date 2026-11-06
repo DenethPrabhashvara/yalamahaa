@@ -68,6 +68,8 @@ export default function GoogleFarmMap({ pin, onPin, onLocate, onFail, autoLocate
           zoom: pin?.lat != null ? 17 : 14,
           mapId: GOOGLE_MAP_ID,
           mapTypeId: 'hybrid',
+          // rural imagery runs out past this and Google shows "Sorry, we have no imagery here"
+          maxZoom: 19,
           disableDefaultUI: true,
           zoomControl: true,
           gestureHandling: 'greedy',

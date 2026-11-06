@@ -5,12 +5,17 @@ import Icon from '../components/Icon.jsx';
 import { CROP_CATALOG, PHOTOS, YIELD_UNITS } from '../data.js';
 import { FieldCards } from './Home.jsx';
 import { waterLabel } from './register/RegWater.jsx';
+import { floodLabel } from './register/RegFlood.jsx';
+import { areaAcres, boundaryState, roundAcres } from '../fieldShape.js';
+import { COLORS } from '../theme.js';
 
 export default function Fields() {
   const { t, farm, update } = useApp();
   const total = farm ? farm.crops.reduce((s, c) => s + (Number(c.acres) || 0), 0) : 0;
 
   const editFarm = () => update({ draft: { ...farm, consent: false } });
+  const drawn = farm && boundaryState(farm.boundary) === 'ok' ? roundAcres(areaAcres(farm.boundary)) : null;
+  const land = Number(farm?.totalAcres) > 0 ? Number(farm.totalAcres) : total;
 
   return (
     <div className="screen">
@@ -25,7 +30,7 @@ export default function Fields() {
                 <div className="f13 muted">{t('farmId')}</div>
                 <div className="f28 fw600 brand-text">{farm.id}</div>
               </div>
-              <div className="f13 muted right lh">{total} {t('acres')}<br />{farm.nearest || 'Mahaweli B'}</div>
+              <div className="f13 muted right lh">{land} {t('acres')}<br />{farm.nearest || 'Mahaweli B'}</div>
             </div>
           </Card>
           {farm.water?.source && (
@@ -34,6 +39,14 @@ export default function Fields() {
               <div className="grow min0"><div className="f12 muted">{t('waterSource')}</div><div className="f16 fw600">{waterLabel(farm.water, t)}</div></div>
             </Card>
           )}
+          <Card className="row-card">
+            <div className="icon-tile mint"><Icon name="shape" size={22} color={COLORS.pin} /></div>
+            <div className="grow min0">
+              <div className="f12 muted">{t('fieldStep')}</div>
+              <div className="f16 fw600">{drawn != null ? `${t('fieldMarked')}: ${drawn} ${t('acres')}` : t('fieldNotMarked')}</div>
+              {farm.flood?.history && <div className="f13 muted">{floodLabel(farm.flood, t)}</div>}
+            </div>
+          </Card>
           {farm.crops.map((c, i) => (
             <Card key={c.id}>
               <div className="row gap12">

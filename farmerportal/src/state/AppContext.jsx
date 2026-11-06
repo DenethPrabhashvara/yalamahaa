@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { translate } from '../i18n.js';
 import { CROP_CATALOG } from '../data.js';
 import * as authApi from '../api/auth.js';
+import { fromGeoJSON, toGeoJSON } from '../fieldShape.js';
 
 const STORAGE_KEY = 'yma-state-v1';
 
@@ -38,14 +39,16 @@ function save(state) {
 export const newCrop = () => ({
   id: Math.random().toString(36).slice(2, 9),
   category: 'paddy',
-  type: 'White Rice (BG)',
-  variety: 'BG 352 (3.5 months)',
+  type: '3.5 months',
+  variety: 'Bg 352',
   acres: 1,
   yield: '',
   unit: 'kg',
 });
 
-export const emptyDraft = () => ({ name: '', nic: '', address: '', district: '', division: '', crops: [newCrop()], pin: null, nearest: null, nearWater: null, water: null, located: false, consent: false });
+// boundary: field corners [{ lat, lng }] ([] = not marked); totalAcres: all the land, '' until the field step;
+// flood: { history, depth, lastYear } or null when skipped.
+export const emptyDraft = () => ({ name: '', nic: '', address: '', district: '', division: '', crops: [newCrop()], pin: null, nearest: null, nearWater: null, water: null, located: false, boundary: [], totalAcres: '', flood: null, consent: false });
 
 const defaults = {
   lang: 'en',
@@ -103,18 +106,27 @@ export function useApp() {
 
 // helpers
 
+// Older catalogs wrote varieties like 'BG 352 (3.5 months)', 'BG 358 Samba', 'MI-2' or 'Villard';
+// the current one has 'Bg 352', 'Bg 358', 'MI 2', 'Willard'
+const varietyKey = (v) => (v || '').replace(/\s*\(.*\)\s*$/, '').replace(/[\s-]+/g, ' ').trim().toLowerCase()
+  .replace(/^(bg|at|bw|ld) (\d.*) samba$/, '$1 $2').replace(/^villard$/, 'willard');
+
 // A crop row from the API (farm_crops) as the app's crop. Names the catalog doesn't know
 // (e.g. 'paddy' from older registrations) fall back to the category's first type and variety.
+// A variety saved under an old type name (e.g. 'White Rice (BG)') is looked up in every type.
 function cropFromApi(crop) {
   const category = CROP_CATALOG[crop.category] ? crop.category
     : Object.keys(CROP_CATALOG).find((c) => CROP_CATALOG[c].types[crop.crop_type]) || 'paddy';
   const types = CROP_CATALOG[category].types;
-  const type = types[crop.crop_type] ? crop.crop_type : Object.keys(types)[0];
+  const key = varietyKey(crop.variety);
+  const typeOf = (tp) => types[tp]?.find((v) => varietyKey(v) === key);
+  const found = typeOf(crop.crop_type) ? crop.crop_type : Object.keys(types).find(typeOf);
+  const type = found || (types[crop.crop_type] ? crop.crop_type : Object.keys(types)[0]);
   return {
     ...newCrop(),
     category,
     type,
-    variety: types[type].includes(crop.variety) ? crop.variety : types[type][0],
+    variety: (found && typeOf(found)) || types[type][0],
     acres: Number(crop.acres) || 1,
     yield: crop.last_yield == null ? '' : String(Number(crop.last_yield)),
     unit: crop.yield_unit || 'kg',
@@ -124,7 +136,7 @@ function cropFromApi(crop) {
 // The farm part of a register / PUT /api/auth/farm request, from the registration draft.
 export function farmPayload(draft) {
   const number = (v) => { const n = Number(String(v).replace(/,/g, '')); return v === '' || !Number.isFinite(n) ? null : n; };
-  return {
+  const payload = {
     water_source: draft.water?.source || null,
     water_name: draft.water?.name?.trim() || null,
     location_label: draft.nearest || null,
@@ -132,6 +144,16 @@ export function farmPayload(draft) {
       category: c.category, crop_type: c.type, variety: c.variety, acres: Number(c.acres), last_yield: number(c.yield), yield_unit: c.unit,
     })),
   };
+  // Only sent when the draft has them: a farm saved by an older version of the app doesn't,
+  // and leaving the key out keeps what the server already has.
+  if (draft.totalAcres !== undefined) payload.total_acres = number(draft.totalAcres ?? '');
+  if (draft.boundary !== undefined) payload.boundary = toGeoJSON(draft.boundary);
+  if (draft.flood !== undefined) {
+    payload.flood_history = draft.flood?.history || null;
+    payload.flood_depth = draft.flood?.depth || null;
+    payload.flood_last_year = draft.flood?.lastYear || null;
+  }
+  return payload;
 }
 
 // Farm for the app built from the API's farmer record and its farm details (farmer.farm).
@@ -158,6 +180,11 @@ export function farmFromProfile(farmer, tankName = null) {
     located: lat != null,
     nearest: details?.location_label || [farmer.division, farmer.district].filter(Boolean).join(', '),
     water,
+    boundary: fromGeoJSON(details?.boundary),
+    totalAcres: details?.total_acres != null ? String(Number(details.total_acres)) : '',
+    flood: details?.flood_history
+      ? { history: details.flood_history, depth: details.flood_depth || null, lastYear: details.flood_last_year ?? null }
+      : null,
     reservoirId: farmer.reservoir_id ?? null,
     smsEnabled: farmer.sms_enabled !== false,
     registeredAt: Date.parse(farmer.created_at) || Date.now(),

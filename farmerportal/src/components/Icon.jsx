@@ -3,7 +3,7 @@ import {
   CloudLightning, CloudRain, Construction, Droplet, Droplets, Ellipsis, ExternalLink, Fence, Globe, House, Info, Leaf,
   LocateFixed, Lock, LogOut,
   Map, MapPin, MessageSquareText, Mic, Newspaper, Plus, RefreshCw, Search, Send, Sparkles, SquarePen, Sun,
-  Trash2, TriangleAlert, User, Waves, WifiOff, Wind, X,
+  Trash2, TriangleAlert, User, Waves, WifiOff, Wind, X, Undo2, Footprints, Pentagon,
 } from 'lucide-react';
 
 // App icon names → Lucide, a standard open-source set close to SF Symbols' outline style.
@@ -58,6 +58,9 @@ const P = {
   wind: Wind,
   cloudLightning: CloudLightning,
   external: ExternalLink,
+  undo: Undo2,
+  walk: Footprints,
+  shape: Pentagon,
 };
 
 export default function Icon({ name, size = 20, color = 'currentColor', stroke = 2, style, className }) {

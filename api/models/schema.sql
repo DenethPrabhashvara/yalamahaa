@@ -113,8 +113,28 @@ CREATE TABLE IF NOT EXISTS farms (
   water_source    TEXT CHECK (water_source IN ('tank', 'canal', 'river', 'well', 'rain')),
   water_name      TEXT,           -- tank / canal / river name as the farmer gave it
   location_label  TEXT,           -- nearest place to the farm pin, as shown in the portal
+
+  -- Field size and shape, for flood risk on the farmer's own land (flood-model/).
+  -- total_acres: all the land as the farmer says, incl. fallow; crop acres can add up to more or less.
+  total_acres     NUMERIC(10,2) CHECK (total_acres > 0),
+  -- boundary: the field the farmer marked on the map, GeoJSON Polygon, [longitude, latitude], ring closed.
+  -- boundary_acres is worked out by the API from it, never taken from the app. NULL = not drawn.
+  boundary        JSONB CHECK (boundary IS NULL OR boundary->>'type' = 'Polygon'),
+  boundary_acres  NUMERIC(10,2) CHECK (boundary_acres > 0),
+
+  -- Past floods on this field as the farmer remembers them (last 5 years). NULL = not asked / skipped.
+  flood_history   TEXT CHECK (flood_history IN ('never', 'once', 'several', 'unsure')),
+  flood_depth     TEXT CHECK (flood_depth IN ('ankle', 'knee', 'waist')),   -- deepest it got; waist = waist or higher
+  flood_last_year SMALLINT CHECK (flood_last_year BETWEEN 1950 AND 2100),
+
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  CONSTRAINT farms_boundary_acres CHECK ((boundary IS NULL) = (boundary_acres IS NULL)),
+  -- depth and year only when the field did flood
+  CONSTRAINT farms_flood_details CHECK (
+    COALESCE(flood_history, '') IN ('once', 'several') OR (flood_depth IS NULL AND flood_last_year IS NULL)
+  )
 );
 
 DROP TRIGGER IF EXISTS trg_farms_updated_at ON farms;

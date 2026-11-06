@@ -8,6 +8,8 @@ import { waterLabel } from './RegWater.jsx';
 import { COLORS } from '../../theme.js';
 import { findReservoirId, register, saveFarmDetails, updateProfile } from '../../api/auth.js';
 import { canalScheme } from '../../api/reservoirs.js';
+import { areaAcres, boundaryState, roundAcres } from '../../fieldShape.js';
+import { floodLabel } from './RegFlood.jsx';
 
 export default function RegReview() {
   const { t, draft, update, user, alerts, showToast } = useApp();
@@ -19,8 +21,11 @@ export default function RegReview() {
   if ((!user.farmerId && !info.valid) || !draft.address?.trim() || !draft.district) return <Navigate to="/register/identity" replace />;
   // The farm location is required; it must come from the phone's GPS.
   if (draft.pin?.lat == null || !draft.located) return <Navigate to="/register/pin" replace />;
+  // The total land area is required; the field step asks it.
+  if (!(Number(draft.totalAcres) > 0)) return <Navigate to="/register/field" replace />;
 
   const total = draft.crops.reduce((s, c) => s + (Number(c.acres) || 0), 0);
+  const drawn = boundaryState(draft.boundary) === 'ok' ? roundAcres(areaAcres(draft.boundary)) : null;
 
   const saveFarm = (id, farmerId, reservoirId) => {
     const farm = { ...draft, id, reservoirId, phone: user.phone, registeredAt: draft.registeredAt || Date.now() };
@@ -76,7 +81,7 @@ export default function RegReview() {
 
   return (
     <div className="screen">
-      <StepHeader step={3} backTo="/register/water" />
+      <StepHeader step={3} backTo="/register/flood" />
       <div>
         <div className="eyebrow">{t('step')} 3 - {t('checkDetails')}</div>
         <h1 className="h1">{t('allRight')}</h1>
@@ -112,9 +117,25 @@ export default function RegReview() {
       </div>
 
       <div className="card row-card static">
+        <div className="icon-tile mint"><Icon name="shape" size={22} color={COLORS.pin} /></div>
+        <div className="grow">
+          <div className="f12 muted">{t('fieldStep')}</div>
+          <div className="f15 fw600">{drawn != null ? `${t('fieldMarked')}: ${drawn} ${t('acres')}` : t('fieldNotMarked')}</div>
+          {draft.totalAcres ? <div className="f13 muted">{t('totalLand')}: {draft.totalAcres} {t('acres')}</div> : null}
+        </div>
+        <Link to="/register/field" className="f15 fw600 ink">{t('edit')}</Link>
+      </div>
+
+      <div className="card row-card static">
         <div className="icon-tile blue"><Icon name="drop" size={22} /></div>
         <div className="grow"><div className="f12 muted">{t('waterSource')}</div><div className="f15 fw600">{waterLabel(draft.water, t) || t('notGiven')}</div></div>
         <Link to="/register/water" className="f15 fw600 ink">{t('edit')}</Link>
+      </div>
+
+      <div className="card row-card static">
+        <div className="icon-tile amber"><Icon name="rain" size={22} /></div>
+        <div className="grow"><div className="f12 muted">{t('floodStep')}</div><div className="f15 fw600">{floodLabel(draft.flood, t) || t('notGiven')}</div></div>
+        <Link to="/register/flood" className="f15 fw600 ink">{t('edit')}</Link>
       </div>
 
       <label className="consent">

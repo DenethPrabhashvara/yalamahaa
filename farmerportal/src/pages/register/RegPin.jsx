@@ -5,6 +5,7 @@ import { PrimaryBtn, StepHeader } from '../../components/UI.jsx';
 import Icon from '../../components/Icon.jsx';
 import { GOOGLE_MAPS_KEY } from '../../api/googleMaps.js';
 import GoogleFarmMap, { formatDistance, nearestTank } from '../../components/GoogleFarmMap.jsx';
+import { farFromPin } from '../../fieldShape.js';
 
 // Leaflet (~150 KB) only downloads when this step opens.
 const LeafletFarmMap = lazy(() => import('../../components/LeafletFarmMap.jsx'));
@@ -31,8 +32,11 @@ export default function RegPin() {
 
   const placeGeo = (p) => {
     const n = nearestTank(p);
+    // a pin moved onto another field: the corners marked for the old one no longer fit
+    const boundary = farFromPin(draft.boundary, p) ? [] : draft.boundary;
     set({
       pin: p,
+      boundary,
       nearest: n ? `${formatDistance(n.meters)} from ${n.name}` : `${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`,
       nearWater: n ? { name: n.name, type: 'tank' } : null,
     });
@@ -78,7 +82,7 @@ export default function RegPin() {
 
       <div className="grow" />
       {!canNext && <div className="f13 muted center">{t('locationRequired')}</div>}
-      <PrimaryBtn onClick={() => navigate('/register/water')} disabled={!canNext}>{t('confirmLocation')}</PrimaryBtn>
+      <PrimaryBtn onClick={() => navigate('/register/field')} disabled={!canNext}>{t('confirmLocation')}</PrimaryBtn>
     </div>
   );
 }

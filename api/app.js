@@ -18,7 +18,10 @@ if (!process.env.JWT_SECRET || !process.env.JWT_ADMIN_SECRET || process.env.JWT_
     throw new Error('JWT_SECRET and JWT_ADMIN_SECRET must both be set and must be different')
 }
 
-const ALLOWED_IP = '::ffff:127.0.0.1' // skip rate limit for localhost for dev purposes
+// dev only: requests from this machine (the vite proxy, curl) skip the slowdown and the rate limit.
+// exact match, not includes() - and in production every request comes from Caddy, so this stays off
+const LOOPBACK = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1'])
+const isLocalDev = (req) => process.env.NODE_ENV !== 'production' && LOOPBACK.has(req.ip)
 
 
 //Note to self:
@@ -28,29 +31,31 @@ const ALLOWED_IP = '::ffff:127.0.0.1' // skip rate limit for localhost for dev p
 // and address potential vulns with the
 // X-Forwarded-For header
 
-//SLOWDOWN AFTER 30 requests
+// The limits are per IP, and Sri Lankan mobile networks put many phones behind one IP (CGNAT),
+// so they have to allow a whole village opening the app at once during a flood.
+// One portal screen is ~8-10 requests.
+const WINDOW_MS = 5 * 60 * 1000
+const SLOWDOWN_AFTER = 300
+const RATE_LIMIT = 600
+
+// SLOWDOWN after 300 requests: +250 ms per request over, never more than 2 s.
+// The cap has to stay well under the portal's 15 s request timeout (farmerportal/src/api/auth.js),
+// otherwise a slowed request reads as "Cannot reach the server" to the farmer.
 const slowDown = slowDownReq({
-    windowMs: 5*60*1000,
-    delayAfter: 33,
-    delayMs: ()=> 20000
-    
+    windowMs: WINDOW_MS,
+    delayAfter: SLOWDOWN_AFTER,
+    delayMs: (used) => (used - SLOWDOWN_AFTER) * 250,
+    maxDelayMs: 2000,
+    skip: isLocalDev
 })
 
 
 //IMplement Rate LImiting for API
 const limiter = rateLimit({
-    windowMs: 5*60 *1000,
-    max:53,
+    windowMs: WINDOW_MS,
+    max: RATE_LIMIT,
     message: {error: 'Too many requests, please try again later.'},
-    skip: (req)=>{
-        if(ALLOWED_IP.includes(req.ip)){
-            return true
-        }
-        else{
-            return false
-            
-        }
-    }
+    skip: isLocalDev
 })
 
 const app = express()
@@ -85,6 +90,7 @@ const adminLimiter = rateLimit({
     max: 600,
     message: {error: 'Too many requests, please try again later.'}
 })
+
 app.use('/admin', adminLimiter, adminrouter)   // admin portal
 // voice alert audio: public, Twilio fetches it while the call is ringing
 // (cross-origin so the admin portal, on its own domain, can play it too)
@@ -94,7 +100,6 @@ app.use('/api/voice', express.static(path.join(__dirname, 'assets', 'voice'), {
 
 app.use(slowDown)
 app.use(limiter)
-
 
 
 // health & service discovery

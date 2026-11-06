@@ -24,6 +24,19 @@ export const WATER_SOURCE_LABELS = {
   unknown: 'Not given',
 }
 
+// farms.flood_history / flood_depth, as the farmer answered at registration
+export const FLOOD_HISTORY_LABELS = {
+  never: 'Never flooded',
+  once: 'Flooded once',
+  several: 'Flooded more than once',
+  unsure: 'Not sure',
+}
+export const FLOOD_DEPTH_LABELS = {
+  ankle: 'ankle deep',
+  knee: 'knee deep',
+  waist: 'waist deep or more',
+}
+
 // "94771234567" -> "+94 77 123 4567"
 export const formatPhone = (phone = '') => {
   const digits = String(phone).replace(/\D/g, '')
