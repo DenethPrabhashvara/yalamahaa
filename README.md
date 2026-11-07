@@ -1,8 +1,8 @@
 # Yala Maha
-**Advanced Hydrological Monitoring, Farmer Portal & Agricultural Early Warning System for Mahaweli B Zone, Sri Lanka**
+**Advanced Hydrological Monitoring, Farmer Portal & Agricultural Early Warning System for farmers across Sri Lanka**
 
 ## Overview
-Yala Maha is a comprehensive, modular web application designed for hydrological monitoring, farmer registration, and agricultural early warning systems in Sri Lanka's Mahaweli B Zone (Palugaswewa / Kudawewa system). The platform integrates real-time river monitoring, schematic GIS farm coverage mapping, multilingual Text.lk SMS dispatch, and a modern, mobile-responsive farmer self-service portal.
+Yala Maha is a comprehensive, modular web application designed for hydrological monitoring, farmer registration, and agricultural early warning systems across Sri Lanka. The platform integrates real-time river monitoring, schematic GIS farm coverage mapping, multilingual Text.lk SMS dispatch, and a modern, mobile-responsive farmer self-service portal.
 
 **Version:** 1.0  
 **Primary Focus:** Farmland management, water resource optimization, agricultural sustainability, disaster mitigation  
@@ -97,7 +97,7 @@ yala-maha/
 - **Canal Maintenance Reports:** Rapid reporting tool for canal blockages, gate damage, and water leaks.
 
 ### Schematic GIS Farm Coverage Map
-- **Vector-Based SVG Infrastructure:** Interactive schematic of the Mahaweli B Zone water distribution network.
+- **Vector-Based SVG Infrastructure:** Interactive schematic of the water distribution network.
 - **Dual-Axis Evaluation:** Simultaneous evaluation of water supply adequacy and cellular/SMS signal reception.
 - **Vulnerability Highlighting:** Instantly pinpoints downstream farms facing water scarcity or poor communication reception.
 

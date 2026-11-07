@@ -9,10 +9,12 @@
     "preview": "vite preview",
     "reservoirs": "node scripts/build-reservoirs.mjs",
     "dev:phone": "vite --host --mode phone",
-    "dev:apk": "vite --host --mode phone --port 5175 --strictPort"
+    "dev:apk": "vite --host --mode phone --port 5175 --strictPort",
+    "test": "vitest run"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.5.3",
     "@capacitor/ios": "^8.5.3",
     "glisse": "^0.5.0",
@@ -26,6 +28,7 @@
     "@capacitor/cli": "^8.5.3",
     "@vitejs/plugin-basic-ssl": "^1.2.0",
     "@vitejs/plugin-react": "^4.3.4",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "vitest": "^3.2.7"
   }
 }

@@ -1,5 +1,7 @@
 FROM python:3.13-slim
 WORKDIR /app
+# rasterio's wheel needs the system expat library, which the slim image leaves out
+RUN apt-get update && apt-get install -y --no-install-recommends libexpat1 && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir psycopg2-binary pdfplumber tzdata numpy scipy rasterio
 COPY Tank-Reserviour/ ./
 # farm flood risk score; needs the DEM tiles mounted at FLOOD_DEM_DIR (see docker-compose.yml)

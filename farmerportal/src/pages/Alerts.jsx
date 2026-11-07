@@ -52,7 +52,7 @@ export default function Alerts() {
                 <div className="row between gap8"><span className="f15 fw600">{a.title}</span><span className="f12 muted nowrap">{a.when}</span></div>
                 <div className="f15 muted lh" style={{ marginTop: 2 }}>{a.body}</div>
               </div>
-              {!a.read && <span className="unread-dot" aria-label="Unread" />}
+              {!a.read && <span className="unread-dot" aria-label={t('a11yUnread')} />}
             </button>
           );
         })}

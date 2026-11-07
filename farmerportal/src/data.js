@@ -80,8 +80,15 @@ export const WATER_SOURCES = [
 ];
 
 
-// Google map defaults (Mahaweli B). Tanks with lat/lon appear on the map and are used for "nearest tank".
-export const MAP_CENTER = { lat: 7.364212, lng: 81.02131 };
+// Where the maps open when the farm has no pin yet: the whole island (farms can be anywhere in Sri Lanka).
+export const MAP_CENTER = { lat: 7.87, lng: 80.77 };
+export const MAP_ZOOM = 8;
+// The maps only show Sri Lanka: tiles load only inside this box (the island plus a little sea), and
+// panning and zooming out stop at it. Sri Lanka's land ends about 79.7 E (Mannar, Kalpitiya) and
+// 9.83 N (Point Pedro); the box stops short of India's coast (Rameswaram 79.3 E, Kodiakkarai 10.3 N).
+export const SRI_LANKA_BOUNDS = { south: 5.75, west: 79.6, north: 9.95, east: 82.0 };
+// Tank names are hidden when zoomed out further than this: at island scale 117 names pile on top of each other.
+export const TANK_LABEL_MIN_ZOOM = 11;
 
 export const DISTRICTS = [
   'Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo', 'Galle', 'Gampaha', 'Hambantota', 'Jaffna',

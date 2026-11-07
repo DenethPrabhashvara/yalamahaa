@@ -45,6 +45,8 @@ const STATUS = {
   watch: ['warn', 'warn'], low: ['warn', 'warn'], lowWater: ['warn', 'warn'], inProgress: ['warn', 'clock'],
   critical: ['danger', 'stop'], spill: ['danger', 'stop'],
   received: ['info', 'inbox'],
+  // tank level bands (tankLevel in api/reservoirs.js)
+  levelVeryLow: ['danger', 'stop'], levelLow: ['warn', 'warn'], levelModerate: ['info', 'info'], levelGood: ['ok', 'checkCircle'], levelFull: ['ok', 'checkCircle'],
   forwarded: ['info', 'send'], reportClosed: ['warn', 'close'],
 };
 
@@ -58,19 +60,19 @@ export function StatusPill({ status, t }) {
 }
 
 export function LangSwitch({ compact }) {
-  const { lang, update } = useApp();
+  const { lang, update, t } = useApp();
   if (compact) {
     const idx = LANGS.findIndex((l) => l.code === lang);
     const nextLang = LANGS[(idx + 1) % LANGS.length];
     return (
-      <button type="button" className="lang-chip" onClick={() => update({ lang: nextLang.code })} aria-label="Change language">
+      <button type="button" className="lang-chip" onClick={() => update({ lang: nextLang.code })} aria-label={t('a11yChangeLanguage')}>
         <b>{LANGS[idx].short}</b>
         <span>{LANGS.filter((l) => l.code !== lang).map((l) => l.short).join(' - ')}</span>
       </button>
     );
   }
   return (
-    <div className="seg seg-white" role="radiogroup" aria-label="Language">
+    <div className="seg seg-white" role="radiogroup" aria-label={t('language')}>
       {LANGS.map((l) => (
         <button key={l.code} type="button" role="radio" aria-checked={lang === l.code}
           className={lang === l.code ? 'on-accent' : ''} onClick={() => update({ lang: l.code })}
@@ -82,7 +84,7 @@ export function LangSwitch({ compact }) {
   );
 }
 
-export function StepHeader({ step, total = 4, title, backTo, closeTo, onClose, closeLabel = 'Close', right }) {
+export function StepHeader({ step, total = 4, title, backTo, closeTo, onClose, closeLabel, right }) {
   const { t } = useApp();
   const navigate = useNavigate();
   const done = Math.floor(step);
@@ -90,9 +92,9 @@ export function StepHeader({ step, total = 4, title, backTo, closeTo, onClose, c
     <>
       <div className="row gap10">
         {onClose
-          ? <IconBtn icon="close" label={closeLabel} onClick={onClose} />
+          ? <IconBtn icon="close" label={closeLabel || t('close')} onClick={onClose} />
           : closeTo
-          ? <IconBtn icon="close" label="Close" to={closeTo} />
+          ? <IconBtn icon="close" label={t('close')} to={closeTo} />
           : <IconBtn icon="back" label={t('back')} onClick={() => (backTo ? navigate(backTo) : navigate(-1))} />}
         <div className="grow center fw600 f15">{title || t('registerFarm')}</div>
         {right || <span className="chip-dark">{Math.ceil(step)} / {total}</span>}
@@ -125,7 +127,7 @@ export function BottomNav() {
   // Glisse's iOS 26 tab bar: the selection springs between tabs, follows a drag and lifts into a lens while held.
   return (
     <div className="bottom-nav">
-      <GlisseTabBar aria-label="Main" items={items} link={RouterLink}
+      <GlisseTabBar aria-label={t('a11yMainMenu')} items={items} link={RouterLink}
         value={items.some((it) => it.value === pathname) ? pathname : null} />
     </div>
   );

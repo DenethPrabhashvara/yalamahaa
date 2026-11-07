@@ -2,6 +2,7 @@
 const db = require('../config/db.js')
 const crypto = require('crypto')
 const { withTransaction, saveFarm, getFarm, cropSummary } = require('./farmService.js')
+const { nudgeSchemeJob } = require('./schemeJob.js')
 
 // farm_id is a random 6 hex code, retry if it clashes
 const FARM_ID_ATTEMPTS = 5
@@ -143,6 +144,7 @@ async function updateFarmer(farmerId, changes, { fields: allowed = UPDATABLE_FIE
         `UPDATE farmers SET ${sets.join(', ')} WHERE farmer_id = $1 RETURNING ${FARMER_COLUMNS}`,
         [farmerId, ...flds.map(f => changes[f])]
     )
+    if (flds.includes('farm_latitude') || flds.includes('farm_longitude')) nudgeSchemeJob()   // moved pin: new scheme lookup
     return r.rows[0] || null
 }
 

@@ -127,6 +127,18 @@ CREATE TABLE IF NOT EXISTS farms (
   flood_depth     TEXT CHECK (flood_depth IN ('ankle', 'knee', 'waist')),   -- deepest it got; waist = waist or higher
   flood_last_year SMALLINT CHECK (flood_last_year BETWEEN 1950 AND 2100),
 
+  -- Irrigation scheme the pin falls in, from the Irrigation Department's irrigable area layer
+  -- (services/schemeJob.js). scheme_irrigable_ha is the WHOLE scheme's command area, shared by every
+  -- farmer in it, not this farmer's land. NULL name = not in a mapped scheme; NULL checked = not looked up yet.
+  scheme_name         TEXT,
+  scheme_type         TEXT,
+  scheme_division     TEXT,
+  scheme_irrigable_ha NUMERIC(10,2) CHECK (scheme_irrigable_ha > 0),
+  scheme_distance_m   INT,          -- 0 = pin inside a paddy tract of the scheme, else metres to the nearest (<= 300)
+  scheme_checked_lat  NUMERIC(10,6),
+  scheme_checked_lng  NUMERIC(10,6),
+  scheme_checked_at   TIMESTAMPTZ,
+
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 

@@ -33,15 +33,16 @@ export default function SiteRelative2({ t }: { t: Dict }) {
           </p>
           <div style={css({ "--delay": "700ms" })} className="hero-in site-flex items-center justify-center md:gap-5 gap-2">
             <a
-              href={SITE.appUrl}
+              href={SITE.apkUrl}
+              download={SITE.apkName}
               className="group site-relative overflow-hidden bg-white md:px-8.5 site-px-3-5 py-3 md:py-4 md:text-lg text-sm font-medium text-black site-transition-all duration-300 hover:scale-95 rounded-[3.40282e38px]"
             >
               <span className="site-relative site-block overflow-hidden">
                 <span className="site-block transition-transform duration-300 group-hover:-translate-y-full">
-                  {t.nav.openApp}
+                  {t.nav.downloadApk}
                 </span>
                 <span className="site-absolute top-full site-block transition-transform duration-300 group-hover:-translate-y-full left-[calc(var(--spacing)_*_0)]">
-                  {t.nav.openApp}
+                  {t.nav.downloadApk}
                 </span>
               </span>
             </a>

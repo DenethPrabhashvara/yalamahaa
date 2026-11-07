@@ -23,6 +23,7 @@ const en = {
     forecast: "Forecast",
     faq: "FAQ",
     openApp: "Open the app",
+    downloadApk: "Download for Android",
     language: "Language",
   },
   hero: {
@@ -296,6 +297,7 @@ const si: Dict = {
     forecast: "පුරෝකථනය",
     faq: "ප්‍රශ්න",
     openApp: "ඇප් එක විවෘත කරන්න",
+    downloadApk: "Android සඳහා බාගන්න",
     language: "භාෂාව",
   },
   hero: {
@@ -567,6 +569,7 @@ const ta: Dict = {
     forecast: "முன்னறிவிப்பு",
     faq: "கேள்விகள்",
     openApp: "செயலியைத் திற",
+    downloadApk: "Android-க்குப் பதிவிறக்கு",
     language: "மொழி",
   },
   hero: {

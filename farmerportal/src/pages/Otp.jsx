@@ -7,27 +7,34 @@ import { sendOtp, verifyOtp } from '../api/auth.js';
 
 const RESEND_SECONDS = 60;
 
+// What the code box keeps of whatever was typed or pasted: the first 6 digits.
+export const cleanCode = (v) => String(v ?? '').replace(/\D/g, '').slice(0, 6);
+
 export default function Otp() {
   const { t, pendingPhone, otpSentAt, update, showToast } = useApp();
   const navigate = useNavigate();
-  const [digits, setDigits] = useState(['', '', '', '', '', '']);
+  // One real input shown as six boxes: the phone keyboard's backspace, paste and SMS autofill all
+  // work on it as on any text field. (Six separate inputs can't follow backspace on Android: an empty
+  // box gets no usable key event, so the cursor never moved back to the previous digit.)
+  const [code, setCode] = useState('');
+  const [focused, setFocused] = useState(false);
   const [error, setError] = useState('');
   const [now, setNow] = useState(Date.now());
   const [busy, setBusy] = useState(false);
-  const refs = useRef([]);
+  const inputRef = useRef(null);
 
   useEffect(() => { const id = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(id); }, []);
-  useEffect(() => { refs.current[0]?.focus(); }, []);
+  useEffect(() => { inputRef.current?.focus(); }, []);
 
   if (!pendingPhone) return <Navigate to="/login" replace />;
 
   const left = Math.max(0, RESEND_SECONDS - Math.floor((now - (otpSentAt || 0)) / 1000));
 
-  const verify = async (code) => {
-    if (code.length < 6 || busy) return;
+  const verify = async (value) => {
+    if (value.length < 6 || busy) return;
     setBusy(true);
     try {
-      const { alreadyRegistered } = await verifyOtp(pendingPhone, code);
+      const { alreadyRegistered } = await verifyOtp(pendingPhone, value);
       if (alreadyRegistered) {
         // The account exists: the API signs in with phone + NIC.
         navigate('/signin', { replace: true });
@@ -45,28 +52,16 @@ export default function Otp() {
     } catch (err) {
       setBusy(false);
       setError(err.status === 400 ? t('wrongCode') : err.message);
-      setDigits(['', '', '', '', '', '']);
-      refs.current[0]?.focus();
+      setCode('');
+      inputRef.current?.focus();
     }
   };
 
-  const setAt = (i, v) => {
-    const clean = v.replace(/\D/g, '');
-    if (clean.length > 1) { // paste
-      const arr = clean.slice(0, 6).split('');
-      const next = [...digits];
-      arr.forEach((d, k) => { if (i + k < 6) next[i + k] = d; });
-      setDigits(next);
-      refs.current[Math.min(5, i + arr.length)]?.focus();
-      verify(next.join(''));
-      return;
-    }
-    const next = [...digits];
-    next[i] = clean;
-    setDigits(next);
+  const onType = (v) => {
+    const next = cleanCode(v);
+    setCode(next);
     setError('');
-    if (clean && i < 5) refs.current[i + 1]?.focus();
-    if (next.every(Boolean)) verify(next.join(''));
+    if (next.length === 6) verify(next);
   };
 
   const resend = async () => {
@@ -90,13 +85,15 @@ export default function Otp() {
         <div className="f15 muted">{t('sentTo')} <b className="ink">{formatPhone(pendingPhone)}</b> - <button type="button" className="link-btn" onClick={() => navigate('/login')}>{t('change')}</button></div>
       </div>
 
-      <div className={`otp ${error ? 'shake' : ''}`} role="group" aria-label="6-digit code">
-        {digits.map((d, i) => (
-          <input key={i} ref={(el) => { refs.current[i] = el; }} aria-label={`Digit ${i + 1}`}
-            inputMode="numeric" autoComplete={i === 0 ? 'one-time-code' : 'off'} maxLength={6}
-            className={`otp-box ${d ? 'filled' : ''} ${error ? 'error' : ''}`} value={d}
-            onChange={(e) => setAt(i, e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Backspace' && !digits[i] && i > 0) refs.current[i - 1]?.focus(); }} />
+      <div className={`otp ${error ? 'shake' : ''}`} onClick={() => inputRef.current?.focus()}>
+        <input ref={inputRef} className="otp-input" aria-label={t('enterCode')} inputMode="numeric" pattern="[0-9]*"
+          autoComplete="one-time-code" value={code}
+          onChange={(e) => onType(e.target.value)} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} />
+        {Array.from({ length: 6 }, (_, i) => (
+          <div key={i} aria-hidden="true"
+            className={`otp-box ${code[i] ? 'filled' : ''} ${error ? 'error' : ''} ${focused && i === Math.min(code.length, 5) ? 'active' : ''}`}>
+            {code[i] || ''}
+          </div>
         ))}
       </div>
       {error && <div className="err-text" role="alert">{error}</div>}
@@ -109,8 +106,8 @@ export default function Otp() {
       </div>
 
       <div className="grow" />
-      <PrimaryBtn onClick={() => verify(digits.join(''))} disabled={busy || digits.some((d) => !d)}>{busy ? '…' : t('verify')}</PrimaryBtn>
-      <button type="button" className="text-btn center" onClick={() => showToast('Visit your Agrarian Service Centre for sign-in help')}>Need help signing in?</button>
+      <PrimaryBtn onClick={() => verify(code)} disabled={busy || code.length < 6}>{busy ? '…' : t('verify')}</PrimaryBtn>
+      <button type="button" className="text-btn center" onClick={() => showToast(t('signInHelp'))}>{t('needHelpSignIn')}</button>
     </div>
   );
 }

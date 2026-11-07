@@ -1,6 +1,6 @@
 # Yala Maha — Farmer Portal
 
-Mobile-first React + Vite app for smallholder farmers in the Mahaweli B zone: flood warnings, tank levels, water release times, canal issue reports and 4-stage farm registration, in English, Sinhala and Tamil.
+Mobile-first React + Vite app for smallholder farmers across Sri Lanka: flood warnings, tank levels, water release times, canal issue reports and 4-stage farm registration, in English, Sinhala and Tamil.
 
 ## Run it
 

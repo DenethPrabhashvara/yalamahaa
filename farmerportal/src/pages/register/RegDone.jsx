@@ -4,11 +4,14 @@ import { Aerial, PrimaryBtn } from '../../components/UI.jsx';
 import Icon from '../../components/Icon.jsx';
 import { PHOTOS } from '../../data.js';
 import { COLORS } from '../../theme.js';
+import { placeLabel } from '../../components/GoogleFarmMap.jsx';
 
 export default function RegDone() {
   const { t, farm, user } = useApp();
   if (!farm) return <Navigate to="/home" replace />;
-  const total = farm.crops.reduce((s, c) => s + (Number(c.acres) || 0), 0);
+  // all the land, as My Fields shows it; the crops' total only for a farm saved without one
+  const cropTotal = Math.round(farm.crops.reduce((s, c) => s + (Number(c.acres) || 0), 0) * 100) / 100;
+  const total = Number(farm.totalAcres) > 0 ? Number(farm.totalAcres) : cropTotal;
 
   return (
     <div className="screen">
@@ -27,7 +30,7 @@ export default function RegDone() {
             <div className="f13 dim">{t('yourFarmId')}</div>
             <div className="f40 fw600 accent-text">{farm.id}</div>
           </div>
-          <div className="f13 dim right lh">{total} {t('acres')}<br />Mahaweli B</div>
+          <div className="f13 dim right lh">{total} {t('acres')}<br />{placeLabel(farm.nearest, t) || farm.district}</div>
         </div>
       </div>
 

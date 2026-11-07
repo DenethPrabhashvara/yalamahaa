@@ -201,7 +201,7 @@ export default function Report() {
             <div className="f15 fw600">{t('received')} - {justSent.code}</div>
             <div className="f13 dim lh">{t('reportSaved')}</div>
           </div>
-          <button type="button" className="icon-btn glass sm" aria-label="Dismiss" onClick={() => setJustSent(null)}><Icon name="close" size={16} /></button>
+          <button type="button" className="icon-btn glass sm" aria-label={t('a11yDismiss')} onClick={() => setJustSent(null)}><Icon name="close" size={16} /></button>
         </div>
       )}
 
@@ -241,13 +241,13 @@ export default function Report() {
       <label htmlFor="notes" className="f15 fw600">{t('tellMore')}</label>
       <div className="card tight">
         <textarea id="notes" className="textarea" rows={3} value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)}
-          placeholder="e.g. Mud and weeds blocking the channel about 50 m after gate 7" />
+          placeholder={t('reportNoteExample')} />
         {photos.length > 0 && (
           <div className="row gap8 wrap">
             {photos.map((p) => (
               <div key={p.url} className="photo-prev">
                 <img src={p.url} alt={t('photo')} />
-                <button type="button" className="icon-btn dark sm" aria-label="Remove photo" onClick={() => removePhoto(p.url)}><Icon name="close" size={14} /></button>
+                <button type="button" className="icon-btn dark sm" aria-label={t('a11yRemovePhoto')} onClick={() => removePhoto(p.url)}><Icon name="close" size={14} /></button>
               </div>
             ))}
           </div>

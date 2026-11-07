@@ -9,23 +9,40 @@ const STORAGE_KEY = 'yma-state-v1';
 function load() {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    const saved = raw ? JSON.parse(raw) : null;
-    // Sessions from the offline demo have no server account behind them: sign them out.
-    if (saved?.user && !saved.user.farmerId && !saved.user.pendingRegistration) {
-      return { ...saved, user: null, farm: null };
-    }
-    // Drop the old sample alerts; live alerts come from api/alerts.js now. Only the app's own notes are kept.
-    if (saved?.alerts) saved.alerts = saved.alerts.filter((a) => a.kind === 'farm');
-    // The SMS setting is saved on the server now (farm.smsEnabled)
-    if (saved) delete saved.smsEnabled;
-    // Canal names saved with a middle dot ("Kaudulla · Lower") are now written with a dash
-    for (const place of [saved?.farm, saved?.draft]) {
-      if (place?.water?.name) place.water.name = place.water.name.replaceAll('·', '-');
-    }
-    return saved;
+    return migrateSaved(raw ? JSON.parse(raw) : null);
   } catch {
     return null;
   }
+}
+
+// Brings state saved by an older version of the app up to date. Exported for the tests.
+export function migrateSaved(saved) {
+  if (!saved) return saved;
+  // Sessions from the offline demo have no server account behind them: sign them out.
+  if (saved.user && !saved.user.farmerId && !saved.user.pendingRegistration) {
+    return { ...saved, user: null, farm: null };
+  }
+  // Drop the old sample alerts; live alerts come from api/alerts.js now. Only the app's own notes are kept.
+  if (saved.alerts) saved.alerts = saved.alerts.filter((a) => a.kind === 'farm');
+  // "Farm registered" notes were saved as English text with a fixed "Just now": keep the facts instead
+  // (api/alerts.js writes them in the farmer's language), and only the first one per farm, since editing
+  // the farm used to add another each time.
+  if (saved.alerts) {
+    const seen = new Set();
+    saved.alerts = saved.alerts.map((a) => {
+      const m = !a.farmId && /^Farm registered - (.+)$/.exec(a.title || '');
+      return m
+        ? { id: a.id, kind: 'farm', farmId: m[1], acres: Number(/^([\d.]+)/.exec(a.body || '')?.[1]) || null, at: Number(String(a.id).slice(1)) || Date.now(), read: a.read }
+        : a;
+    }).reverse().filter((a) => { if (a.kind !== 'farm' || !a.farmId) return true; if (seen.has(a.farmId)) return false; seen.add(a.farmId); return true; }).reverse();
+  }
+  // The SMS setting is saved on the server now (farm.smsEnabled)
+  delete saved.smsEnabled;
+  // Canal names saved with a middle dot ("Kaudulla · Lower") are now written with a dash
+  for (const place of [saved.farm, saved.draft]) {
+    if (place?.water?.name) place.water.name = place.water.name.replaceAll('·', '-');
+  }
+  return saved;
 }
 
 function save(state) {
@@ -47,8 +64,9 @@ export const newCrop = () => ({
 });
 
 // boundary: field corners [{ lat, lng }] ([] = not marked); totalAcres: all the land, '' until the field step;
+// totalTyped: the farmer set totalAcres themselves (else it follows the marked area / crop total);
 // flood: { history, depth, lastYear } or null when skipped.
-export const emptyDraft = () => ({ name: '', nic: '', address: '', district: '', division: '', crops: [newCrop()], pin: null, nearest: null, nearWater: null, water: null, located: false, boundary: [], totalAcres: '', flood: null, consent: false });
+export const emptyDraft = () => ({ name: '', nic: '', address: '', district: '', division: '', crops: [newCrop()], pin: null, nearest: null, nearWater: null, water: null, located: false, boundary: [], totalAcres: '', totalTyped: false, flood: null, consent: false });
 
 const defaults = {
   lang: 'en',
@@ -182,6 +200,7 @@ export function farmFromProfile(farmer, tankName = null) {
     water,
     boundary: fromGeoJSON(details?.boundary),
     totalAcres: details?.total_acres != null ? String(Number(details.total_acres)) : '',
+    totalTyped: details?.total_acres != null,   // saved before: keep it unless the farmer changes it
     flood: details?.flood_history
       ? { history: details.flood_history, depth: details.flood_depth || null, lastYear: details.flood_last_year ?? null }
       : null,

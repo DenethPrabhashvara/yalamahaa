@@ -14,13 +14,16 @@ const LOW_ZOOM_LAYERS = new Set(['reservoir', 'tank']);
 const COLORS = {
   area: '#dff0df',
   canal: '#2996ff',
-  reservoir: '#73dfff',
+  // every reservoir and tank, whatever its size, and the farmer's own (which only pulses): one soft
+  // blue that sits quietly on the green imagery (the top-left blue of the desktop background, .stage)
+  reservoir: '#88bfe6',
+  reservoirEdge: '#4f97cf',
   bund: '#b35933',
-  tank: '#fcd1f3',
+  tank: '#88bfe6',
   sluice: '#ffd166',
   spill: '#ed5353',
-  mediumReservoir: '#42d6ac',
-  highlight: '#ff00ff',
+  // the tank's own canals and bunds and the fields it waters, when it is the farmer's tank
+  highlight: '#a8c8f0',
 };
 
 const simplifyName = (value) => String(value || '')
@@ -109,17 +112,17 @@ function popupContent(properties, kind) {
 }
 
 function featureStyle(kind, selected) {
+  // fields watered by the highlighted tank (irrigable areas carry their tank's name): outlined
+  // and lightly tinted, so they don't look like part of the tank itself
+  if (selected && kind === 'area') {
+    return { color: COLORS.highlight, weight: 2, opacity: 0.85, dashArray: '5 4', fillColor: COLORS.highlight, fillOpacity: 0.06 };
+  }
   if (selected) {
-    return {
-      color: COLORS.highlight,
-      weight: kind === 'bund' ? 5 : 4,
-      fillColor: COLORS.highlight,
-      fillOpacity: 0.58,
-    };
+    // the tank's own canals and bunds: steady (only the tank itself pulses)
+    return { color: COLORS.highlight, weight: kind === 'bund' ? 4 : 3, opacity: 0.9 };
   }
   if (kind === 'area') return { color: '#00a884', weight: 1, fillColor: COLORS.area, fillOpacity: 0.18 };
   if (kind === 'canal') return { color: COLORS.canal, weight: 2, opacity: 0.85 };
-  if (kind === 'reservoir') return null;
   if (kind === 'bund') return { color: COLORS.bund, weight: 3, opacity: 0.95 };
   return {};
 }
@@ -132,14 +135,9 @@ function makeLayer(layer, geojson, selectedTankName, interactive) {
     style: (feature) => {
       const name = feature.properties?.Res_Name || feature.properties?.Scheme;
       const selected = nameMatches(name, selectedTankName);
-      if (layer.kind === 'reservoir' && !selected) {
-        const medium = feature.properties?.Type?.toLowerCase() === 'medium';
-        return {
-          color: medium ? '#008d6d' : '#0070ff',
-          weight: 2,
-          fillColor: medium ? COLORS.mediumReservoir : COLORS.reservoir,
-          fillOpacity: medium ? 0.52 : 0.45,
-        };
+      if (layer.kind === 'reservoir') {
+        // the same blue for every tank; the farmer's own pulses (.tank-pulse in styles.css)
+        return { color: COLORS.reservoirEdge, weight: 2, opacity: 0.9, fillColor: COLORS.reservoir, fillOpacity: 0.6, ...(selected ? { className: 'tank-pulse' } : {}) };
       }
       return featureStyle(layer.kind, selected);
     },
@@ -148,10 +146,11 @@ function makeLayer(layer, geojson, selectedTankName, interactive) {
       return L.circleMarker(latlng, {
         interactive,
         radius: selected ? 7 : 5,
-        color: selected ? COLORS.highlight : '#15283f',
-        weight: selected ? 3 : 1,
-        fillColor: selected ? COLORS.highlight : COLORS[layer.kind],
+        color: layer.kind === 'tank' ? COLORS.reservoirEdge : '#15283f',
+        weight: selected ? 2 : 1,
+        fillColor: COLORS[layer.kind],
         fillOpacity: 0.95,
+        ...(selected && layer.kind === 'tank' ? { className: 'tank-pulse' } : {}),   // not its sluices / spills
       });
     },
     onEachFeature: (feature, featureLayer) => {

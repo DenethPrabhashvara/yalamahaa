@@ -12,7 +12,7 @@ import { isExpired } from './newsRules.js';
 
 // The pure rules live in newsRules.js so they can be tested without Vite; re-exported
 // here so callers only need one import.
-export { isExpired, activeNews, bannerNews, newsIcon, instructionSteps, newsErrorText } from './newsRules.js';
+export { isExpired, activeNews, bannerNews, newsIcon, instructionSections, instructionSteps, bodyText, newsErrorText } from './newsRules.js';
 
 const q = (params) => {
   const s = new URLSearchParams(Object.entries(params).filter(([, v]) => v != null && v !== ''));

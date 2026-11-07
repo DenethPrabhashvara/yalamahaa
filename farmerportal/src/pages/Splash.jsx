@@ -39,12 +39,12 @@ export default function Splash() {
   }, []);
 
   return (
-    <div className="splash" role="status" aria-label={`${t('appName')}, loading`} style={{ '--splash-ms': `${SPLASH_MS}ms` }}>
+    <div className="splash" role="status" aria-label={`${t('appName')}, ${t('a11yLoading')}`} style={{ '--splash-ms': `${SPLASH_MS}ms` }}>
       <div className="splash-mark">
         <div className="splash-rings" aria-hidden="true"><span /><span /><span /></div>
         <img src={`${import.meta.env.BASE_URL}logo-full.png`} alt="Yala Maha" draggable="false" />
       </div>
-      <div className="splash-sub">Mahaweli B - ගොවි ද්වාරය - விவசாயி தளம்</div>
+      <div className="splash-sub">Farmer Portal - ගොවි ද්වාරය - விவசாயி தளம்</div>
       <div className="splash-loader" aria-hidden="true"><i /></div>
       <div className="splash-foot">Department of Agrarian Development - Irrigation Department</div>
     </div>

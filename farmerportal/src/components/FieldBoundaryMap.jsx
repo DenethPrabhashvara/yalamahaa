@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Icon from './Icon.jsx';
-import { makeBaseLayers, pinIcon } from './LeafletFarmMap.jsx';
+import { lockToSriLanka, makeBaseLayers, pinIcon } from './LeafletFarmMap.jsx';
+import { MAP_CENTER, MAP_ZOOM } from '../data.js';
 import { MAX_CORNERS, selfIntersects } from '../fieldShape.js';
 import { COLORS } from '../theme.js';
 
@@ -40,13 +41,14 @@ export default function FieldBoundaryMap({ pin, points, onChange, onFail, t }) {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) { onFail(); return undefined; }
     const start = points.length ? points : pin?.lat != null ? [pin] : null;
     const map = L.map(boxRef.current, {
-      center: start ? [start[0].lat, start[0].lng] : [7.9, 80.8],
-      zoom: start ? 18 : 8,
+      center: start ? [start[0].lat, start[0].lng] : [MAP_CENTER.lat, MAP_CENTER.lng],
+      zoom: start ? 18 : MAP_ZOOM,
       maxZoom: 19,
       zoomControl: false,
       attributionControl: true,
     });
-    L.control.zoom({ position: 'topright' }).addTo(map);
+    L.control.zoom({ position: 'topright', zoomInTitle: t('a11yZoomIn'), zoomOutTitle: t('a11yZoomOut') }).addTo(map);
+    lockToSriLanka(map);
     map.attributionControl.setPrefix(false);
     layersRef.current.satellite.forEach((l) => l.addTo(map));
     if (pin?.lat != null) L.marker([pin.lat, pin.lng], { icon: pinIcon, interactive: false, keyboard: false }).addTo(map);
@@ -118,9 +120,9 @@ export default function FieldBoundaryMap({ pin, points, onChange, onFail, t }) {
     <>
       <div className="gmap-wrap tall">
         <div ref={boxRef} className="gmap" role="application" aria-label={t('fieldTitle')} />
-        <div className="seg-mini map-base" role="radiogroup" aria-label="Map type">
-          <button type="button" role="radio" aria-checked={base === 'satellite'} className={base === 'satellite' ? 'on' : ''} onClick={() => switchBase('satellite')}>Satellite</button>
-          <button type="button" role="radio" aria-checked={base === 'map'} className={base === 'map' ? 'on' : ''} onClick={() => switchBase('map')}>Map</button>
+        <div className="seg-mini map-base" role="radiogroup" aria-label={t('a11yMapType')}>
+          <button type="button" role="radio" aria-checked={base === 'satellite'} className={base === 'satellite' ? 'on' : ''} onClick={() => switchBase('satellite')}>{t('mapSatellite')}</button>
+          <button type="button" role="radio" aria-checked={base === 'map'} className={base === 'map' ? 'on' : ''} onClick={() => switchBase('map')}>{t('mapStreet')}</button>
         </div>
         {ready && points.length === 0 && <div className="tap-hint"><Icon name="target" size={16} />{t('tapCorners')}</div>}
         <div className="corner-tools">

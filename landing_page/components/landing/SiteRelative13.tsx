@@ -1,7 +1,7 @@
 import type { Dict } from "../../lib/i18n";
 import { css } from "../../lib/css";
 import QRCode from "qrcode";
-import { CircleHelp, Smartphone } from "lucide-react";
+import { CircleHelp, Download } from "lucide-react";
 import { SITE } from "../../lib/site";
 
 async function qrDataUrl() {
@@ -25,17 +25,18 @@ export default async function SiteRelative13({ t }: { t: Dict }) {
             </p>
             <div className="site-mt-3-5 site-flex flex-col gap-4 site-lg-mt-8 site-relative site-z-40">
               <a
-                href={SITE.appUrl}
+                href={SITE.apkUrl}
+                download={SITE.apkName}
                 className="group site-relative site-inline-flex overflow-hidden bg-black lg:px-8.5 site-px-3-5 text-white site-transition-all duration-300 hover:scale-95 rounded-[3.40282e38px] [box-shadow:var(--tw-inset-shadow),_var(--tw-inset-ring-shadow),_var(--tw-ring-offset-shadow),_var(--tw-ring-shadow),_var(--tw-shadow)] [--tw-shadow:0_20px_25px_-5px_var(--tw-shadow-color,#0000001a),_0_8px_10px_-6px_var(--tw-shadow-color,#0000001a)]"
               >
                 <div className="site-relative site-flex flex-col items-center transition-transform duration-300 group-hover:-translate-y-full">
                   <div className="site-flex h-14 items-center gap-3">
-                    <Smartphone className="size-5" />
-                    <span className="lg:text-base text-sm">{t.nav.openApp}</span>
+                    <Download className="size-5" />
+                    <span className="lg:text-base text-sm">{t.nav.downloadApk}</span>
                   </div>
                   <div className="site-absolute top-full site-flex h-14 items-center gap-3">
-                    <Smartphone className="size-5" />
-                    <span className="lg:text-base text-sm">{t.nav.openApp}</span>
+                    <Download className="size-5" />
+                    <span className="lg:text-base text-sm">{t.nav.downloadApk}</span>
                   </div>
                 </div>
               </a>

@@ -82,9 +82,9 @@ export default function Welcome() {
       </div>
 
       <div className="row between">
-        <div className="dots" role="tablist" aria-label="Slides">
+        <div className="dots" role="tablist" aria-label={t('a11ySlides')}>
           {SLIDES.map((s, n) => (
-            <button key={s.title} type="button" role="tab" aria-selected={n === i} aria-label={`Slide ${n + 1}`}
+            <button key={s.title} type="button" role="tab" aria-selected={n === i} aria-label={t('a11ySlide').replace('{n}', n + 1)}
               className={`dot ${n === i ? 'on' : ''}`} onClick={() => go(n)} />
           ))}
         </div>

@@ -11,7 +11,15 @@ import { haversine } from './googleMaps.js';
 
 const FRESH_MS = 10 * 60 * 1000;
 // Usable storage under this is "low" everywhere in the portal.
-export const LOW_PCT = 30;
+// Tank level bands, the same boundaries as the admin portal (adminportal/src/data/tanks.js), with
+// the top split so a nearly full tank says so: [below this %, i18n key]
+export const TANK_LEVELS = [[10, 'levelVeryLow'], [25, 'levelLow'], [50, 'levelModerate'], [90, 'levelGood'], [Infinity, 'levelFull']];
+export function tankLevel(percent) {
+  if (percent == null || !Number.isFinite(Number(percent))) return null;
+  return TANK_LEVELS.find(([below]) => Number(percent) < below)[1];
+}
+// "Low" starts here: the tank-low alert, "needs water", the forecast's low-water risk and the chart line
+export const LOW_PCT = 25;
 const num = (v) => (v == null || v === '' ? null : Number(v));
 const round1 = (v) => Math.round(v * 10) / 10;
 const title = (s) => (s || '').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());

@@ -4,9 +4,12 @@ import { normalizePhone, useApp } from '../state/AppContext.jsx';
 import { Aerial, LangSwitch, Logo, PrimaryBtn } from '../components/UI.jsx';
 import { PHOTOS } from '../data.js';
 import { sendOtp } from '../api/auth.js';
+import { LANGS, translate } from '../i18n.js';
 
 export default function Login() {
-  const { t, update, pendingPhone } = useApp();
+  const { t, lang, update, pendingPhone } = useApp();
+  // the portal's name in the other two languages, under the name in the farmer's own
+  const otherNames = LANGS.filter((l) => l.code !== lang).map((l) => translate(l.code, 'farmerPortal')).join(' - ');
   const navigate = useNavigate();
   const [value, setValue] = useState(pendingPhone ? `0${pendingPhone.slice(3)}` : '');
   const [error, setError] = useState('');
@@ -35,8 +38,8 @@ export default function Login() {
           <span className="fw600 f16" style={{ color: '#fff' }}>{t('appName')}</span>
         </div>
         <div className="art-float" style={{ left: 16, right: 16, bottom: 16 }}>
-          <div className="f13 fw600" style={{ color: 'var(--accent)' }}>Mahaweli B - {t('farmerPortal')}</div>
-          <div className="f15" style={{ marginTop: 4, fontFamily: 'var(--font-system), Noto Sans Sinhala, Noto Sans Tamil' }}>ගොවි ද්වාරය - விவசாயி தளம்</div>
+          <div className="f13 fw600" style={{ color: 'var(--accent)' }}>{t('farmerPortal')}</div>
+          <div className="f15" style={{ marginTop: 4, fontFamily: 'var(--font-system), Noto Sans Sinhala, Noto Sans Tamil' }}>{otherNames}</div>
         </div>
       </Aerial>
 

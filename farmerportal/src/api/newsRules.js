@@ -60,11 +60,43 @@ export function newsErrorText(error, t) {
   return t('newsUnavailable');
 }
 
-/** The CAP instruction is already a bulleted list of what to do; split it into steps. */
-export function instructionSteps(instruction) {
+// "Action Required:" / "Warning Description:" style labels the Met Department puts in front of a
+// section: short, ending in a colon, no sentence before it
+const LABEL = /^([^:.!?\n]{1,60}):\s*(.*)$/s;
+
+/**
+ * The CAP instruction as titled sections of bullet points, e.g.
+ *   "Action Required: • Stay indoors • Unplug …\nDamage Expected: • Power cuts …"
+ *   -> [{ title: 'Action Required', items: ['Stay indoors', 'Unplug …'] }, { title: 'Damage Expected', items: [...] }]
+ * A line with no label gives a section with title null. Works the same for the Sinhala and Tamil texts.
+ */
+export function instructionSections(instruction) {
   if (!instruction) return [];
-  return instruction
-    .split(/\n|(?:^|\s)[•·*]\s*/)
-    .map((s) => s.replace(/^[-–—]\s*/, '').trim())
-    .filter((s) => s.length > 2);
+  const sections = [];
+  let pending = null;   // a title on a line of its own ("Action Required:"), for the points on the lines after it
+  for (const line of String(instruction).split('\n')) {
+    const [head, ...bullets] = line.split(/(?:^|\s)[•·*]\s*/);
+    const items = bullets.map((s) => s.replace(/^[-–—]\s*/, '').trim()).filter((s) => s.length > 2);
+    let title = null;
+    let lead = head.trim();
+    const m = LABEL.exec(lead);
+    if (m) { title = m[1].trim(); lead = m[2].trim(); }
+    if (lead.length > 2) items.unshift(lead.replace(/^[-–—]\s*/, ''));
+    if (!items.length) { if (title) pending = title; continue; }
+    if (!title && pending) { title = pending; pending = null; }
+    if (!title && sections.length) { sections[sections.length - 1].items.push(...items); continue; }   // more points
+    sections.push({ title, items });
+  }
+  return sections;
+}
+
+/** Every point of the instruction in order, without the section titles (the first is used as an alert's text). */
+export function instructionSteps(instruction) {
+  return instructionSections(instruction).flatMap((s) => s.items);
+}
+
+/** The warning's description without the "Warning Description:" label in front of it. */
+export function bodyText(body) {
+  const m = LABEL.exec(String(body || '').trim());
+  return (m && m[2] ? m[2] : String(body || '')).trim();
 }

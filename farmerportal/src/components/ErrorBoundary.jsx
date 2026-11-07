@@ -18,6 +18,8 @@ export default class ErrorBoundary extends Component {
 
   render() {
     if (this.state.error) {
+      // fallback: what to show instead of the full error screen (e.g. null for a floating widget)
+      if (this.props.fallback !== undefined) return this.props.fallback;
       return (
         <ErrorScreen
           detail={String(this.state.error?.message || this.state.error)}

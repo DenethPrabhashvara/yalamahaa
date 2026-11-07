@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+import { useApp } from '../state/AppContext.jsx';
 
 // `tanks` are reservoirs from the API ({ id, name }).
 export default function TankPicker({ tanks, value, onChange, dark = false }) {
+  const { t } = useApp();
   const ref = useRef(null);
   // Fade whichever edge still has chips scrolled out of view, so the cut-off chip reads as "more".
   const [edges, setEdges] = useState({ l: false, r: false });
@@ -18,7 +20,7 @@ export default function TankPicker({ tanks, value, onChange, dark = false }) {
 
   return (
     <div ref={ref} className={`tank-picker ${dark ? 'dark' : ''} ${edges.l ? 'fade-l' : ''} ${edges.r ? 'fade-r' : ''}`}
-      role="radiogroup" aria-label="Tank">
+      role="radiogroup" aria-label={t('a11yTank')}>
       {tanks.map((x) => (
         <button key={x.id} type="button" role="radio" aria-checked={value === x.id}
           className={value === x.id ? 'on' : ''} onClick={() => onChange(x.id)}>

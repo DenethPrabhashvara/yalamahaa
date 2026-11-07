@@ -34,7 +34,7 @@ function TankChooser({ value, isOther, pin, onPick, t }) {
       <div className="search">
         <Icon name="search" size={20} />
         <input aria-label={t('searchTank')} placeholder={t('searchTank')} value={q} onChange={(e) => setQ(e.target.value)} enterKeyHint="search" />
-        {q && <button type="button" className="icon-btn soft sm" aria-label="Clear" onClick={() => setQ('')}><Icon name="close" size={14} /></button>}
+        {q && <button type="button" className="icon-btn soft sm" aria-label={t('a11yClear')} onClick={() => setQ('')}><Icon name="close" size={14} /></button>}
       </div>
       {!query && pin && <div className="label">{t('nearestTanks')}</div>}
       {query && list.length === 0 && <div className="f15 muted">{t('noTankMatch')}</div>}
@@ -79,7 +79,7 @@ function ApiSourceChooser({ data, items, value, isOther, pin, onPick, t, keys })
       <div className="search">
         <Icon name="search" size={20} />
         <input aria-label={t(keys.search)} placeholder={t(keys.search)} value={q} onChange={(e) => setQ(e.target.value)} enterKeyHint="search" />
-        {q && <button type="button" className="icon-btn soft sm" aria-label="Clear" onClick={() => setQ('')}><Icon name="close" size={14} /></button>}
+        {q && <button type="button" className="icon-btn soft sm" aria-label={t('a11yClear')} onClick={() => setQ('')}><Icon name="close" size={14} /></button>}
       </div>
       {data.loading && !data.data && <div className="f15 muted">{t(keys.loading)}</div>}
       {data.error && !data.data && (

@@ -1,6 +1,6 @@
 import type { Dict } from "../../lib/i18n";
 import { css } from "../../lib/css";
-import { ArrowDown, Languages, Smartphone } from "lucide-react";
+import { ArrowDown, Download, Languages } from "lucide-react";
 import { SITE } from "../../lib/site";
 
 export default function SiteMxAuto({ t }: { t: Dict }) {
@@ -19,17 +19,18 @@ export default function SiteMxAuto({ t }: { t: Dict }) {
       </p>
       <div className="site-flex flex-col md:flex-row gap-5 w-full justify-center">
         <a
-          href={SITE.appUrl}
+          href={SITE.apkUrl}
+          download={SITE.apkName}
           className="group site-relative px-8.5 overflow-hidden bg-black text-white site-inline-flex items-center justify-center hover:scale-95 site-transition-all duration-300 rounded-[3.40282e38px] [box-shadow:var(--tw-inset-shadow),_var(--tw-inset-ring-shadow),_var(--tw-ring-offset-shadow),_var(--tw-ring-shadow),_var(--tw-shadow)]! [--tw-shadow:0_20px_25px_-5px_var(--tw-shadow-color,#0000001a),_0_8px_10px_-6px_var(--tw-shadow-color,#0000001a)]!"
         >
           <div className="site-relative flex-col items-center transition-transform duration-300 group-hover:-translate-y-full">
             <div className="site-flex items-center gap-3 h-14">
-              <Smartphone className="w-5 h-5" />
-              <span className="font-normal">{t.nav.openApp}</span>
+              <Download className="w-5 h-5" />
+              <span className="font-normal">{t.nav.downloadApk}</span>
             </div>
             <div className="site-flex items-center gap-3 h-14 site-absolute top-full">
-              <Smartphone className="w-5 h-5" />
-              <span className="font-normal">{t.nav.openApp}</span>
+              <Download className="w-5 h-5" />
+              <span className="font-normal">{t.nav.downloadApk}</span>
             </div>
           </div>
         </a>

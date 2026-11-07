@@ -23,8 +23,8 @@ export default function Footer({ t, home = "/" }: { t: Dict; home?: string }) {
               <p className="site-mb-5 text-lg site-text-default-500">
                 {t.footer.text}
               </p>
-              <a href={SITE.appUrl} className="w-full md:w-auto whitespace-nowrap bg-default-900 site-px-8 site-py-3-5 font-medium text-white site-transition-all hover:scale-95 rounded-[3.40282e38px] site-inline-block text-center">
-                {t.nav.openApp}
+              <a href={SITE.apkUrl} download={SITE.apkName} className="w-full md:w-auto whitespace-nowrap bg-default-900 site-px-8 site-py-3-5 font-medium text-white site-transition-all hover:scale-95 rounded-[3.40282e38px] site-inline-block text-center">
+                {t.nav.downloadApk}
               </a>
             </div>
           </div>
