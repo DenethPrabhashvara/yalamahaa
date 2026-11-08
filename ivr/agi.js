@@ -188,7 +188,8 @@ function to8kWav(pcm, rate) {
   return Buffer.concat([wavHeader(out.length, 8000), out])
 }
 
-const ttsId = (text) => 'tts-' + crypto.createHash('sha1').update(VOICE + '|' + text).digest('hex').slice(0, 16)
+// v2: audio made before 3.x models got plain text has "Read this aloud" spoken in it; a new id remakes it
+const ttsId = (text) => 'tts-' + crypto.createHash('sha1').update('v2|' + VOICE + '|' + text).digest('hex').slice(0, 16)
 const isCached = (text) => fs.existsSync(path.join(SOUNDS, ttsId(text) + '.wav'))
 
 // Text -> 8 kHz WAV in the shared folder; returns the name Asterisk plays it by
@@ -200,8 +201,9 @@ async function tts(text) {
       try {
         const r = await ai.models.generateContent({
           model,
-          // Without "read aloud", short texts make the TTS model try to answer them instead
-          contents: [{ parts: [{ text: `Read this aloud exactly as written:\n${text}` }] }],
+          // 3.x TTS speaks its input word for word, so the instruction would be read out too.
+          // 2.x needs it: without "read aloud", short texts make it try to answer them instead.
+          contents: [{ parts: [{ text: /^gemini-2\./.test(model) ? `Read this aloud exactly as written:\n${text}` : text }] }],
           config: {
             responseModalities: ['AUDIO'],
             speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: VOICE } } },
@@ -223,7 +225,7 @@ async function tts(text) {
     fs.writeFileSync(file + '.part', to8kWav(pcm, rate))
     fs.renameSync(file + '.part', file)
   }
-  return 'ivr/' + id
+  return AST_SOUNDS + '/' + id     // full path: Asterisk's own sounds dir may not be /var/lib/asterisk/sounds
 }
 
 async function askGemini(recording, history, context, lang) {
@@ -409,7 +411,7 @@ async function assistant(agi, say, hold, uid, context, lang) {
     const name = await tts(ans.reply)
     await hold(false)
     await agi.cmd(`STREAM FILE ${name} ""`)
-    fs.rm(path.join(SOUNDS, name.slice(4) + '.wav'), () => {}) // replies are one-off
+    fs.rm(path.join(SOUNDS, path.basename(name) + '.wav'), () => {}) // replies are one-off
     if (ans.done) break
   }
 }
