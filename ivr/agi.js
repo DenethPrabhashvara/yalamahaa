@@ -32,7 +32,7 @@ const db = new Pool({
 })
 
 // First thing every caller hears; each line in its own language
-const LANG_MENU = 'සිංහල සඳහා එක ඔබන්න. தமிழுக்கு இரண்டை அழுத்தவும். For English, press three.'
+const LANG_MENU = 'ශ්‍රී ලංකාවේ ප්‍රමුඛතම කෘත්‍රිම බුද්ධි සහායක සේවාව වන යල මහ වෙත ඔබව සාදරයෙන් පිළිගනිමු. Thank you for calling Yala Maha, Sri Lanka’s premier AI assistant service. සිංහල සඳහා එක ඔබන්න. தமிழுக்கு இரண்டை அழுத்தவும். For English, press three.'
 const LANGS = { 1: 'si', 2: 'ta', 3: 'en' }
 const LANG_NAME = { si: 'Sinhala', ta: 'Tamil', en: 'English' }
 
