@@ -99,8 +99,18 @@ function addDays(dateStr, days) {
   return dt.toISOString().split("T")[0];
 }
 
+// In-memory cache for Open-Meteo rainfall queries (1-hour TTL)
+const rainCache = new Map();
+const RAIN_CACHE_TTL_MS = 60 * 60 * 1000;
+
 // 3. Fetch 65 days of rainfall from Open-Meteo for the tank's coordinates
 async function fetchRainfallMap(lat, lon, endDateStr) {
+  const cacheKey = `${Number(lat).toFixed(3)},${Number(lon).toFixed(3)},${endDateStr}`;
+  const cached = rainCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < RAIN_CACHE_TTL_MS) {
+    return cached.map;
+  }
+
   const startDateStr = addDays(endDateStr, -65);
   const todayStr = new Date().toISOString().split("T")[0];
   const diffDays = (new Date(todayStr) - new Date(endDateStr)) / (1000 * 60 * 60 * 24);
@@ -112,17 +122,34 @@ async function fetchRainfallMap(lat, lon, endDateStr) {
     url = `https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${startDateStr}&end_date=${endDateStr}&daily=precipitation_sum&timezone=Asia%2FColombo`;
   }
 
-  const res = await fetch(url);
-  const data = await res.json();
-  if (!data.daily || !data.daily.time) {
-    throw new Error(`Open-Meteo error: ${data.reason || "No daily rainfall returned"}`);
+  let lastErr = null;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
+      const data = await res.json();
+      if (!data.daily || !data.daily.time) {
+        throw new Error(`Open-Meteo error: ${data.reason || "No daily rainfall returned"}`);
+      }
+
+      const rainMap = new Map();
+      data.daily.time.forEach((date, i) => {
+        rainMap.set(date, data.daily.precipitation_sum[i] ?? 0);
+      });
+
+      rainCache.set(cacheKey, { timestamp: Date.now(), map: rainMap });
+      return rainMap;
+    } catch (err) {
+      lastErr = err;
+      if (attempt < 2) await new Promise((r) => setTimeout(r, 600));
+    }
   }
 
-  const rainMap = new Map();
-  data.daily.time.forEach((date, i) => {
-    rainMap.set(date, data.daily.precipitation_sum[i] ?? 0);
-  });
-  return rainMap;
+  if (cached?.map) {
+    console.warn(`[Rainfall] Open-Meteo failed (${lastErr?.message}); using expired cache`);
+    return cached.map;
+  }
+
+  throw lastErr;
 }
 
 // Gaps of 4 to MAX_FILL_GAP missing days are filled with a straight line between the readings

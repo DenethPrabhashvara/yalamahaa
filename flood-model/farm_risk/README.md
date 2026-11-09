@@ -10,6 +10,15 @@ Gives every farm a river flood risk score from 0 to 100 and a category, based on
 | 15–29 | `low` |
 | 0–14 | `very_low` |
 
+Automatic river-gauge SMS uses these as **flood-susceptibility groups**, not as live alert levels
+or literal high-ground/low-ground measurements: `high`/`very_high` receive more urgent field
+precautions, `medium` receives preparation advice, and `low`/`very_low` are told that access routes
+may still flood. Missing DEM scores get a general precaution message. The SMS still triggers only
+when the nearby gauge reaches its official alert or major-flood threshold.
+Each flood-alert SMS includes the same gauge reading and susceptibility-specific advice in English,
+Sinhala, and Tamil; it is sent as one potentially multipart message regardless of the farmer's
+saved portal language.
+
 ## How a farm is scored
 
 For each river within 6 km of the farm:

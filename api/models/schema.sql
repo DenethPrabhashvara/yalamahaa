@@ -70,6 +70,7 @@ CREATE TABLE IF NOT EXISTS farmers (
   address         TEXT not NULL,
   district        TEXT not NULL,
   division        TEXT,                                          -- Divisional Secretariat
+  preferred_lang  TEXT NOT NULL DEFAULT 'en' CHECK (preferred_lang IN ('en', 'si', 'ta')),
   farm_latitude   NUMERIC(10,6) CHECK (farm_latitude  BETWEEN -90  AND 90),
   farm_longitude  NUMERIC(10,6) CHECK (farm_longitude BETWEEN -180 AND 180),
 
@@ -92,6 +93,25 @@ CREATE TABLE IF NOT EXISTS farmers (
 CREATE INDEX IF NOT EXISTS idx_farmers_reservoir ON farmers (reservoir_id);
 CREATE INDEX IF NOT EXISTS idx_farmers_tank      ON farmers (tank_id);
 CREATE INDEX IF NOT EXISTS idx_farmers_district  ON farmers (district, division);
+
+-- Precomputed river-flood susceptibility from flood-model/farm_risk/score_farms.py and the
+-- 12.5 m ALOS DEM. The scoring job can create/update this table independently.
+CREATE TABLE IF NOT EXISTS farm_flood_risk (
+  farm_id          TEXT PRIMARY KEY REFERENCES farmers(farm_id) ON UPDATE CASCADE ON DELETE CASCADE,
+  score            SMALLINT NOT NULL CHECK (score BETWEEN 0 AND 100),
+  category         TEXT NOT NULL CHECK (category IN ('very_low', 'low', 'medium', 'high', 'very_high')),
+  elevation_m      DOUBLE PRECISION,
+  elevation_from   TEXT,
+  river_name       TEXT,
+  river_distance_m INT,
+  rise_needed_m    DOUBLE PRECISION,
+  rivers           JSONB NOT NULL,
+  farm_latitude    NUMERIC(10,6) NOT NULL,
+  farm_longitude   NUMERIC(10,6) NOT NULL,
+  boundary         JSONB,
+  method           TEXT NOT NULL,
+  computed_at      TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 
 CREATE OR REPLACE FUNCTION set_updated_at() RETURNS TRIGGER AS $$
 BEGIN
@@ -455,3 +475,85 @@ CREATE TRIGGER trg_weather_advisories_updated_at
 
 -- Lets the weather feed be switched off from the admin portal
 INSERT INTO app_settings (key, value) VALUES ('weather_feed', 'true') ON CONFLICT (key) DO NOTHING;
+
+-- Automatic voice calls stay off until an administrator enables them in the SMS portal.
+INSERT INTO app_settings (key, value) VALUES ('storm_calls', 'false') ON CONFLICT (key) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS storm_calls (
+  id             BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  farmer_id      UUID NOT NULL REFERENCES farmers(farmer_id) ON DELETE CASCADE,
+  phone          TEXT NOT NULL,
+  source         TEXT NOT NULL CHECK (source IN ('weather','ml')),
+  alert_key      TEXT NOT NULL,
+  subject        TEXT,
+  event_date     DATE NOT NULL,
+  event_end      DATE NOT NULL,
+  kinds          TEXT[] NOT NULL,
+  max_rain_mm    NUMERIC(6,1),
+  max_gust_kmh   NUMERIC(6,1),
+  predicted_pct  NUMERIC(6,1),
+  lead_days      SMALLINT,
+  mode           TEXT NOT NULL,
+  lang           TEXT,
+  status         TEXT NOT NULL CHECK (status IN ('dry_run','skipped_trial','outside_hours','calling','called','failed')),
+  call_sid       TEXT,
+  error          TEXT,
+  attempts       SMALLINT NOT NULL DEFAULT 0,
+  called_at      TIMESTAMPTZ,
+  created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (farmer_id, alert_key)
+);
+CREATE INDEX IF NOT EXISTS idx_storm_calls_recent ON storm_calls (updated_at DESC);
+CREATE INDEX IF NOT EXISTS idx_storm_calls_farmer ON storm_calls (farmer_id, status);
+
+-- Disaster and damage assessment surveys sent from the admin portal (see models/add-surveys.sql)
+CREATE TABLE IF NOT EXISTS surveys (
+  id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  title           TEXT NOT NULL CHECK (length(trim(title)) > 0),
+  description     TEXT,
+  translations    JSONB NOT NULL DEFAULT '{}'::jsonb,
+  category        TEXT NOT NULL DEFAULT 'disaster' CHECK (category IN ('disaster', 'flood', 'drought', 'pest', 'general')),
+  target_type     TEXT NOT NULL CHECK (target_type IN ('all', 'district', 'reservoir', 'tank', 'farmers')),
+  target_value    JSONB,
+  target_label    TEXT NOT NULL,
+  status          TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'closed')),
+  created_by      UUID REFERENCES admins(admin_id) ON DELETE SET NULL,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_surveys_status ON surveys (status, created_at DESC);
+
+DROP TRIGGER IF EXISTS trg_surveys_updated_at ON surveys;
+CREATE TRIGGER trg_surveys_updated_at
+  BEFORE UPDATE ON surveys
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TABLE IF NOT EXISTS survey_questions (
+  id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  survey_id       BIGINT NOT NULL REFERENCES surveys(id) ON DELETE CASCADE,
+  position        INT NOT NULL CHECK (position >= 0),
+  question_text   TEXT NOT NULL CHECK (length(trim(question_text)) > 0),
+  question_type   TEXT NOT NULL CHECK (question_type IN ('choice', 'multi_choice', 'yes_no', 'number', 'text')),
+  options         JSONB,
+  translations    JSONB NOT NULL DEFAULT '{}'::jsonb,
+  required        BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_survey_question_pos UNIQUE (survey_id, position)
+);
+
+CREATE INDEX IF NOT EXISTS idx_survey_questions_survey ON survey_questions (survey_id, position ASC);
+
+CREATE TABLE IF NOT EXISTS survey_responses (
+  id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+  survey_id       BIGINT NOT NULL REFERENCES surveys(id) ON DELETE CASCADE,
+  farmer_id       UUID NOT NULL REFERENCES farmers(farmer_id) ON DELETE CASCADE,
+  farm_id         TEXT REFERENCES farmers(farm_id) ON UPDATE CASCADE ON DELETE SET NULL,
+  answers         JSONB NOT NULL DEFAULT '{}'::jsonb,
+  submitted_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT uq_survey_farmer UNIQUE (survey_id, farmer_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_survey_responses_survey ON survey_responses (survey_id, submitted_at DESC);
+CREATE INDEX IF NOT EXISTS idx_survey_responses_farmer ON survey_responses (farmer_id);
