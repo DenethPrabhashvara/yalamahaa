@@ -36,20 +36,10 @@ function normalizePhoneNumber(phone) {
 }
 
 /**
- * Dispatch SMS via Text.lk API v3
+ * Dispatch single SMS via Text.lk API v3
  */
-async function sendSms(recipients, message, options = {}) {
-  const firstRecipient = (Array.isArray(recipients) ? recipients[0] : recipients)
-    ?.toString()
-    .split(',')[0]    //prevent one OTP getting sent to multiple nums IMPORTNT Logic
-  const recipientCheck = validateSriLankanMobile(firstRecipient)
-
-  if (!recipientCheck.valid) {
-    throw new Error('No valid Sri Lankan mobile numbers provided.')
-  }
-
-  const recipientStr = recipientCheck.normalized
-  const isDryRun = options.forceLive ? false : process.env.SMS_DRY_RUN === 'true'
+async function sendSingleSms(recipientStr, message, { forceLive, senderId, token, type }) {
+  const isDryRun = forceLive ? false : process.env.SMS_DRY_RUN === 'true'
 
   if (isDryRun) {
     console.log(`[SMS DRY RUN] To: ${recipientStr} | Message: "${message}"`)
@@ -61,36 +51,86 @@ async function sendSms(recipients, message, options = {}) {
     }
   }
 
+  const response = await fetch('https://app.text.lk/api/v3/sms/send', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({
+      recipient: recipientStr,
+      sender_id: senderId,
+      type,
+      message,
+    }),
+  })
+
+  const data = await response.json()
+  if (!response.ok) {
+    throw new Error(`Message API error (${response.status}): ${JSON.stringify(data)}`)
+  }
+  return data
+}
+
+/**
+ * Dispatch SMS via Text.lk API v3 (supports single or multi-recipients, plain and unicode)
+ */
+async function sendSms(recipients, message, options = {}) {
+  const rawList = Array.isArray(recipients)
+    ? recipients.flat()
+    : String(recipients || '').split(',')
+  const list = rawList.map(r => String(r || '').trim()).filter(Boolean)
+
+  if (list.length === 0) {
+    throw new Error('No valid Sri Lankan mobile numbers provided.')
+  }
+
+  const validRecipients = []
+  for (const item of list) {
+    const chk = validateSriLankanMobile(item)
+    if (chk.valid) validRecipients.push(chk.normalized)
+  }
+
+  if (validRecipients.length === 0) {
+    throw new Error('No valid Sri Lankan mobile numbers provided.')
+  }
+
+  const isDryRun = options.forceLive ? false : process.env.SMS_DRY_RUN === 'true'
   const token = process.env.TEXTLK_API_TOKEN
-  if (!token) {
+  if (!isDryRun && !token) {
     throw new Error('TEXTLK_API_TOKEN is not configured.')
   }
 
   const senderId = process.env.TEXTLK_SENDER_ID || 'yala-maha'
+  const type = /[^\u0000-\u007F]/.test(message) ? 'unicode' : 'plain'
 
-  const response = await fetch('https://app.text.lk/api/v3/sms/send', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({
-          recipient: recipientStr,
-          sender_id: senderId,
-          type: 'plain',
-          message,
-        }),
-  })
-  
-
-  const data = await response.json()
-
-  if (!response.ok) {
-       throw new Error(`Message API error (${response.status}): ${JSON.stringify(data)}`)
+  if (validRecipients.length === 1) {
+    return await sendSingleSms(validRecipients[0], message, {
+      forceLive: options.forceLive, senderId, token, type
+    })
   }
 
-  return data
+  const results = []
+  let delivered = 0
+  for (const recipient of validRecipients) {
+    try {
+      const res = await sendSingleSms(recipient, message, {
+        forceLive: options.forceLive, senderId, token, type
+      })
+      delivered += 1
+      results.push({ recipient, status: 'success', data: res })
+    } catch (err) {
+      results.push({ recipient, status: 'fail', error: err.message })
+    }
+  }
+
+  return {
+    status: 'success',
+    recipients: validRecipients.length,
+    delivered,
+    results
+  }
 }
 
 /**

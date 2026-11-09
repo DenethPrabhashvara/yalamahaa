@@ -119,11 +119,12 @@ test('nearPin: within 5 km of the pin, or no pin to compare with', () => {
 test('validateFarmerChanges: the edit screen\'s profile payload passes', () => {
   const { error, changes } = validateFarmerChanges({
     full_name: ' Sunil Bandara ', address: 'No 12', district: 'Polonnaruwa', division: '  ', farm_latitude: 8.05, farm_longitude: 80.98,
-    reservoir_id: 12, tank_id: null, land_acres: 2, primary_crop: '3.5 months', phone: '+94770000000',
+    preferred_lang: 'ta', reservoir_id: 12, tank_id: null, land_acres: 2, primary_crop: '3.5 months', phone: '+94770000000',
   })
   assert.equal(error, undefined)
   assert.equal(changes.full_name, 'Sunil Bandara')
   assert.equal(changes.division, null)            // empty optional text -> null
+  assert.equal(changes.preferred_lang, 'ta')
   assert.equal('phone' in changes, false)         // farmers can't change their phone here
 })
 
@@ -134,6 +135,7 @@ test('validateFarmerChanges: rejects empty names, non-numbers, both water links 
   assert.match(validateFarmerChanges({ farm_latitude: 'north' }).error, /farm_latitude must be a number/)
   assert.match(validateFarmerChanges({ reservoir_id: 1, tank_id: 2 }).error, /not both/)
   assert.match(validateFarmerChanges({ sms_enabled: 'yes' }).error, /sms_enabled/)
+  assert.match(validateFarmerChanges({ preferred_lang: 'fr' }).error, /preferred_lang/)
   assert.deepEqual(validateFarmerChanges({ sms_enabled: false }).changes, { sms_enabled: false })
 })
 

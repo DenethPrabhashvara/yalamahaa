@@ -5,7 +5,8 @@ import { useApp } from '../state/AppContext.jsx';
 
 // Floating chat with the Yala Maha AI assistant (ai-assistant/server.js)
 const _raw = (import.meta.env.VITE_AI_API_URL || 'http://localhost:5050').replace(/\/$/, '');
-const AI_URL = /^https?:\/\//.test(_raw) ? _raw : `http://${_raw}`;
+// A relative base ('/ai' behind the Caddy proxy) must stay relative; only a bare host:port needs a scheme.
+export const AI_URL = /^https?:\/\//.test(_raw) || _raw.startsWith('/') ? _raw : `http://${_raw}`;
 
 export default function ChatBubble({ hidden = false }) {
   const { t } = useApp();
@@ -16,10 +17,11 @@ export default function ChatBubble({ hidden = false }) {
   const [playing, setPlaying] = useState(null);
   const listRef = useRef(null);
   const audioRef = useRef(null);
+  const ttsAbortRef = useRef(null);
 
   useEffect(() => {
     listRef.current?.scrollTo(0, listRef.current.scrollHeight);
-  }, [msgs, open]);
+  }, [msgs, open, busy]);
 
   // Escape (and the phone's back button, see useAndroidBack.js) closes the open chat
   useEffect(() => {
@@ -30,7 +32,11 @@ export default function ChatBubble({ hidden = false }) {
   }, [open]);
 
   // signing out unmounts the chat: stop any reply that is still being read out
-  useEffect(() => () => { audioRef.current?.pause(); if (audioRef.current) URL.revokeObjectURL(audioRef.current.src); }, []);
+  useEffect(() => () => {
+    ttsAbortRef.current?.abort();
+    audioRef.current?.pause();
+    if (audioRef.current) URL.revokeObjectURL(audioRef.current.src);
+  }, []);
 
   async function send(e) {
     e.preventDefault();
@@ -64,21 +70,33 @@ export default function ChatBubble({ hidden = false }) {
     audioRef.current?.pause();
     if (audioRef.current) URL.revokeObjectURL(audioRef.current.src);
     audioRef.current = null;
+    ttsAbortRef.current?.abort();
+    ttsAbortRef.current = null;
     if (playing === i) return setPlaying(null);
+    const textToSpeak = msgs[i]?.text;
+    if (!textToSpeak) return setPlaying(null);
     setPlaying(i);
+    const ac = new AbortController();
+    ttsAbortRef.current = ac;
     try {
       const res = await fetch(`${AI_URL}/tts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: msgs[i].text }),
+        body: JSON.stringify({ text: textToSpeak }),
+        signal: ac.signal,
       });
       if (!res.ok) throw new Error();
-      const audio = new Audio(URL.createObjectURL(await res.blob()));
+      const blob = await res.blob();
+      if (ac.signal.aborted) return;
+      const audio = new Audio(URL.createObjectURL(blob));
       audioRef.current = audio;
-      audio.onended = () => setPlaying(null);
+      audio.onended = () => setPlaying((p) => (p === i ? null : p));
+      audio.onerror = () => setPlaying((p) => (p === i ? null : p));
       await audio.play();
     } catch {
-      setPlaying(null);
+      if (!ac.signal.aborted) {
+        setPlaying((p) => (p === i ? null : p));
+      }
     }
   }
 

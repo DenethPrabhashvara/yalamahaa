@@ -1,8 +1,11 @@
+import { useState } from 'react';
 import { useApp } from '../state/AppContext.jsx';
 import { IconBtn } from '../components/UI.jsx';
 import Icon from '../components/Icon.jsx';
 import { useFarmConditions } from '../api/farm.js';
 import { useAlerts } from '../api/alerts.js';
+import { useActiveSurveys } from '../api/surveys.js';
+import SurveySheet from '../components/SurveySheet.jsx';
 
 const KIND = {
   flood: { icon: 'warn', cls: 'amber' },
@@ -11,12 +14,15 @@ const KIND = {
   report: { icon: 'check', cls: 'green' },
   farm: { icon: 'leaf', cls: 'accent' },
   advisory: { icon: 'wind', cls: 'red' },
+  survey: { icon: 'survey', cls: 'amber' },
 };
 
 export default function Alerts() {
-  const { t, farm, update } = useApp();
+  const { t, user, farm, update } = useApp();
   const alerts = useAlerts(useFarmConditions(farm));
-  const unread = alerts.filter((a) => !a.read).length;
+  const { surveys: activeSurveys, reload: reloadSurveys } = useActiveSurveys(user?.farmerId);
+  const [selectedSurvey, setSelectedSurvey] = useState(null);
+  const unread = alerts.filter((a) => !a.read).length + activeSurveys.length;
   // Live alerts remember read ids, the app's own notes carry their read flag. Weather
   // advisories ("cap:" ids) go in their own list so a run of them can't push real alerts
   // out of readAlerts' 200-id cap.
@@ -36,13 +42,36 @@ export default function Alerts() {
         {unread > 0 && <button type="button" className="chip-white btn" onClick={markAll}>{t('markAllRead')}</button>}
       </div>
       <h1 className="h1">{t('alerts')}</h1>
-      {alerts.length === 0 && (
+      {alerts.length === 0 && activeSurveys.length === 0 && (
         <div className="empty">
           <div className="icon-tile soft big"><Icon name="bell" size={30} /></div>
           <div className="f16 fw600">{t('noAlerts')}</div>
         </div>
       )}
       <div className="col gap10">
+        {/* Active disaster surveys shown first */}
+        {activeSurveys.map((s) => (
+          <button
+            key={`survey:${s.id}`}
+            type="button"
+            className="alert-row unread"
+            style={{ borderLeft: '3px solid var(--warning-ink, #d97706)' }}
+            onClick={() => setSelectedSurvey(s)}
+          >
+            <div className="icon-tile amber"><Icon name="survey" size={22} /></div>
+            <div className="grow" style={{ textAlign: 'left' }}>
+              <div className="row between gap8">
+                <span className="f15 fw600">{s.title}</span>
+                <span className="survey-pill-tag">{t('disasterSurvey')}</span>
+              </div>
+              <div className="f15 muted lh" style={{ marginTop: 2 }}>
+                {s.description || t('surveyNotice')}
+              </div>
+            </div>
+            <span className="unread-dot" aria-label={t('a11yUnread')} />
+          </button>
+        ))}
+
         {alerts.map((a) => {
           const k = KIND[a.kind] || KIND.tank;
           return (
@@ -57,6 +86,18 @@ export default function Alerts() {
           );
         })}
       </div>
+
+      {selectedSurvey && (
+        <SurveySheet
+          survey={selectedSurvey}
+          open={Boolean(selectedSurvey)}
+          onClose={() => setSelectedSurvey(null)}
+          onSuccess={() => {
+            setSelectedSurvey(null);
+            reloadSurveys();
+          }}
+        />
+      )}
     </div>
   );
 }
