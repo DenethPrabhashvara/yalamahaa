@@ -7,11 +7,15 @@ import { ISSUE_TYPES } from '../data.js';
 import { useCanals, withTankDistance } from '../api/canals.js';
 import { MAX_PHOTOS, REPORT_STATUS, fetchMyReports, fetchReportPhoto, shrinkPhoto, submitReport } from '../api/reports.js';
 import { formatDistance } from '../components/GoogleFarmMap.jsx';
+import { localizedDate } from '../time.js';
 
 // Only types the camera and gallery give us that the API accepts
 const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/heic,image/heif';
 
-const when = (iso, lang) => new Date(iso).toLocaleDateString(lang === 'en' ? 'en-GB' : lang, { day: 'numeric', month: 'short' });
+const when = (iso, lang) => {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? '' : localizedDate(date, lang, { day: 'numeric', month: 'short' });
+};
 
 // Canals from the water issue schedule, nearest to the farm first, with search and "Not listed"
 function CanalSheet({ open, onClose, value, onPick, pin, t }) {

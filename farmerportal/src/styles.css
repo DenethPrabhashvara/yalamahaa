@@ -136,13 +136,14 @@ a { color: inherit; }
   .stage { padding: 24px; background: linear-gradient(160deg, #88bfe6 0%, #cbe1f8 100%); }
   .device { width: 400px; height: min(860px, calc(100dvh - 48px)); border-radius: 48px; box-shadow: 0 0 0 1.5px rgba(255,255,255,.85), 0 30px 80px rgb(14 33 62 / .22); }
 }
-.viewport { flex: 1; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; animation: pageIn .28s ease backwards; isolation: isolate; /* not 'both': a transform left on after the animation made the page the containing block for everything absolutely positioned in it (sheets opened off screen). isolation keeps the page's own layers (map controls at 1001, Leaflet panes) below the chat, sheets, bottom bar and toasts, without that side effect */ scrollbar-width: none; }
+.viewport { flex: 1; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; animation: pageIn .2s cubic-bezier(.2,.7,.25,1) backwards; isolation: isolate; /* not 'both': a transform left on after the animation made the page the containing block for everything absolutely positioned in it (sheets opened off screen). isolation keeps the page's own layers (map controls at 1001, Leaflet panes) below the chat, sheets, bottom bar and toasts, without that side effect */ scrollbar-width: none; }
 .viewport::-webkit-scrollbar { display: none; }
 .viewport.has-nav { padding-bottom: var(--nav-h); }
 /* the chat button floats above the bottom bar on the right: leave room so the last button on the page
    (e.g. Send on Report) scrolls clear of it instead of ending up under it */
 .viewport.has-nav.has-chat { padding-bottom: calc(var(--nav-h) + 60px); }
-@keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes pageIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+.tab-nav-navigating .viewport { animation: none; }
 
 .screen { min-height: 100%; padding: max(24px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left)); display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 760px; margin-inline: auto; }
 .center-screen { justify-content: flex-start; }
@@ -162,8 +163,8 @@ a { color: inherit; }
 .ink { color: var(--ink); } .muted { color: var(--muted); } .dim { color: var(--dim); } .amber { color: var(--amber); } .accent-text { color: var(--accent); }
 .fw500 { font-weight: 500; } .fw600 { font-weight: 600; }
 /* Text sizes follow the iOS Dynamic Type scale (Apple HIG › Typography, Large default):
-   f11 Caption 2 · f12 Caption 1 · f13 Footnote · f15 Subheadline · f16 Callout · f17 Body/Headline
-   f20 Title 3 · f22 Title 2 · f28 Title 1 · f34 Large Title. 32+ outside the scale are display numerals only. */
+   f11 Caption 2 - f12 Caption 1 - f13 Footnote - f15 Subheadline - f16 Callout - f17 Body/Headline
+   f20 Title 3 - f22 Title 2 - f28 Title 1 - f34 Large Title. 32+ outside the scale are display numerals only. */
 .f11 { font-size: 11px; } .f12 { font-size: 12px; } .f13 { font-size: 13px; } .f15 { font-size: 15px; } .f16 { font-size: 16px; }
 .f17 { font-size: 17px; } .f20 { font-size: 20px; } .f22 { font-size: 22px; } .f34 { font-size: 34px; }
 .f28 { font-size: 28px; } .f32 { font-size: 32px; } .f40 { font-size: 40px; letter-spacing: .02em; line-height: 1.05; }
@@ -242,8 +243,14 @@ a { color: inherit; }
 .sl-danger { color: var(--danger-text); }
 .sl-info { color: var(--brand); }
 
-.lang-chip { height: 48px; padding: 0 12px; border-radius: 24px; border: 0; background: transparent; display: flex; align-items: center; gap: 6px; font-size: 15px; }
-.lang-chip span { color: var(--muted); font-weight: 500; }
+.lang-switch-compact { display: flex; align-items: center; gap: 2px; padding: 3px; border-radius: 22px; background: #fff; box-shadow: inset 0 0 0 1px var(--line); }
+.lang-switch-compact button { min-width: 36px; height: 44px; padding: 0 5px; border: 0; border-radius: 22px; background: transparent; color: var(--muted); font: inherit; font-size: 12px; font-weight: 600; white-space: nowrap; -webkit-tap-highlight-color: transparent; }
+.lang-switch-compact button.active { background: var(--accent); color: var(--ink); }
+.lang-switch-compact button:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+@media (max-width: 360px) {
+  .lang-switch-compact { gap: 1px; padding: 2px; }
+  .lang-switch-compact button { min-width: 30px; padding: 0 3px; font-size: 11px; }
+}
 
 .seg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; border-radius: 22px; padding: 5px; }
 .seg-white { background: #fff; border-radius: 24px; }
@@ -324,20 +331,16 @@ a { color: inherit; }
 .ok-circle { width: 40px; height: 40px; border-radius: 50%; background: var(--accent); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; flex: none; }
 
 /* ---------- splash & onboarding ---------- */
-.splash { height: 100%; background: #f7f8f1; color: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; position: relative; overflow: hidden; padding: 24px; text-align: center; }
-.splash-mark { position: relative; width: min(64%, 260px); aspect-ratio: 720 / 624; animation: pop .7s cubic-bezier(.2, 1.3, .4, 1) both; }
-.splash-mark img { position: relative; display: block; width: 100%; height: 100%; user-select: none; mix-blend-mode: multiply; } /* multiply lets the rings show through the image's off-white background */
-.splash-rings { position: absolute; left: 50%; top: 36%; width: 0; height: 0; }
-.splash-rings span { position: absolute; width: 150px; height: 150px; margin: -75px 0 0 -75px; border-radius: 50%; border: 2px solid rgba(12,134,207,.28); animation: ring 2.4s ease-out infinite; }
-.splash-rings span:nth-child(2) { animation-delay: .8s; }
-.splash-rings span:nth-child(3) { animation-delay: 1.6s; }
-.splash-sub { color: var(--muted); font-size: 15px; margin-top: 6px; animation: rise .5s .45s both; font-family: 'Noto Sans Sinhala', 'Noto Sans Tamil', var(--font); }
-.splash-loader { width: 140px; height: 4px; border-radius: 2px; background: rgba(14,33,62,.1); overflow: hidden; margin-top: 18px; animation: rise .4s .6s both; }
-.splash-loader i { display: block; height: 100%; border-radius: 2px; background: linear-gradient(90deg, #0c86cf, #3bb54a); animation: load var(--splash-ms, 2200ms) cubic-bezier(.3, .6, .4, 1) both; }
-.splash-foot { position: absolute; bottom: 32px; left: 24px; right: 24px; font-size: 12px; color: var(--muted); }
-@keyframes load { from { width: 6%; } to { width: 100%; } }
-@keyframes ring { from { transform: scale(.7); opacity: 1; } to { transform: scale(3); opacity: 0; } }
-@keyframes pop { from { transform: scale(.4); opacity: 0; } to { transform: none; opacity: 1; } }
+.splash { height: 100%; background: linear-gradient(180deg, #e8f5fc 0%, #f5f8f8 58%, #f0f5eb 100%); color: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; position: relative; overflow: hidden; padding: 24px; text-align: center; }
+.splash-brand { display: flex; align-items: center; gap: 14px; animation: rise .45s ease-out both; }
+.splash-brand > img { display: block; width: 64px; height: 64px; border-radius: 18px; box-shadow: 0 3px 12px rgb(14 33 62 / .10); }
+.splash-brand-copy { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; text-align: left; }
+.splash-brand-copy strong { font-size: 24px; line-height: 1.1; letter-spacing: -.035em; font-weight: 700; }
+.splash-brand-copy span { color: var(--muted); font-size: 13px; font-weight: 600; }
+.splash-loading { display: flex; flex-direction: column; align-items: center; gap: 12px; margin-top: 42px; color: var(--muted); font-size: 13px; font-weight: 500; animation: rise .45s .08s both; }
+.splash-track { display: block; width: 156px; height: 3px; overflow: hidden; border-radius: 2px; background: rgb(14 33 62 / .12); }
+.splash-track i { display: block; width: 38%; height: 100%; border-radius: inherit; background: var(--brand); animation: splash-travel 1.25s ease-in-out infinite; }
+@keyframes splash-travel { from { transform: translateX(-110%); } to { transform: translateX(370%); } }
 @keyframes rise { from { transform: translateY(10px); opacity: 0; } to { transform: none; opacity: 1; } }
 
 .onboard { gap: 18px; }
@@ -496,10 +499,11 @@ a { color: inherit; }
   position: absolute; left: 50%; transform: translateX(-50%); bottom: max(16px, env(safe-area-inset-bottom)); z-index: 30;
   border-radius: 34px; box-shadow: 0 10px 30px rgba(14,33,62,.16);
 }
-.bottom-nav .lg-tab-bar { --lg-tab-width: calc((var(--nav-w) - 8px) / 5); --lg-tab-height: 60px; }
-.bottom-nav .lg-tab { color: var(--chip-ink); }
-.bottom-nav :is(.lg-tab, .lg-tab-copy) { font-size: 11px; font-weight: 600; }
-.lang-si .bottom-nav :is(.lg-tab, .lg-tab-copy), .lang-ta .bottom-nav :is(.lg-tab, .lg-tab-copy) { font-size: 11px; }
+.bottom-nav .lg-tab-bar {
+  --lg-tab-width: calc((var(--nav-w) - 8px) / 5);
+  --lg-tab-height: 60px;
+}
+.bottom-nav .lg-tab { color: var(--chip-ink); font-size: 11px; font-weight: 600; }
 .bottom-nav .lg-tab-text { max-width: calc(var(--lg-tab-width) - 6px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 @media (min-width: 520px) and (min-height: 600px) and (hover: hover) and (pointer: fine) {
   .bottom-nav { --nav-w: 368px; } /* inside the 400px phone mock-up */
@@ -513,20 +517,24 @@ a { color: inherit; }
 .irrigation-map-legend > div:not(.irrigation-map-status) { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
 .irrigation-map-legend i { display: inline-block; flex: none; width: 12px; height: 9px; border: 1px solid rgba(255,255,255,.75); }
 .irrigation-map-legend .legend-reservoir { background: #88bfe6; border-color: #4f97cf; }
-.irrigation-map-legend .legend-highlight { background: #88bfe6; border-color: #4f97cf; animation: tankPulse 1.6s ease-in-out infinite; }
+.irrigation-map-legend .legend-highlight { background: #88bfe6; border-color: #4f97cf; animation: tankPulse 1.6s ease-in-out 4; }
 .irrigation-map-legend > .legend-wide { grid-column: 1 / -1; }
 .irrigation-map-legend .legend-highlight-area { background: rgba(168,200,240,.15); border: 1px dashed #a8c8f0; }
 /* the farmer's tank on the map (irrigationLayers.js): a slow pulse. CSS beats the SVG attributes Leaflet sets */
-@keyframes tankPulse { 0%, 100% { fill-opacity: .7; stroke-opacity: 1; opacity: 1; } 50% { fill-opacity: .25; stroke-opacity: .45; opacity: .55; } }
-path.tank-pulse { animation: tankPulse 1.6s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { path.tank-pulse, .irrigation-map-legend .legend-highlight { animation: none; } }
+/* Opacity only, on a layer of its own: the GPU animates it without repainting (see PULSE_PANE in
+   maps/irrigationLayers.js). Animating fill-opacity repainted the whole map every frame. */
+@keyframes tankPulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+/* 4 pulses (about 6 s) when the map opens, then steady: a pulse that never stops keeps a budget
+   phone's GPU busy every frame for as long as the map is open. */
+.leaflet-tank-pulse-pane { animation: tankPulse 1.6s ease-in-out 4; }
+@media (prefers-reduced-motion: reduce) { .leaflet-tank-pulse-pane, .irrigation-map-legend .legend-highlight { animation: none; } }
 .irrigation-map-legend .legend-bund { height: 3px; border: 0; background: #b35933; }
 .irrigation-map-legend .legend-canal { height: 3px; border: 0; background: #2996ff; }
 .irrigation-map-legend .legend-area { background: rgba(223,240,223,.65); border-color: #00a884; }
 .irrigation-map-status { grid-column: 1 / -1; color: #ffd166; white-space: normal; max-width: 220px; }
 /* pin map: bottom-right, clear of the Satellite/Map switch (top-left), zoom (top-right) and
    Use my location (bottom-left); one narrow column, closed by default */
-.gmap-wrap .irrigation-map-legend { top: auto; left: auto; right: 12px; bottom: 26px; }
+.gmap-wrap .irrigation-map-legend { top: auto; left: auto; right: 12px; bottom: 44px; }
 /* water page: bottom-right of the visible map (the sheet covers it from 400px down), under the
    zoom/locate buttons (136px + 4 x 48px + gaps = 352px); opens upwards over them, closes on a tap outside */
 .water-screen .irrigation-map-legend { top: 394px; left: auto; right: 16px; transform: translateY(-100%); z-index: 1002; }
@@ -538,6 +546,16 @@ path.tank-pulse { animation: tankPulse 1.6s ease-in-out infinite; }
 .map-top { position: absolute; left: 16px; right: 16px; top: 20px; display: flex; flex-direction: column; gap: 14px; align-items: flex-start; z-index: 1001; }
 .map-title { font-size: 22px; font-weight: 600; color: #fff; text-shadow: 0 1px 8px rgba(0,0,0,.5); }
 .map-tools { position: absolute; right: 16px; top: 136px; z-index: 1001; display: flex; flex-direction: column; gap: 8px; }
+.map-all-chip { position: absolute; left: 50%; top: 136px; transform: translateX(-50%); z-index: 1001; border: 0; background: rgba(14,33,62,.78); color: #fff; font-size: 13px; font-weight: 600; min-height: 36px; padding: 0 14px; border-radius: 18px; white-space: nowrap; backdrop-filter: blur(8px); }
+.gmap-wrap > .map-all-chip.under-base { left: 12px; top: 62px; transform: none; box-shadow: 0 4px 14px rgba(0,0,0,.2); }
+/* pin map: zoom lined up with the Satellite/Map switch, rounded like the other controls; the credits
+   get their own strip along the bottom, and Use my location / Map legend sit on one line above it */
+.gmap-wrap .leaflet-top.leaflet-right .leaflet-control-zoom { margin: 12px 12px 0 0; border: 0; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 14px rgba(0,0,0,.2); }
+.gmap-wrap .leaflet-touch .leaflet-bar a, .gmap-wrap .leaflet-bar a { width: 40px; height: 40px; line-height: 40px; font-size: 20px; color: var(--ink); background: rgba(249,250,252,.92); }
+.gmap-wrap .leaflet-control-attribution { font-size: 9px; line-height: 1.3; padding: 2px 8px; }
+.gmap-wrap > .gps-btn { bottom: 44px; }
+.gmap-wrap .irrigation-map-legend.closed { min-height: 44px; border-radius: 22px; padding: 6px 14px; align-content: center; }
+.map-all-chip.on { background: var(--accent); color: var(--ink); }
 .water-sheet { position: relative; margin: 0 auto; width: calc(100% - 20px - env(safe-area-inset-left) - env(safe-area-inset-right)); max-width: 760px; background: rgba(24,48,84,.96); color: #fff; border-radius: 30px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
 .chart { height: 120px; display: flex; align-items: flex-end; gap: 6px; position: relative; margin-top: 18px; }
 .chart-line { position: absolute; left: 0; right: 0; border-top: 1px dashed rgba(255,255,255,.3); }
@@ -717,6 +735,13 @@ button.report-row { width: 100%; border: 0; font: inherit; color: inherit; text-
 .chat-form input { border: 0; border-radius: 20px; padding: 10px 14px; background: rgb(255 255 255 / .85); box-shadow: inset 0 0 0 1px var(--line); }
 .chat-form button { border-radius: 20px; background: var(--brand); }
 
+/* On Android, Glisse bends the live backdrop with an SVG displacement filter (it does that in every
+   Chromium), and the WebView redraws that filter on every frame the content behind it moves: on
+   budget phones scrolling and map dragging stutter. So the bend is only switched off while something
+   is moving (main.jsx sets .moving) and comes back as soon as it stops; the frost and rim stay.
+   Glisse sets --lg-filter inline, hence !important. */
+.android.moving .lg-glass { --lg-filter: saturate(1.5) !important; }   /* only the glass: `*` restyled every element (map tiles too) at each scroll start and stop */
+
 @media (prefers-reduced-transparency: reduce) {
   .device { --lg-glass: rgb(249 250 252 / .97); --lg-blur: 0px; }
 }
@@ -754,3 +779,366 @@ button.report-row { width: 100%; border: 0; font: inherit; color: inherit; text-
 /* A row inside the "Latest news" card on Home; the whole row is the tap target. */
 .news-mini { align-items: center; min-height: 44px; padding: 6px; margin: 0 -6px; border-radius: 16px; text-decoration: none; color: inherit; }
 .news-mini:active { background: var(--soft); }
+
+/* ---------- disaster surveys ---------- */
+.survey-home-card {
+  border: 1.5px solid color-mix(in srgb, var(--warning-ink, #d97706) 24%, var(--line));
+  background: color-mix(in srgb, var(--warning-bg, #fffbeb) 40%, var(--card));
+  box-shadow: 0 4px 14px rgb(217 119 6 / .08);
+}
+.survey-pill-tag {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--warning-bg, #fffbeb);
+  color: var(--warning-ink, #b45309);
+  border: 1px solid color-mix(in srgb, var(--warning-ink, #b45309) 25%, transparent);
+}
+.survey-desc-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: var(--sky-50);
+  border: 1px solid var(--sky-200);
+  color: var(--navy-800);
+}
+.survey-error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: var(--danger-bg);
+  color: var(--danger-ink);
+  border: 1px solid var(--danger-line);
+}
+.survey-q-block {
+  padding: 15px 16px;
+  border-radius: 20px;
+  background: var(--card);
+  border: 1.5px solid var(--line);
+  box-shadow: 0 2px 8px rgb(14 33 62 / .04);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.survey-req-star {
+  color: var(--danger-ink);
+  font-weight: 700;
+  margin-left: 2px;
+}
+.survey-choice-btn {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 16px;
+  border: 1.5px solid var(--line);
+  background: var(--soft);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+  transition: all .15s cubic-bezier(.2, .9, .3, 1);
+  min-height: 48px;
+  font-size: 15px;
+  font-weight: 500;
+}
+.survey-choice-btn:active {
+  transform: scale(.985);
+}
+.survey-choice-btn.is-selected {
+  border-color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 10%, #fff);
+  box-shadow: 0 0 0 1px var(--brand);
+  color: var(--navy-950);
+  font-weight: 600;
+}
+.survey-radio-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--dim);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: #fff;
+  transition: all .15s ease;
+}
+.survey-radio-circle.checked {
+  border-color: var(--brand);
+  background: var(--brand);
+  box-shadow: inset 0 0 0 3.5px #fff;
+}
+.survey-checkbox-box {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 2px solid var(--dim);
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  color: #fff;
+  background: #fff;
+  transition: all .15s ease;
+}
+.survey-checkbox-box.checked {
+  border-color: var(--brand);
+  background: var(--brand);
+}
+.survey-toggle-btn {
+  min-height: 48px;
+  padding: 10px 16px;
+  border-radius: 16px;
+  border: 1.5px solid var(--line);
+  background: var(--soft);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.survey-toggle-btn:active {
+  transform: scale(.97);
+}
+.survey-toggle-btn.is-yes {
+  border-color: var(--green);
+  background: var(--green);
+  color: #fff;
+  box-shadow: 0 4px 12px rgb(25 92 46 / .22);
+}
+.survey-toggle-btn.is-no {
+  border-color: var(--slate-700);
+  background: var(--slate-700);
+  color: #fff;
+  box-shadow: 0 4px 12px rgb(66 78 94 / .22);
+}
+.survey-number-input {
+  height: 52px;
+  width: 100%;
+  border-radius: 16px;
+  border: 1.5px solid var(--line);
+  background: var(--soft);
+  padding: 0 16px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--ink);
+  outline: none;
+  transition: all .15s ease;
+}
+.survey-number-input:focus {
+  border-color: var(--brand);
+  background: #fff;
+  box-shadow: 0 0 0 3px var(--brand-soft);
+}
+.survey-textarea-box {
+  border-radius: 16px;
+  border: 1.5px solid var(--line);
+  background: var(--soft);
+  padding: 12px 14px;
+  transition: all .15s ease;
+}
+.survey-textarea-box:focus-within {
+  border-color: var(--brand);
+  background: #fff;
+  box-shadow: 0 0 0 3px var(--brand-soft);
+}
+.survey-textarea {
+  border: 0;
+  outline: none;
+  resize: vertical;
+  font-size: 15px;
+  line-height: 1.45;
+  background: transparent;
+  padding: 0;
+  width: 100%;
+  min-height: 72px;
+  color: var(--ink);
+}
+
+/* ---------- mobile responsive refinements ---------- */
+.home-greeting { font-size: 17px; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+
+/* Phones and compact mobile viewports (<= 480px) */
+@media (max-width: 480px) {
+  .lg-glass.chat-panel {
+    right: 12px;
+    left: 12px;
+    width: calc(100% - 24px);
+    max-width: none;
+    bottom: calc(var(--nav-h) + 8px);
+    height: min(460px, 70dvh);
+    border-radius: 24px;
+  }
+  .device:not(:has(.bottom-nav)) .chat-panel {
+    bottom: calc(max(16px, env(safe-area-inset-bottom)) + 64px);
+  }
+  .lg-button.chat-fab {
+    right: 12px;
+  }
+  .chat-head { padding: 14px 16px 6px; font-size: 16px; }
+  .chat-msg { max-width: 90%; font-size: 15px; padding: 7px 11px; }
+  .toast {
+    max-width: calc(100% - 24px);
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+  .sheet {
+    max-height: 90%;
+    border-radius: 28px 28px 0 0;
+  }
+}
+
+/* Small mobile devices, iPhone SE / Mini, budget Androids (<= 380px) */
+@media (max-width: 380px) {
+  .screen {
+    padding: max(16px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    gap: 12px;
+  }
+  .h1 { font-size: 28px; line-height: 34px; }
+  .h1.xl { font-size: 28px; line-height: 34px; }
+  .h1.sm { font-size: 24px; line-height: 30px; }
+  .lang-si .h1, .lang-ta .h1 { font-size: 24px; line-height: 30px; }
+  .home-greeting { font-size: 15px; }
+
+  .card {
+    padding: 14px 16px;
+    border-radius: 22px;
+    gap: 12px;
+  }
+  .card.tight {
+    padding: 12px 14px;
+    border-radius: 18px;
+  }
+  .primary-btn {
+    min-height: 52px;
+    padding: 6px 6px 6px 18px;
+    font-size: 15px;
+    border-radius: 26px;
+  }
+  .primary-btn .pb-circle {
+    width: 40px;
+    height: 40px;
+  }
+  .pill-btn.big {
+    height: 50px;
+    border-radius: 25px;
+    font-size: 15px;
+  }
+
+  /* Compact navigation on narrow screens */
+  .bottom-nav {
+    --nav-w: calc(100vw - 16px - env(safe-area-inset-left) - env(safe-area-inset-right));
+    bottom: max(10px, env(safe-area-inset-bottom));
+  }
+  .bottom-nav .lg-tab-bar {
+    --lg-tab-height: 56px;
+  }
+  .bottom-nav .lg-tab {
+    font-size: 10px;
+  }
+  .bottom-nav .lg-tab > svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Forecast table & day rows */
+  .day-row {
+    grid-template-columns: 56px minmax(28px, 1fr) 38px 38px 40px;
+    gap: 4px;
+    padding: 0 6px;
+    font-size: 13px;
+  }
+  .day-row .dr-date b { font-size: 13px; }
+  .day-row .dr-lvl { font-size: 13px; }
+  .day-row .dr-diff, .day-row .dr-rain { font-size: 11px; }
+
+  /* Issue reporting grid */
+  .issue-grid {
+    gap: 8px;
+  }
+  .issue-tile {
+    height: 108px;
+    padding: 12px;
+    border-radius: 18px;
+    font-size: 14px;
+  }
+
+  /* Weather card layout */
+  .weather-num {
+    font-size: 52px;
+  }
+  .weather-num span {
+    font-size: 18px;
+  }
+  .day-chip {
+    padding: 8px 4px 10px;
+  }
+
+  /* Surveys */
+  .survey-q-block {
+    padding: 12px 14px;
+    border-radius: 18px;
+    gap: 10px;
+  }
+  .survey-choice-btn {
+    padding: 10px 12px;
+    font-size: 14px;
+    gap: 10px;
+    min-height: 44px;
+  }
+  .survey-toggle-btn {
+    min-height: 44px;
+    font-size: 14px;
+    padding: 8px 12px;
+  }
+
+  .date-tile {
+    width: 54px;
+    height: 54px;
+    border-radius: 16px;
+  }
+  .date-tile b {
+    font-size: 22px;
+  }
+  .date-tile small {
+    font-size: 11px;
+  }
+
+  /* Language switch */
+  .lang-switch-compact { gap: 1px; padding: 2px; }
+  .lang-switch-compact button { min-width: 32px; padding: 0 4px; font-size: 11px; height: 38px; }
+}
+
+/* Extra-narrow devices (<= 340px) */
+@media (max-width: 340px) {
+  .otp { gap: 4px; }
+  .otp-box { height: 50px; border-radius: 14px; font-size: 20px; }
+  .phone-input input { font-size: 18px; padding: 0 8px; }
+  .phone-input .cc { padding: 0 10px; font-size: 14px; }
+  .rain-strip { gap: 1.5px; }
+  .weather-num { font-size: 44px; }
+  .big-num { font-size: 48px; }
+  .big-num span { font-size: 24px; }
+}
+
+/* Short height mobile viewports (<= 720px height) */
+@media (max-height: 720px) {
+  .water-screen { padding-top: 310px; }
+  .water-map { height: 350px; }
+  .water-screen .irrigation-map-legend { top: 304px; }
+  .map-tools { top: 100px; }
+  .map-all-chip { top: 100px; }
+  .gmap-wrap { height: 320px; }
+}

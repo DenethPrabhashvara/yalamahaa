@@ -22,7 +22,7 @@ async function restoreSession(user, update) {
   }
 }
 
-// Loading screen shown on launch: the Yala Maha logo with a soft ripple and a progress bar.
+// Loading screen shown while the saved session is checked.
 export default function Splash() {
   const { user, onboarded, update, t } = useApp();
   const navigate = useNavigate();
@@ -39,14 +39,18 @@ export default function Splash() {
   }, []);
 
   return (
-    <div className="splash" role="status" aria-label={`${t('appName')}, ${t('a11yLoading')}`} style={{ '--splash-ms': `${SPLASH_MS}ms` }}>
-      <div className="splash-mark">
-        <div className="splash-rings" aria-hidden="true"><span /><span /><span /></div>
-        <img src={`${import.meta.env.BASE_URL}logo-full.png`} alt="Yala Maha" draggable="false" />
+    <div className="splash" role="status" aria-label={`${t('appName')}, ${t('a11yLoading')}`}>
+      <div className="splash-brand">
+        <img src={`${import.meta.env.BASE_URL}logo.png`} alt="" draggable="false" />
+        <div className="splash-brand-copy">
+          <strong>{t('appName')}</strong>
+          <span>{t('farmerPortal')}</span>
+        </div>
       </div>
-      <div className="splash-sub">Farmer Portal - ගොවි ද්වාරය - விவசாயி தளம்</div>
-      <div className="splash-loader" aria-hidden="true"><i /></div>
-      <div className="splash-foot">Department of Agrarian Development - Irrigation Department</div>
+      <div className="splash-loading">
+        <span className="splash-track" aria-hidden="true"><i /></span>
+        <span>{t('loadingPortal')}</span>
+      </div>
     </div>
   );
 }

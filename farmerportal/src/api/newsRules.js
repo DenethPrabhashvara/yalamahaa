@@ -95,6 +95,18 @@ export function instructionSteps(instruction) {
   return instructionSections(instruction).flatMap((s) => s.items);
 }
 
+// The Met Department's colour tiers as a plain risk level: "Thunderstorms Amber Warning (Be Prepared)"
+// reads as "Thunderstorms - Medium risk". The server reads the colour off the headline (capParse.js colourOf,
+// orange counted as amber).
+const RISK_KEY = { yellow: 'riskLow', amber: 'riskMedium', red: 'riskHigh' };
+
+/** The title to show for a warning: its event and risk level, or the feed's own headline when it names no colour. */
+export function newsTitle(item, t) {
+  const key = RISK_KEY[item?.colour];
+  if (!key || !item.event) return item?.headline || item?.event || '';
+  return `${item.event} - ${t(key)}`;
+}
+
 /** The warning's description without the "Warning Description:" label in front of it. */
 export function bodyText(body) {
   const m = LABEL.exec(String(body || '').trim());

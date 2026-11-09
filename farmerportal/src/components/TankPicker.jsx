@@ -11,11 +11,16 @@ export default function TankPicker({ tanks, value, onChange, dark = false }) {
   useEffect(() => {
     const el = ref.current;
     if (!el) return undefined;
-    const measure = () => setEdges({ l: el.scrollLeft > 2, r: el.scrollLeft + el.clientWidth < el.scrollWidth - 2 });
-    measure();
+    const measure = () => {
+      const next = { l: el.scrollLeft > 2, r: el.scrollLeft + el.clientWidth < el.scrollWidth - 2 };
+      setEdges((e) => (e.l === next.l && e.r === next.r ? e : next));   // no re-render when nothing changed
+    };
+    // ResizeObserver runs after the browser's own layout, so the first measure doesn't force a layout of
+    // the whole page while it is being built (it did on every visit to Home and Water)
+    const sized = new ResizeObserver(measure);
+    sized.observe(el);
     el.addEventListener('scroll', measure, { passive: true });
-    window.addEventListener('resize', measure);
-    return () => { el.removeEventListener('scroll', measure); window.removeEventListener('resize', measure); };
+    return () => { sized.disconnect(); el.removeEventListener('scroll', measure); };
   }, [tanks]);
 
   return (

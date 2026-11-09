@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Icon from './Icon.jsx';
-import { MAP_CENTER, MAP_ZOOM, SRI_LANKA_BOUNDS, TANK_LABEL_MIN_ZOOM } from '../data.js';
+import { MAP_CENTER, MAP_ZOOM, SRI_LANKA_BOUNDS, TANK_LABEL_MIN_ZOOM, inSriLanka } from '../data.js';
 import { MAPPED_TANKS, nearestTank, PIN_SVG } from './GoogleFarmMap.jsx';
 import { addIrrigationLayers } from '../maps/irrigationLayers.js';
+import AllReservoirsButton from '../maps/AllReservoirsButton.jsx';
+import { dataTanks } from '../maps/tankFilter.js';
 import IrrigationLegend from '../maps/IrrigationLegend.jsx';
 
 // Free map: no account, key or billing.
@@ -92,9 +94,11 @@ export default function LeafletFarmMap({ pin, onPin, onLocate, onFail, autoLocat
 
   useEffect(() => {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) { onFail(); return undefined; }
+    // a pin saved outside Sri Lanka (an old test, a bad GPS fix) would open the locked map at its edge, out at sea
+    const startPin = inSriLanka(pin) ? pin : null;
     const map = L.map(boxRef.current, {
-      center: pin?.lat != null ? [pin.lat, pin.lng] : [MAP_CENTER.lat, MAP_CENTER.lng],
-      zoom: pin?.lat != null ? 17 : MAP_ZOOM,
+      center: startPin ? [startPin.lat, startPin.lng] : [MAP_CENTER.lat, MAP_CENTER.lng],
+      zoom: startPin ? 17 : MAP_ZOOM,
       zoomControl: false,
       attributionControl: true,
     });
@@ -106,7 +110,7 @@ export default function LeafletFarmMap({ pin, onPin, onLocate, onFail, autoLocat
     MAPPED_TANKS.forEach((tk) => L.marker([tk.pos.lat, tk.pos.lng], { icon: tankIcon(tk.name), interactive: false, keyboard: false }).addTo(map));
     hideTankNamesWhenFar(map);
     // not tappable: a tap on an irrigable area or reservoir has to place the pin, not open a popup
-    irrigationLayersRef.current = addIrrigationLayers(map, () => selectionRef.current, setLayerStatus, { interactive: false });
+    irrigationLayersRef.current = addIrrigationLayers(map, () => selectionRef.current, setLayerStatus, { interactive: false, dataTanks: dataTanks(MAPPED_TANKS) });
 
     const marker = L.marker([0, 0], { icon: pinIcon, draggable: true, title: t('myPlot'), autoPan: true });
     marker.on('dragend', () => { const p = marker.getLatLng(); placedByHand.current = true; onPinRef.current({ lat: p.lat, lng: p.lng }); });
@@ -162,6 +166,9 @@ export default function LeafletFarmMap({ pin, onPin, onLocate, onFail, autoLocat
         setLocating(false);
         if (auto && placedByHand.current) return;
         const p = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: Math.round(pos.coords.accuracy) };
+        // A laptop's location comes from Wi-Fi or the IP address and can be another country (or a VPN's).
+        // The map is locked to Sri Lanka, so going there showed the sea at the island's edge.
+        if (!inSriLanka(p)) { setGpsError(t('gpsOutsideSriLanka')); return; }
         onPinRef.current(p);
         onLocate?.(p);
         mapRef.current?.setView([p.lat, p.lng], 17);
@@ -212,6 +219,7 @@ export default function LeafletFarmMap({ pin, onPin, onLocate, onFail, autoLocat
           <button type="button" role="radio" aria-checked={base === 'satellite'} className={base === 'satellite' ? 'on' : ''} onClick={() => switchBase('satellite')}>{t('mapSatellite')}</button>
           <button type="button" role="radio" aria-checked={base === 'map'} className={base === 'map' ? 'on' : ''} onClick={() => switchBase('map')}>{t('mapStreet')}</button>
         </div>
+        <AllReservoirsButton layers={irrigationLayersRef} body={t('mapAllBodyReg')} t={t} className="under-base" />
         {ready && !pin?.lat && <div className="tap-hint"><Icon name="target" size={16} />{t('tapField')}</div>}
         <button type="button" className="gps-btn" onClick={() => useGps()} disabled={locating || !ready}>
           <Icon name="target" size={18} stroke={2.4} />{locating ? t('locating') : t('useMyLocation')}

@@ -208,6 +208,9 @@ export default function RegWater() {
             <input className="input" autoFocus aria-label={t('typeName')} placeholder={t('typeName')} value={water.name}
               onChange={(e) => set({ ...water, name: e.target.value.slice(0, 60), other: true })} />
           )}
+          {isOther && src.ask === 'tank' && (
+            <div className="note-box amber"><Icon name="info" size={18} stroke={2.2} style={{ flex: 'none' }} />{t('tankNoDataNote')}</div>
+          )}
         </div>
       )}
 

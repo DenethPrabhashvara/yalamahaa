@@ -7,6 +7,10 @@ import { MAPPED_TANKS } from './GoogleFarmMap.jsx';
 import { hideTankNamesWhenFar, lockToSriLanka, makeBaseLayers, pinIcon, tankIcon } from './LeafletFarmMap.jsx';
 import { addIrrigationLayers } from '../maps/irrigationLayers.js';
 import IrrigationLegend from '../maps/IrrigationLegend.jsx';
+import AllReservoirsButton from '../maps/AllReservoirsButton.jsx';
+import { dataTanks } from '../maps/tankFilter.js';
+
+const DATA_TANKS = dataTanks(MAPPED_TANKS);
 
 /**
  * Free satellite map for the Water page: the farmer's pinned field, the tank they chose
@@ -19,6 +23,7 @@ export default function WaterMap({ pin, tankName, t }) {
   if (!layersRef.current) layersRef.current = makeBaseLayers();
   const [base, setBase] = useState('satellite');
   const [layerStatus, setLayerStatus] = useState({ loading: true, error: false, zoomedOut: false });
+  const irrigationRef = useRef(null);
   const home = pin?.lat != null ? [pin.lat, pin.lng] : [MAP_CENTER.lat, MAP_CENTER.lng];
   // older farms kept the portal's label, e.g. "Senanayaka Sam (…)", so also match "<name> (" (as farmReservoirs does)
   const mine = tankName
@@ -32,15 +37,32 @@ export default function WaterMap({ pin, tankName, t }) {
     ...(tankAlias ? [tankAlias] : []),
   ].filter(Boolean);
 
-  const showFarm = () => {
+  const showFarm = (animate = true) => {
     const map = mapRef.current;
     if (!map) return;
-    if (mine && pin?.lat != null) map.fitBounds(L.latLngBounds([home, [mine.pos.lat, mine.pos.lng]]), { padding: [70, 70], maxZoom: 15 });
-    else map.setView(home, pin?.lat != null ? 15 : MAP_ZOOM);
+    if (mine && pin?.lat != null) map.fitBounds(L.latLngBounds([home, [mine.pos.lat, mine.pos.lng]]), { padding: [70, 70], maxZoom: 15, animate });
+    else map.setView(home, pin?.lat != null ? 15 : MAP_ZOOM, { animate });
   };
 
   useEffect(() => {
-    const map = L.map(boxRef.current, { center: home, zoom: pin?.lat != null ? 14 : MAP_ZOOM, zoomControl: false, scrollWheelZoom: false });
+    // Built when the phone is idle, not in the same frames as the page opening and the tab bar's spring:
+    // creating the map, its tiles and 117 tank labels is the heaviest thing any page does.
+    let cleanup = null;
+    const idle = window.requestIdleCallback || ((cb) => setTimeout(cb, 50));
+    const cancelIdle = window.cancelIdleCallback || clearTimeout;
+    const job = idle(() => { cleanup = build(); }, { timeout: 400 });
+    return () => { cancelIdle(job); cleanup?.(); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function build() {
+    if (!boxRef.current) return null;
+    const map = L.map(boxRef.current, { zoomControl: false, scrollWheelZoom: false });
+    // Open straight on the farm and its tank. Opening at zoom 14 and then fitting both on the next tick
+    // downloaded and drew the tiles twice, with a zoom animation in between.
+    mapRef.current = map;
+    const laidOut = map.getSize().x > 0;
+    showFarm(false);
     lockToSriLanka(map);
     map.attributionControl.setPrefix(false);
     map.attributionControl.setPosition('bottomleft');   // bottom-right holds the map legend button
@@ -55,12 +77,12 @@ export default function WaterMap({ pin, tankName, t }) {
       if (mine) L.polyline([home, [mine.pos.lat, mine.pos.lng]], { color: '#93d2ee', weight: 3, dashArray: '6 6', interactive: false }).addTo(map);
       L.marker(home, { icon: pinIcon, keyboard: false, title: t('myPlot'), zIndexOffset: 1000 }).addTo(map);
     }
-    const irrigationLayers = addIrrigationLayers(map, { names: tankNames, points: mine ? [mine.pos] : [] }, setLayerStatus);
-    mapRef.current = map;
-    setTimeout(() => { map.invalidateSize(); showFarm(); }, 0);
-    return () => { irrigationLayers.remove(); map.remove(); mapRef.current = null; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const irrigationLayers = addIrrigationLayers(map, { names: tankNames, points: mine ? [mine.pos] : [] }, setLayerStatus, { dataTanks: DATA_TANKS });
+    irrigationRef.current = irrigationLayers;
+    // the box had no size yet (rare): fit again once it has
+    setTimeout(() => { map.invalidateSize({ pan: false }); if (!laidOut) showFarm(false); }, 0);
+    return () => { irrigationLayers.remove(); map.remove(); mapRef.current = null; irrigationRef.current = null; };
+  }
 
   const switchBase = () => {
     const map = mapRef.current;
@@ -81,8 +103,9 @@ export default function WaterMap({ pin, tankName, t }) {
         <button type="button" className="icon-btn glass" aria-label={base === 'satellite' ? t('a11yShowStreet') : t('a11yShowSatellite')} onClick={switchBase}>
           <Icon name={base === 'satellite' ? 'map' : 'globe'} size={20} />
         </button>
-        <button type="button" className="icon-btn accent" aria-label={t('a11yShowFarm')} onClick={showFarm}><Icon name="target" size={20} /></button>
+        <button type="button" className="icon-btn accent" aria-label={t('a11yShowFarm')} onClick={() => showFarm()}><Icon name="target" size={20} /></button>
       </div>
+      <AllReservoirsButton layers={irrigationRef} body={t('mapAllBody')} t={t} />
     </>
   );
 }

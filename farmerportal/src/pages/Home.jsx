@@ -13,6 +13,8 @@ import { rainAdvice } from '../api/weather.js';
 import { useAlerts } from '../api/alerts.js';
 import { COLORS } from '../theme.js';
 import { CycloneBanner, LatestNewsCard } from '../components/News.jsx';
+import { useActiveSurveys } from '../api/surveys.js';
+import SurveySheet from '../components/SurveySheet.jsx';
 import { hhmm } from '../time.js';
 import { placeLabel } from '../components/GoogleFarmMap.jsx';
 
@@ -266,6 +268,8 @@ export default function Home() {
   const tankList = tanks.data || [];
   const reservoirId = live.tank?.id;
   const [adviceOpen, setAdviceOpen] = useState(false);
+  const { surveys: activeSurveys, reload: reloadSurveys } = useActiveSurveys(user?.farmerId);
+  const [selectedSurvey, setSelectedSurvey] = useState(null);
   const unread = useAlerts(live).filter((a) => !a.read).length;
   const firstName = farm?.name?.split(' ')[0];
   const today = new Date();
@@ -275,6 +279,7 @@ export default function Home() {
     readings.reload();
     live.rivers.reload();
     live.rain.reload();
+    reloadSurveys();
   };
 
   return (
@@ -298,6 +303,39 @@ export default function Home() {
           <Icon name="refresh" size={14} stroke={2.4} /> {fmtDay(readings.data?.latest?.date || live.today, lang, { day: 'numeric', month: 'short' })} - {t(season(today))}
         </button>
       </div>
+
+      {/* Disaster assessment survey prompt when an active poll is pending */}
+      {activeSurveys.map((survey, index) => (
+        <Card key={survey.id} className="survey-home-card">
+          <div className="row gap12" style={{ alignItems: 'flex-start' }}>
+            <div className="icon-tile amber big" style={{ flexShrink: 0 }}>
+              <Icon name="survey" size={26} />
+            </div>
+            <div className="grow min0">
+              <div className="row between gap6">
+                <span className="survey-pill-tag">{t('disasterSurvey')}</span>
+                {index === 0 && activeSurveys.length > 1 && (
+                  <span className="f12 muted">{t('pendingSurveyCount').replace('{n}', activeSurveys.length)}</span>
+                )}
+              </div>
+              <div className="f16 fw600" style={{ marginTop: 4 }}>{survey.title}</div>
+              {survey.description && (
+                <div className="f13 muted lh line-clamp-2" style={{ marginTop: 2 }}>
+                  {survey.description}
+                </div>
+              )}
+              <button
+                type="button"
+                className="pill-btn dark sm"
+                style={{ marginTop: 10 }}
+                onClick={() => setSelectedSurvey(survey)}
+              >
+                <Icon name="check" size={16} /> {t('takeSurvey')}
+              </button>
+            </div>
+          </div>
+        </Card>
+      ))}
 
       {/* Flood alert first — the most urgent question */}
       <FloodCard flood={flood} rivers={live.rivers} onAdvice={() => setAdviceOpen(true)} t={t} />
@@ -343,6 +381,18 @@ export default function Home() {
           </ol>
           <Link to="/water" className="pill-btn dark big" onClick={() => setAdviceOpen(false)}>{t('tankCanals')} <Icon name="arrow" size={18} stroke={2.2} /></Link>
         </Sheet>
+      )}
+
+      {selectedSurvey && (
+        <SurveySheet
+          survey={selectedSurvey}
+          open={Boolean(selectedSurvey)}
+          onClose={() => setSelectedSurvey(null)}
+          onSuccess={() => {
+            setSelectedSurvey(null);
+            reloadSurveys();
+          }}
+        />
       )}
     </div>
   );

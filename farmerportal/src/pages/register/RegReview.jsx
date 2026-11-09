@@ -13,7 +13,7 @@ import { floodLabel } from './RegFlood.jsx';
 import { placeLabel } from '../../components/GoogleFarmMap.jsx';
 
 export default function RegReview() {
-  const { t, draft, update, user, alerts, showToast } = useApp();
+  const { t, lang, draft, update, user, alerts, showToast } = useApp();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -54,6 +54,7 @@ export default function RegReview() {
         address: draft.address.trim(),
         district: draft.district,
         division: draft.division?.trim() || null,
+        preferred_lang: lang,
         farm_latitude: Number(draft.pin.lat.toFixed(6)),
         farm_longitude: Number(draft.pin.lng.toFixed(6)),
         reservoir_id: await findReservoirId(tank).catch(() => null),

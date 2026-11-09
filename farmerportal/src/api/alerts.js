@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { useApp } from '../state/AppContext.jsx';
 import { fmtDay } from '../components/ForecastChart.jsx';
 import { LOW_PCT } from './reservoirs.js';
-import { useNews, activeNews, instructionSteps, bodyText } from './news.js';
+import { useNews, activeNews, instructionSteps, bodyText, newsTitle } from './news.js';
 import { hhmm, timeAgo } from '../time.js';
 
 const DATE = { day: 'numeric', month: 'short' };
@@ -67,7 +67,7 @@ export function useAlerts(live) {
       .map((n) => ({
         id: `cap:${n.id}`,
         kind: 'advisory',
-        title: n.headline,
+        title: newsTitle(n, t),
         body: instructionSteps(n.instruction)[0] || bodyText(n.body),
         when: hhmm(n.sent),
         read: readAdvisories.has(`cap:${n.id}`),

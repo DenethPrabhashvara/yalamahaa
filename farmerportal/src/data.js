@@ -87,6 +87,11 @@ export const MAP_ZOOM = 8;
 // panning and zooming out stop at it. Sri Lanka's land ends about 79.7 E (Mannar, Kalpitiya) and
 // 9.83 N (Point Pedro); the box stops short of India's coast (Rameswaram 79.3 E, Kodiakkarai 10.3 N).
 export const SRI_LANKA_BOUNDS = { south: 5.75, west: 79.6, north: 9.95, east: 82.0 };
+// A GPS fix or saved pin outside the box is ignored: on a laptop the location comes from Wi-Fi or the IP
+// address and can be another country, and the locked map would open at its edge, out at sea.
+export const inSriLanka = (p) => p?.lat != null && p?.lng != null
+  && p.lat >= SRI_LANKA_BOUNDS.south && p.lat <= SRI_LANKA_BOUNDS.north
+  && p.lng >= SRI_LANKA_BOUNDS.west && p.lng <= SRI_LANKA_BOUNDS.east;
 // Tank names are hidden when zoomed out further than this: at island scale 117 names pile on top of each other.
 export const TANK_LABEL_MIN_ZOOM = 11;
 

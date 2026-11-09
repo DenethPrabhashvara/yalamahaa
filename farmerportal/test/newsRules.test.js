@@ -1,7 +1,7 @@
 // Weather warning text from the Department of Meteorology (src/api/newsRules.js): how the sheet on
 // the News page splits it into a description and titled sections of points.
 import { describe, expect, it } from 'vitest';
-import { bodyText, instructionSections, instructionSteps } from '../src/api/newsRules.js';
+import { bodyText, instructionSections, instructionSteps, newsTitle } from '../src/api/newsRules.js';
 
 // as the API sends it (GET /api/data/news), shortened
 const LIGHTNING = 'Action Required: • Suspend or postpone outdoor sports, construction, agricultural, and recreational activities when thunderstorms approach. • Move immediately into a substantial building. • Avoid beaches, swimming areas, lakes, rivers, and other water bodies.\n'
@@ -68,5 +68,28 @@ describe('bodyText', () => {
   it('leaves a description without a label as it is', () => {
     expect(bodyText('Heavy rain above 100 mm is likely. Take care: roads may flood.')).toBe('Heavy rain above 100 mm is likely. Take care: roads may flood.');
     expect(bodyText(null)).toBe('');
+  });
+});
+
+describe('newsTitle', () => {
+  const t = (k) => ({ riskLow: 'Low risk', riskMedium: 'Medium risk', riskHigh: 'High risk' })[k] || k;
+  it.each([
+    ['yellow', 'Heavy Rain', 'Heavy Rain - Low risk'],
+    ['amber', 'Thunderstorms', 'Thunderstorms - Medium risk'],
+    ['red', 'Cyclone', 'Cyclone - High risk'],
+  ])('%s -> risk level, not the colour', (colour, event, want) => {
+    const title = newsTitle({ colour, event, headline: `${event} ${colour} Warning (Be Prepared)` }, t);
+    expect(title).toBe(want);
+    expect(title).not.toMatch(/amber|yellow|red|warning/i);
+  });
+  it('keeps the feed\'s headline when it names no colour', () => {
+    expect(newsTitle({ colour: null, event: 'Fog', headline: 'Fog advisory' }, t)).toBe('Fog advisory');
+  });
+  it('falls back to the event, then nothing', () => {
+    expect(newsTitle({ colour: null, event: 'Fog' }, t)).toBe('Fog');
+    expect(newsTitle(null, t)).toBe('');
+  });
+  it('uses the translated event and risk', () => {
+    expect(newsTitle({ colour: 'amber', event: 'மின்னல்' }, (k) => (k === 'riskMedium' ? 'நடுத்தர ஆபத்து' : k))).toBe('மின்னல் - நடுத்தர ஆபத்து');
   });
 });

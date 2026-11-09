@@ -1,4 +1,5 @@
 import L from 'leaflet';
+import { dataKeysFor, keepDataTanks, nameMatches, simplifyName } from './tankFilter.js';
 
 const LAYER_URL = 'https://services3.arcgis.com/J7ZFXmR8rSmQ3FGf/arcgis/rest/services/Scheme_Data_2/FeatureServer';
 const LAYERS = [
@@ -24,18 +25,6 @@ const COLORS = {
   spill: '#ed5353',
   // the tank's own canals and bunds and the fields it waters, when it is the farmer's tank
   highlight: '#a8c8f0',
-};
-
-const simplifyName = (value) => String(value || '')
-  .normalize('NFD')
-  .replace(/[\u0300-\u036f]/g, '')
-  .toLowerCase()
-  .replace(/\b(wewa|tank|reservoir|samudraya|samudra)\b/g, '')
-  .replace(/[^a-z0-9]/g, '');
-
-const nameMatches = (name, selectedNames) => {
-  const left = simplifyName(name);
-  return Boolean(left && selectedNames.some((selected) => left === simplifyName(selected)));
 };
 
 // The GIS often spells a tank differently from the app (Kantalai / Kantale, Hurulu wewa /
@@ -75,20 +64,29 @@ function distanceToOutline(p, rings) {
   return inside ? 0 : best;
 }
 
-// GIS names of the reservoir outlines at or next to the selected tanks' points
+// GIS names of the reservoir outlines at or next to the given tanks' points. Each outline's box
+// (grown by MATCH_RADIUS_M) is checked first, so matching all 117 tanks against ~1000 outlines stays cheap.
+const PAD_DEG = MATCH_RADIUS_M / 100000;
 function namesAtPoints(loaded, points) {
-  const reservoirs = loaded.find(({ layer }) => layer.kind === 'reservoir')?.data.features || [];
+  const reservoirs = (loaded.find(({ layer }) => layer.kind === 'reservoir')?.data.features || []).map((feature) => {
+    const rings = ringsOf(feature.geometry);
+    let w = Infinity, s = Infinity, e = -Infinity, n = -Infinity;
+    rings.forEach((ring) => ring.forEach(([x, y]) => { w = Math.min(w, x); e = Math.max(e, x); s = Math.min(s, y); n = Math.max(n, y); }));
+    return { rings, name: feature.properties?.Res_Name, box: [w - PAD_DEG, s - PAD_DEG, e + PAD_DEG, n + PAD_DEG] };
+  });
   const names = [];
   points.forEach(({ lat, lng }) => {
     let best = null;
-    reservoirs.forEach((feature) => {
-      const d = distanceToOutline([lng, lat], ringsOf(feature.geometry));
-      if (d <= MATCH_RADIUS_M && (!best || d < best.d)) best = { d, name: feature.properties?.Res_Name };
+    reservoirs.forEach(({ rings, name, box }) => {
+      if (lng < box[0] || lat < box[1] || lng > box[2] || lat > box[3]) return;
+      const d = distanceToOutline([lng, lat], rings);
+      if (d <= MATCH_RADIUS_M && (!best || d < best.d)) best = { d, name };
     });
     if (best?.name) names.push(best.name);
   });
   return names;
 }
+
 
 function popupContent(properties, kind) {
   const fields = {
@@ -129,15 +127,34 @@ function featureStyle(kind, selected) {
 
 // interactive = false: the shapes ignore taps (no popups), so a tap on an irrigable area or
 // reservoir reaches the map below. Leaflet stops the map click when it opens a feature's popup.
-function makeLayer(layer, geojson, selectedTankName, interactive) {
+// The farmer's own tank (outline and point) is drawn in a layer of its own, and that whole layer
+// pulses by opacity (.leaflet-tank-pulse-pane in styles.css). Opacity on its own layer is animated by
+// the GPU; pulsing the shape's fill-opacity inside the shared SVG made the phone repaint every shape on
+// the map 60 times a second (and the glass over it re-bend), which is what made budget phones lag.
+const PULSE_PANE = 'tank-pulse';
+const isPulsing = (layer, feature, selectedTankName) => (layer.kind === 'reservoir' || layer.kind === 'tank')
+  && nameMatches(feature.properties?.Res_Name || feature.properties?.Scheme, selectedTankName);
+
+function makeLayer(layer, geojson, selectedTankName, interactive, pulseRenderer, dataKeys) {
+  geojson = keepDataTanks(layer.kind, geojson, dataKeys);   // the tanks we have data for (tankFilter.js)
+  const steady = makeGeoJSON(layer, geojson, selectedTankName, interactive, (f) => !isPulsing(layer, f, selectedTankName), {});
+  if (!pulseRenderer || !geojson.features.some((f) => isPulsing(layer, f, selectedTankName))) return steady;
+  const pulsing = makeGeoJSON(layer, geojson, selectedTankName, interactive, (f) => isPulsing(layer, f, selectedTankName),
+    { pane: PULSE_PANE, renderer: pulseRenderer });
+  return L.layerGroup([steady, pulsing]);
+}
+
+function makeGeoJSON(layer, geojson, selectedTankName, interactive, filter, paneOptions) {
   return L.geoJSON(geojson, {
     interactive,
+    filter,
+    ...paneOptions,
     style: (feature) => {
       const name = feature.properties?.Res_Name || feature.properties?.Scheme;
       const selected = nameMatches(name, selectedTankName);
       if (layer.kind === 'reservoir') {
-        // the same blue for every tank; the farmer's own pulses (.tank-pulse in styles.css)
-        return { color: COLORS.reservoirEdge, weight: 2, opacity: 0.9, fillColor: COLORS.reservoir, fillOpacity: 0.6, ...(selected ? { className: 'tank-pulse' } : {}) };
+        // the same blue for every tank; the farmer's own pulses (its layer, see PULSE_PANE)
+        return { color: COLORS.reservoirEdge, weight: 2, opacity: 0.9, fillColor: COLORS.reservoir, fillOpacity: selected ? 0.7 : 0.6 };
       }
       return featureStyle(layer.kind, selected);
     },
@@ -145,12 +162,12 @@ function makeLayer(layer, geojson, selectedTankName, interactive) {
       const selected = nameMatches(feature.properties?.Res_Name, selectedTankName);
       return L.circleMarker(latlng, {
         interactive,
+        ...paneOptions,
         radius: selected ? 7 : 5,
         color: layer.kind === 'tank' ? COLORS.reservoirEdge : '#15283f',
         weight: selected ? 2 : 1,
         fillColor: COLORS[layer.kind],
         fillOpacity: 0.95,
-        ...(selected && layer.kind === 'tank' ? { className: 'tank-pulse' } : {}),   // not its sluices / spills
       });
     },
     onEachFeature: (feature, featureLayer) => {
@@ -195,22 +212,39 @@ async function fetchLayer(layer, bounds, tolerance, zoom, signal) {
  * selection: { names, points } (or a function returning it) for the tank(s) to highlight;
  *   names are app spellings, points ({ lat, lng }) find the outline when the GIS spells it differently.
  * options.interactive (default true): false on maps where a tap must place a pin.
+ * options.dataTanks: [{ names, pos }] for the tanks we have readings for. When given, other reservoirs
+ *   and tanks are hidden until setShowAll(true).
  * Fires on 'moveend' (fetch for the new area) and 'irrigationselectionchange' (restyle only).
  */
-export function addIrrigationLayers(map, selection, onStatus, { interactive = true } = {}) {
+export function addIrrigationLayers(map, selection, onStatus, { interactive = true, dataTanks } = {}) {
   let controller;
   let timer;
   let requestId = 0;
   let visibleLayers = L.layerGroup().addTo(map);
   let loaded = []; // [{ layer, data }] from the last fetch, so a new selection doesn't download again
+  if (!map.getPane(PULSE_PANE)) map.createPane(PULSE_PANE).style.zIndex = 401;   // just above the other shapes
+  const pulseRenderer = L.svg({ pane: PULSE_PANE });
+  let pulsed = false;
+  let showAll = false;
+  let dataKeys = null;   // simplified names, worked out once per download, not on every restyle
 
   const render = () => {
     const { names: given = [], points = [] } = (typeof selection === 'function' ? selection() : selection) || {};
     const names = [...given, ...namesAtPoints(loaded, points)];
+    if (dataTanks && !dataKeys) {
+      dataKeys = dataKeysFor(dataTanks, namesAtPoints(loaded, dataTanks.map((tk) => tk.pos)));
+    }
+    const only = dataTanks && !showAll ? new Set([...dataKeys, ...names.map(simplifyName)]) : null;
     const nextLayers = L.layerGroup();
-    loaded.forEach(({ layer, data }) => nextLayers.addLayer(makeLayer(layer, data, names, interactive)));
+    loaded.forEach(({ layer, data }) => nextLayers.addLayer(makeLayer(layer, data, names, interactive, pulseRenderer, only)));
     map.removeLayer(visibleLayers);
     visibleLayers = nextLayers.addTo(map);
+    // The 4 pulses start when the farmer's tank is first drawn (its outline arrives a few seconds after
+    // the map opens), not when the map was created. Panning later doesn't start them again.
+    if (!pulsed && map.getPane(PULSE_PANE).querySelector('path')) {
+      pulsed = true;
+      map.getPane(PULSE_PANE).getAnimations?.().forEach((a) => { a.currentTime = 0; a.play(); });
+    }
   };
 
   const update = () => {
@@ -233,6 +267,7 @@ export function addIrrigationLayers(map, selection, onStatus, { interactive = tr
 
       const failures = [];
       loaded = [];
+      dataKeys = null;
       results.forEach((result) => {
         if (result.status === 'fulfilled') loaded.push(result.value);
         else if (result.reason?.name !== 'AbortError') failures.push(result.reason);
@@ -251,12 +286,14 @@ export function addIrrigationLayers(map, selection, onStatus, { interactive = tr
 
   return {
     refresh: update,
+    setShowAll: (value) => { showAll = Boolean(value); render(); },
     remove: () => {
       clearTimeout(timer);
       controller?.abort();
       map.off('moveend', update);
       map.off('irrigationselectionchange', render);
       map.removeLayer(visibleLayers);
+      if (map.hasLayer(pulseRenderer)) map.removeLayer(pulseRenderer);
     },
   };
 }

@@ -3,7 +3,7 @@ import { useApp } from '../state/AppContext.jsx';
 import { IconBtn } from '../components/UI.jsx';
 import Icon from '../components/Icon.jsx';
 import Sheet from '../components/Sheet.jsx';
-import { useNews, newsIcon, instructionSections, bodyText, newsErrorText } from '../api/news.js';
+import { useNews, newsIcon, instructionSections, bodyText, newsErrorText, newsTitle } from '../api/news.js';
 import { timeAgo, fmtDateTime } from '../time.js';
 
 // Official weather warnings from the Department of Meteorology. "My area" filters to the
@@ -74,7 +74,7 @@ export default function News() {
             <div className={`icon-tile ${n.tone}`}><Icon name={newsIcon(n)} size={22} /></div>
             <div className="grow" style={{ textAlign: 'left' }}>
               <div className="row between gap8">
-                <span className="f15 fw600">{n.headline}</span>
+                <span className="f15 fw600">{newsTitle(n, t)}</span>
                 <span className="f12 muted nowrap">{n.expired ? t('ended') : timeAgo(n.sent, t, lang)}</span>
               </div>
               {bodyText(n.body) && <div className="f15 muted lh" style={{ marginTop: 2 }}>{bodyText(n.body)}</div>}
@@ -90,7 +90,7 @@ export default function News() {
       <Sheet open={Boolean(open)} onClose={() => setOpen(null)} title={open?.event || t('news')}>
         {open && (
           <>
-            <div className="f17 fw600 lh">{open.headline}</div>
+            <div className="f17 fw600 lh">{newsTitle(open, t)}</div>
             {open.langFallback && <div className="f12 muted">{t('englishOnly')}</div>}
             <div className="f15 muted lh">
               {t('issued')} {fmtDateTime(open.sent, lang)}

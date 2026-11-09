@@ -2,6 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { translate } from '../i18n.js';
 import { CROP_CATALOG } from '../data.js';
 import * as authApi from '../api/auth.js';
+import { clearSavedData } from '../api/reservoirs.js';
+import { flushSurveyQueue } from '../api/surveys.js';
 import { fromGeoJSON, toGeoJSON } from '../fieldShape.js';
 
 const STORAGE_KEY = 'yma-state-v1';
@@ -38,7 +40,7 @@ export function migrateSaved(saved) {
   }
   // The SMS setting is saved on the server now (farm.smsEnabled)
   delete saved.smsEnabled;
-  // Canal names saved with a middle dot ("Kaudulla · Lower") are now written with a dash
+  // Canal names saved with an old separator ("Kaudulla - Lower") are normalized to a dash
   for (const place of [saved.farm, saved.draft]) {
     if (place?.water?.name) place.water.name = place.water.name.replaceAll('·', '-');
   }
@@ -87,6 +89,7 @@ export function AppProvider({ children }) {
   const [state, setState] = useState(() => ({ ...defaults, ...(load() || {}) }));
   const [toast, setToast] = useState(null);
   const toastTimer = useRef();
+  const languageSave = useRef(Promise.resolve());
 
   useEffect(() => { save(state); }, [state]);
   useEffect(() => { document.documentElement.lang = state.lang; }, [state.lang]);
@@ -101,17 +104,55 @@ export function AppProvider({ children }) {
     toastTimer.current = setTimeout(() => setToast(null), 2800);
   }, []);
 
+  useEffect(() => {
+    const farmerId = state.user?.farmerId;
+    if (!farmerId) return undefined;
+    let active = true;
+    const sync = () => {
+      flushSurveyQueue(farmerId)
+        .then(({ error }) => {
+          if (active && error) showToast(`${t('surveyQueueSendError')}: ${error.message}`, 'warning');
+        })
+        .catch((error) => {
+          if (active) showToast(error.message || t('surveyQueueStorageError'), 'error');
+        });
+    };
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') sync();
+    };
+    sync();
+    window.addEventListener('online', sync);
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      active = false;
+      window.removeEventListener('online', sync);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, [state.user?.farmerId, showToast, t]);
+
+  const setLanguage = useCallback((lang) => {
+    if (!['en', 'si', 'ta'].includes(lang)) return;
+    update({ lang });
+    if (!state.user?.farmerId) return;
+    languageSave.current = languageSave.current
+      .catch(() => {})
+      .then(() => authApi.updateProfile({ preferred_lang: lang }))
+      .catch((error) => showToast(error.message || t('languageSaveError'), 'warning'));
+  }, [state.user?.farmerId, update, showToast, t]);
+
   const value = useMemo(() => ({
-    ...state, update, t, toast, showToast,
+    ...state, update, setLanguage, t, toast, showToast,
     logout: () => {
       authApi.logout().catch(() => { /* session is cleared locally either way */ });
+      clearSavedData();   // the next farmer on this phone should not see this farm's tank first
       setState((s) => ({ ...s, user: null }));
     },
     resetAll: () => {
       authApi.logout().catch(() => {});
+      clearSavedData();
       setState({ ...defaults });
     },
-  }), [state, update, t, toast, showToast]);
+  }), [state, update, setLanguage, t, toast, showToast]);
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
 }

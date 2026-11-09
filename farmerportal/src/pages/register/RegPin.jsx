@@ -6,6 +6,7 @@ import Icon from '../../components/Icon.jsx';
 import { GOOGLE_MAPS_KEY } from '../../api/googleMaps.js';
 import GoogleFarmMap, { formatDistance, nearestTank, placeLabel } from '../../components/GoogleFarmMap.jsx';
 import { farFromPin } from '../../fieldShape.js';
+import { inSriLanka } from '../../data.js';
 
 // Leaflet (~150 KB) only downloads when this step opens.
 const LeafletFarmMap = lazy(() => import('../../components/LeafletFarmMap.jsx'));
@@ -20,7 +21,8 @@ export default function RegPin() {
   const navigate = useNavigate();
   // Google satellite map when a key is set, otherwise the free Leaflet/OpenStreetMap map.
   const [mapMode, setMapMode] = useState(typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : LIVE_MAP);
-  const geoPin = draft.pin?.lat != null ? draft.pin : null;
+  // a pin outside Sri Lanka (an old test, a laptop's guessed location) is no pin: the farmer places it again
+  const geoPin = inSriLanka(draft.pin) ? draft.pin : null;
   const set = (patch) => update((s) => ({ draft: { ...s.draft, ...patch } }));
   const canNext = Boolean(geoPin);
 
