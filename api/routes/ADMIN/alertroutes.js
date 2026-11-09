@@ -6,10 +6,12 @@ const {
   sendSms,
   getSmsStatus,
   getBalance,
-  sendRegistrationConfirmation
+  sendRegistrationConfirmation,
+  validateSriLankanMobile,
 } = require('../../services/smsService.js')
 const { sendCampaign } = require('../../services/campaignService.js')
 const { checkGauges } = require('../../services/floodAlertJob.js')
+const { exposureGroup, buildFloodAlertMessage } = require('../../services/floodAlertMessages.js')
 const stormCalls = require('../../services/stormCallJob.js')
 const stormForecast = require('../../services/stormForecast.js')
 const tankForecastAlerts = require('../../services/tankForecastAlerts.js')
@@ -283,6 +285,147 @@ smsrouter.post('/auto-alerts/send-now', async (req, res, next) => {
         accepted: campaigns.reduce((total, campaign) => total + campaign.delivered, 0),
         failed: campaigns.reduce((total, campaign) => total + campaign.failed, 0),
         dry_run: campaigns.some((campaign) => campaign.dry_run),
+      }
+    })
+  } catch (e) {
+    next(e)
+  }
+})
+
+// demonstration endpoint: preview how risk level changes the flood alert SMS
+smsrouter.post('/auto-alerts/demo-preview', async (req, res, next) => {
+  try {
+    const {
+      basin = 'Kelani Ganga',
+      station = 'Kithulgala',
+      floodStage = 'alert',
+      riskCategory = 'higher_susceptibility',
+      waterLevel,
+    } = req.body || {}
+
+    const gRow = await db.query(
+      `SELECT alertpull, minorpull, majorpull, water_level
+       FROM river_level_realtime
+       WHERE basin = $1 AND station = $2
+       ORDER BY creation_date DESC LIMIT 1`,
+      [basin, station]
+    )
+
+    const row = gRow.rows[0]
+    const alertLevel = row?.alertpull ? Number(row.alertpull) : 3.0
+    const minorLevel = row?.minorpull ? Number(row.minorpull) : 4.0
+    const majorLevel = row?.majorpull ? Number(row.majorpull) : 5.0
+
+    const gaugeObj = {
+      basin,
+      station,
+      alert: alertLevel,
+      minor: minorLevel,
+      major: majorLevel,
+      level: waterLevel ? Number(waterLevel) : floodStage === 'major' ? majorLevel + 0.25 : alertLevel + 0.15,
+      sure: waterLevel ? Number(waterLevel) : floodStage === 'major' ? majorLevel + 0.25 : alertLevel + 0.15,
+    }
+
+    const categoryCode =
+      riskCategory === 'higher_susceptibility' ? 'high'
+      : riskCategory === 'lower_susceptibility' ? 'low'
+      : 'medium'
+
+    const message = buildFloodAlertMessage(floodStage, gaugeObj, categoryCode)
+    res.status(200).json({
+      status: 'success',
+      data: { message, gauge: gaugeObj, riskCategory, floodStage }
+    })
+  } catch (e) {
+    next(e)
+  }
+})
+
+// demonstration endpoint: send risk-customized flood alert SMS to a test phone or sample farmer
+smsrouter.post('/auto-alerts/demo-send', async (req, res, next) => {
+  try {
+    const {
+      basin = 'Kelani Ganga',
+      station = 'Kithulgala',
+      floodStage = 'alert',
+      riskCategory = 'higher_susceptibility',
+      waterLevel,
+      phone,
+      farmerName = 'Demonstration',
+    } = req.body || {}
+
+    const gRow = await db.query(
+      `SELECT basin, station, alertpull, minorpull, majorpull, water_level
+       FROM river_level_realtime
+       WHERE basin = $1 AND station = $2
+       ORDER BY creation_date DESC LIMIT 1`,
+      [basin, station]
+    )
+
+    const row = gRow.rows[0]
+    const alertLevel = row?.alertpull ? Number(row.alertpull) : 3.0
+    const minorLevel = row?.minorpull ? Number(row.minorpull) : 4.0
+    const majorLevel = row?.majorpull ? Number(row.majorpull) : 5.0
+
+    const gaugeObj = {
+      basin,
+      station,
+      alert: alertLevel,
+      minor: minorLevel,
+      major: majorLevel,
+      level: waterLevel ? Number(waterLevel) : floodStage === 'major' ? majorLevel + 0.25 : alertLevel + 0.15,
+      sure: waterLevel ? Number(waterLevel) : floodStage === 'major' ? majorLevel + 0.25 : alertLevel + 0.15,
+    }
+
+    const categoryCode =
+      riskCategory === 'higher_susceptibility' ? 'high'
+      : riskCategory === 'lower_susceptibility' ? 'low'
+      : 'medium'
+
+    const message = buildFloodAlertMessage(floodStage, gaugeObj, categoryCode)
+
+    let recipients = []
+    if (phone && phone.trim()) {
+      const chk = validateSriLankanMobile(phone)
+      if (!chk.valid) {
+        return res.status(400).json({ status: 'fail', message: chk.error })
+      }
+      recipients = [{ full_name: farmerName, phone: chk.normalized }]
+    } else {
+      const fRows = await db.query(
+        `SELECT f.full_name, f.phone, r.category AS flood_category
+         FROM farmers f
+         LEFT JOIN farm_flood_risk r ON r.farm_id = f.farm_id
+         WHERE f.is_active AND f.sms_enabled
+         LIMIT 10`
+      )
+      const matching = fRows.rows.filter((f) => exposureGroup(f.flood_category) === riskCategory)
+      recipients = matching.length ? [matching[0]] : fRows.rows.slice(0, 1)
+    }
+
+    if (!recipients.length) {
+      return res.status(400).json({ status: 'fail', message: 'No recipient phone number provided or found.' })
+    }
+
+    const campaign = await sendCampaign({
+      adminId: req.admin?.admin_id || null,
+      label: `Demo flood alert - ${basin} at ${station} - ${floodStage} - ${riskCategory}`,
+      message,
+      farmers: recipients,
+    })
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        message,
+        recipients: campaign.recipients,
+        delivered: campaign.delivered,
+        failed: campaign.failed,
+        dry_run: campaign.dry_run,
+        campaignId: campaign.id,
+        phone: recipients[0].phone,
+        riskCategory,
+        floodStage,
       }
     })
   } catch (e) {

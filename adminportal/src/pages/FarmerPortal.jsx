@@ -671,8 +671,8 @@ export function FarmerPortal() {
                       IRRIGATION_SCHEDULES.map((schedule) => ({
                         Scheme: schedule.scheme,
                         Section: schedule.section ?? '',
-                        'Water from': schedule.start.toLocaleDateString('en-CA'),
-                        'Water until': schedule.end.toLocaleDateString('en-CA'),
+                        'Water from': schedule.start instanceof Date ? schedule.start.toLocaleDateString('en-CA') : (schedule.start ?? ''),
+                        'Water until': schedule.end instanceof Date ? schedule.end.toLocaleDateString('en-CA') : (schedule.end ?? ''),
                         'Duration (days)': schedule.durationDays,
                         'Paddy target (ha)': schedule.paddyArea,
                         'Total target (ha)': schedule.totalArea,
@@ -726,7 +726,7 @@ export function FarmerPortal() {
                     <strong>{schedule.system}</strong>
                     <span>{formatNumber(schedule.extent)} ha initial extent</span>
                     <div className="schedule-crops">
-                      {schedule.crops.map((crop) => (
+                      {schedule.crops?.map((crop) => (
                         <span className="crop-pill" key={`${schedule.id}-${crop.name}`}>
                           {crop.name}
                           {crop.duration ? ` - ${crop.duration}d` : ''}

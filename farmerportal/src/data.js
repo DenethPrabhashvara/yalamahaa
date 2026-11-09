@@ -93,7 +93,7 @@ export const inSriLanka = (p) => p?.lat != null && p?.lng != null
   && p.lat >= SRI_LANKA_BOUNDS.south && p.lat <= SRI_LANKA_BOUNDS.north
   && p.lng >= SRI_LANKA_BOUNDS.west && p.lng <= SRI_LANKA_BOUNDS.east;
 // Tank names are hidden when zoomed out further than this: at island scale 117 names pile on top of each other.
-export const TANK_LABEL_MIN_ZOOM = 11;
+export const TANK_LABEL_MIN_ZOOM = 0;
 
 export const DISTRICTS = [
   'Ampara', 'Anuradhapura', 'Badulla', 'Batticaloa', 'Colombo', 'Galle', 'Gampaha', 'Hambantota', 'Jaffna',

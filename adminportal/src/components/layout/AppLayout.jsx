@@ -4,6 +4,7 @@ import { AlertTriangle, RefreshCw } from '../ui/icons'
 import { cn, formatDateTime } from '../../utils/format'
 import { useData } from '../../context/DataContext'
 import { LoadingScreen } from '../ui/LoadingScreen'
+import { ErrorBoundary } from '../ui/ErrorBoundary'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { CommandPalette } from './CommandPalette'
@@ -78,7 +79,9 @@ export function AppLayout() {
             </div>
           )}
           {loaded ? (
-            <Outlet context={{ openSearch: () => setPaletteOpen(true) }} />
+            <ErrorBoundary key={location.pathname}>
+              <Outlet context={{ openSearch: () => setPaletteOpen(true) }} />
+            </ErrorBoundary>
           ) : (
             <LoadingScreen label="Loading reservoirs, rivers and farmers…" />
           )}

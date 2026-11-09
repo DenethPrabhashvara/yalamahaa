@@ -499,7 +499,12 @@ export function Reports() {
                 <div>
                   <span>Location</span>
                   <strong>
-                    {selected.latitude !== null ? (
+                    {selected.latitude !== null &&
+                    selected.longitude !== null &&
+                    Number(selected.latitude) !== 0 &&
+                    Number(selected.longitude) !== 0 &&
+                    !Number.isNaN(Number(selected.latitude)) &&
+                    !Number.isNaN(Number(selected.longitude)) ? (
                       <a
                         className="text-btn"
                         href={`https://www.google.com/maps?q=${Number(selected.latitude)},${Number(selected.longitude)}`}

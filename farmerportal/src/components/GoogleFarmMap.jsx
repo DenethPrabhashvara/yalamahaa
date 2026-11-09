@@ -88,11 +88,11 @@ export default function GoogleFarmMap({ pin, onPin, onLocate, onFail, autoLocate
         });
         mapRef.current = map;
         const tankMarkers = MAPPED_TANKS.map((tk) => new AdvancedMarkerElement({ map, position: tk.pos, content: tankEl(tk.name), title: tk.name }));
-        // zoomed out to the whole island the 117 names pile up: show them from TANK_LABEL_MIN_ZOOM in
+        // always show tank and reservoir labels
         let shown = true;
         const showTanks = () => {
-          const want = map.getZoom() >= TANK_LABEL_MIN_ZOOM;
-          if (want !== shown) { shown = want; tankMarkers.forEach((m) => { m.map = want ? map : null; }); }
+          const want = true;
+          if (want !== shown) { shown = want; tankMarkers.forEach((m) => { m.map = map; }); }
         };
         map.addListener('zoom_changed', showTanks);
         showTanks();

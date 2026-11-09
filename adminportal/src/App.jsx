@@ -13,6 +13,7 @@ import { Login } from './pages/Login'
 import { useAuth } from './context/AuthContext'
 import { DataProvider } from './context/DataContext'
 import { LoadingScreen } from './components/ui/LoadingScreen'
+import { ErrorBoundary } from './components/ui/ErrorBoundary'
 
 // Everything except the sign-in page needs a signed-in admin
 function SignedIn() {
@@ -21,9 +22,11 @@ function SignedIn() {
   if (status === 'loading') return <LoadingScreen label="Checking your session…" />
   if (status === 'out') return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />
   return (
-    <DataProvider>
-      <AppLayout />
-    </DataProvider>
+    <ErrorBoundary>
+      <DataProvider>
+        <AppLayout />
+      </DataProvider>
+    </ErrorBoundary>
   )
 }
 

@@ -40,26 +40,37 @@ export function lockToSriLanka(map) {
 export const makeBaseLayers = () => ({
   satellite: [
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 19, maxNativeZoom: ESRI_NATIVE_ZOOM, bounds: sriLanka(), attribution: 'Imagery © Esri, Maxar, Earthstar Geographics',
+      maxZoom: 19,
+      maxNativeZoom: ESRI_NATIVE_ZOOM,
+      bounds: sriLanka(),
+      attribution: 'Imagery © Esri, Maxar, Earthstar Geographics',
+      updateWhenIdle: false,
+      updateInterval: 200,
+      keepBuffer: 3,
     }),
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 19, maxNativeZoom: ESRI_NATIVE_ZOOM, bounds: sriLanka(),
+    L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      maxNativeZoom: ESRI_NATIVE_ZOOM,
+      bounds: sriLanka(),
+      updateWhenIdle: false,
+      updateInterval: 200,
+      keepBuffer: 3,
     }),
   ],
   map: [
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19, bounds: sriLanka(), attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+      bounds: sriLanka(),
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      updateWhenIdle: false,
+      updateInterval: 200,
+      keepBuffer: 3,
     }),
   ],
 });
 
 export const pinIcon = L.divIcon({ className: 'lf-pin', html: PIN_SVG, iconSize: [40, 52], iconAnchor: [20, 48] });
-// Adds the 'tanks-far' class to the map box while zoomed out past TANK_LABEL_MIN_ZOOM (styles.css hides the names).
-export function hideTankNamesWhenFar(map) {
-  const set = () => map.getContainer().classList.toggle('tanks-far', map.getZoom() < TANK_LABEL_MIN_ZOOM);
-  map.on('zoomend', set);
-  set();
-}
+export function hideTankNamesWhenFar() {}
 export const tankIcon = (name, mine = false) => L.divIcon({ className: 'lf-tank', html: `<span class="gm-tank-label${mine ? ' mine' : ''}">${name}</span>`, iconSize: [0, 0] });
 
 /**
@@ -213,7 +224,7 @@ export default function LeafletFarmMap({ pin, onPin, onLocate, onFail, autoLocat
       {searchError && <div className="f13 err-text">{searchError}</div>}
 
       <div className="gmap-wrap">
-        <div ref={boxRef} className="gmap" role="application" aria-label={t('pinTitle')} />
+        <div ref={boxRef} className="gmap" data-base={base} role="application" aria-label={t('pinTitle')} />
         <IrrigationLegend t={t} status={layerStatus} collapsible selectedLabel={t('mapNearestTank')} selectedAreaLabel={t('mapNearestTankFields')} showSelected={Boolean(selectedTank)} />
         <div className="seg-mini map-base" role="radiogroup" aria-label={t('a11yMapType')}>
           <button type="button" role="radio" aria-checked={base === 'satellite'} className={base === 'satellite' ? 'on' : ''} onClick={() => switchBase('satellite')}>{t('mapSatellite')}</button>

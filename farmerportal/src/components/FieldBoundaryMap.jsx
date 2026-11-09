@@ -119,7 +119,7 @@ export default function FieldBoundaryMap({ pin, points, onChange, onFail, t }) {
   return (
     <>
       <div className="gmap-wrap tall">
-        <div ref={boxRef} className="gmap" role="application" aria-label={t('fieldTitle')} />
+        <div ref={boxRef} className="gmap" data-base={base} role="application" aria-label={t('fieldTitle')} />
         <div className="seg-mini map-base" role="radiogroup" aria-label={t('a11yMapType')}>
           <button type="button" role="radio" aria-checked={base === 'satellite'} className={base === 'satellite' ? 'on' : ''} onClick={() => switchBase('satellite')}>{t('mapSatellite')}</button>
           <button type="button" role="radio" aria-checked={base === 'map'} className={base === 'map' ? 'on' : ''} onClick={() => switchBase('map')}>{t('mapStreet')}</button>

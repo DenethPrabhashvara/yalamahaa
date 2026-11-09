@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from 'react'
-import { BellOff, BellRing } from './ui/icons'
+import { BellOff, BellRing, Send } from './ui/icons'
 import { api } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { formatDateTime } from '../utils/format'
 import { Badge } from './ui/Badge'
 import { Button } from './ui/Button'
+import { FloodAlertDemo } from './FloodAlertDemo'
 
 // The on/off switch for the API's automatic flood alert SMS (API/services/floodAlertJob.js)
 export function AutoFloodAlerts({ compact = false }) {
@@ -13,6 +14,7 @@ export function AutoFloodAlerts({ compact = false }) {
   const { toast } = useToast()
   const [state, setState] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [demoOpen, setDemoOpen] = useState(false)
 
   const load = useCallback(() => {
     api('/admin/sms/auto-alerts')
@@ -72,10 +74,16 @@ export function AutoFloodAlerts({ compact = false }) {
         )}
       </div>
       {canEdit && (
-        <Button variant={on ? 'secondary' : 'primary'} size="sm" loading={saving} onClick={toggle}>
-          {on ? 'Turn off' : 'Turn on'}
-        </Button>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <Button variant="secondary" size="sm" icon={Send} onClick={() => setDemoOpen(true)}>
+            Demo risk SMS
+          </Button>
+          <Button variant={on ? 'secondary' : 'primary'} size="sm" loading={saving} onClick={toggle}>
+            {on ? 'Turn off' : 'Turn on'}
+          </Button>
+        </div>
       )}
+      <FloodAlertDemo open={demoOpen} onClose={() => setDemoOpen(false)} />
     </div>
   )
 }

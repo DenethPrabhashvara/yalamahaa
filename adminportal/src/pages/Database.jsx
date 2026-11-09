@@ -335,7 +335,7 @@ export function Database() {
               <tbody>
                 {result?.data.map((row, index) => (
                   <tr key={index} className="clickable-row" onClick={() => setEditor({ row })}>
-                    {table.columns.map((column) => (
+                    {table?.columns?.map((column) => (
                       <td key={column.name}>
                         <Cell value={row[column.name]} />
                       </td>

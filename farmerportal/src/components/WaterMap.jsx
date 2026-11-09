@@ -95,7 +95,7 @@ export default function WaterMap({ pin, tankName, t }) {
 
   return (
     <>
-      <div ref={boxRef} className="water-map" role="application" aria-label={t('tankCanals')} />
+      <div ref={boxRef} className="water-map" data-base={base} role="application" aria-label={t('tankCanals')} />
       <IrrigationLegend t={t} status={layerStatus} collapsible showSelected={Boolean(mine)} />
       <div className="map-tools">
         <button type="button" className="icon-btn glass" aria-label={t('a11yZoomIn')} onClick={() => mapRef.current?.zoomIn()}><Icon name="plus" size={20} /></button>

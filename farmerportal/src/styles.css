@@ -511,7 +511,9 @@ a { color: inherit; }
 
 /* ---------- water ---------- */
 .water-screen { position: relative; min-height: 100%; padding-top: 400px; background: var(--dark); overflow: hidden; }
-.water-map { position: absolute; left: 0; right: 0; top: 0; height: 440px; background: #2c3f16; isolation: isolate; }
+.water-map { position: absolute; left: 0; right: 0; top: 0; height: 440px; background: #1b2618; isolation: isolate; }
+.water-map.leaflet-container { font-family: var(--font); background: #1b2618; }
+.water-map[data-base="map"].leaflet-container { background: #e8ecef; }
 .water-map .leaflet-control-attribution { margin-bottom: 44px; }
 .irrigation-map-legend { position: absolute; z-index: 1001; top: 126px; left: 16px; display: grid; grid-template-columns: repeat(2, max-content); gap: 6px 12px; padding: 9px 11px; border-radius: 12px; background: rgba(15,31,49,.86); color: #fff; font-size: 10px; line-height: 1.2; box-shadow: 0 2px 9px rgba(0,0,0,.2); }
 .irrigation-map-legend > div:not(.irrigation-map-status) { display: flex; align-items: center; gap: 5px; white-space: nowrap; }
@@ -601,7 +603,8 @@ a { color: inherit; }
 .gmap { position: absolute; inset: 0; }
 /* Free Leaflet map: keep its panes (z 400–1000) inside the card, and our overlays above them. */
 .gmap-wrap > .tap-hint, .gmap-wrap > .gps-btn, .gmap-wrap > .map-base, .gmap-wrap > .corner-tools { z-index: 1001; }
-.gmap .leaflet-container, .gmap.leaflet-container { font-family: var(--font); background: var(--map-bg); }
+.gmap .leaflet-container, .gmap.leaflet-container { font-family: var(--font); background: #1b2618; }
+.gmap[data-base="map"].leaflet-container { background: #e8ecef; }
 .map-base { position: absolute; left: 12px; top: 12px; box-shadow: 0 4px 14px rgba(0,0,0,.2); background: rgba(249,250,252,.92); }
 .map-base button { height: 36px; }
 .lf-pin { cursor: grab; }
@@ -612,7 +615,6 @@ a { color: inherit; }
 .corner-tool { height: 44px; width: 44px; padding: 0; border-radius: 22px; border: 0; background: rgba(249,250,252,.95); color: var(--ink); font-size: 15px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
 .corner-tool:disabled { opacity: .5; }
 .lf-tank .gm-tank-label { position: absolute; transform: translate(-50%, -50%); }
-.tanks-far .lf-tank .gm-tank-label:not(.mine) { display: none; } /* see hideTankNamesWhenFar */
 .lf-tank .gm-tank-label.mine { background: var(--accent); color: var(--ink); font-size: 13px; padding: 7px 12px; } /* the farmer's own tank */
 .gmap-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 15px; font-weight: 600; color: var(--map-ink); }
 .gmap-wrap .tap-hint { top: 40%; }
