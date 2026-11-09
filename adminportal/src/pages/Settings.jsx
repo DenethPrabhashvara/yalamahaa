@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Navigate, NavLink, useParams } from 'react-router-dom'
-import { Check, Clock3, KeyRound, Moon, Palette, ShieldCheck, Sun, UserPlus, UserRound, Users } from 'lucide-react'
+import { Check, Clock3, KeyRound, Moon, Palette, ShieldCheck, Sun, UserPlus, UserRound, Users } from '../components/ui/icons'
 import { useTheme } from '../context/ThemeContext'
 import { useToast } from '../context/ToastContext'
 import { ROLE_LABELS, useAuth } from '../context/AuthContext'
