@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { AlertTriangle, ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, ShieldCheck, UserRound } from 'lucide-react'
+import { AlertTriangle, ArrowRight, Eye, EyeOff, Loader2, LockKeyhole, ShieldCheck, UserRound } from '../components/ui/icons'
 import { useAuth } from '../context/AuthContext'
 
 export function Login() {

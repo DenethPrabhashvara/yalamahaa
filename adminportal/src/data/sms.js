@@ -5,30 +5,47 @@ export const SMS_TEMPLATES = [
     id: 'tpl-flood',
     name: 'Flood warning',
     category: 'Emergency',
-    body:
-      'Yala Maha ALERT: {{river}} {{level}} at {{station}}. Move livestock to higher ground and keep away from low-lying fields and roads.',
+    body: [
+      'EN: Yala Maha FLOOD ALERT: {{river}} {{levelEn}} at {{station}} ({{level}} m). Move livestock to higher ground and avoid flooded roads.',
+      'SI: Yala Maha ගංවතුර අනතුරු ඇඟවීම: {{river}} හි {{station}} මිනුම් ස්ථානය {{levelSi}} ({{level}} m). සතුන් උස් බිමකට ගෙන ගොස් ජලයෙන් යටවූ මාර්ගවලින් ඉවත් වන්න.',
+      'TA: Yala Maha வெள்ள எச்சரிக்கை: {{river}} ஆற்றின் {{station}} நிலையம் {{levelTa}} ({{level}} m). கால்நடைகளை மேட்டுக்கு நகர்த்தி, வெள்ளப் பாதைகளைத் தவிர்க்கவும்.',
+    ].join('\n'),
   },
   {
     id: 'tpl-release',
     name: 'Water release notice',
     category: 'Irrigation',
-    body:
-      'Yala Maha: Water release for {{scheme}} begins on {{date}}. Please prepare your field channels.',
+    body: [
+      'EN: Yala Maha: Water release for {{scheme}} begins on {{date}}. Please prepare your field channels.',
+      'SI: Yala Maha: {{scheme}} යෝජනා ක්‍රමය සඳහා ජලය {{date}} දින නිකුත් කිරීම ආරම්භ වේ. ඔබේ කුඹුරු ඇළ මාර්ග සූදානම් කරගන්න.',
+      'TA: Yala Maha: {{scheme}} திட்டத்திற்கான நீர் {{date}} அன்று திறக்கப்படும். உங்கள் வயல் வாய்க்கால்களைத் தயார் செய்யுங்கள்.',
+    ].join('\n'),
   },
   {
     id: 'tpl-tank',
     name: 'Tank level',
     category: 'Irrigation',
-    body:
-      'Yala Maha: {{tank}} is at {{percent}}% storage. Plan your water use with your farmer organisation.',
+    body: [
+      'EN: Yala Maha: {{tank}} is at {{percent}}% storage. Plan your water use with your farmer organisation.',
+      'SI: Yala Maha: {{tank}} ජලාශයේ ජලය ධාරිතාවෙන් {{percent}}% කි. ගොවි සංවිධානය සමඟ ජල භාවිතය සැලසුම් කරන්න.',
+      'TA: Yala Maha: {{tank}} நீர்த்தேக்கத்தில் {{percent}}% நீர் உள்ளது. விவசாய அமைப்புடன் நீர் பயன்பாட்டைத் திட்டமிடுங்கள்.',
+    ].join('\n'),
   },
   {
     id: 'tpl-advisory',
     name: 'Crop advisory',
     category: 'Agronomy',
-    body: 'Yala Maha ADVISORY: Dear {{name}}, ',
+    body: [
+      'EN: Yala Maha CROP ADVISORY: Dear {{name}}, follow the latest advice from your local agriculture officer.',
+      'SI: Yala Maha වගා උපදෙස්: {{name}} මහත්මයා/මහත්මිය, ඔබේ ප්‍රදේශයේ කෘෂිකර්ම නිලධාරියාගේ නවතම උපදෙස් පිළිපදින්න.',
+      'TA: Yala Maha பயிர் ஆலோசனை: {{name}}, உங்கள் பகுதி விவசாய அலுவலரின் சமீபத்திய ஆலோசனையைப் பின்பற்றுங்கள்.',
+    ].join('\n'),
   },
 ]
+
+export function renderSmsTemplate(template, values) {
+  return template.body.replace(/\{\{(\w+)\}\}/g, (match, key) => values[key] ?? match)
+}
 
 // delivered = accepted by Text.lk; handset_* = Text.lk's report of what reached the phone.
 // tracked = messages with a Text.lk id (0 for dry runs and campaigns sent before tracking)

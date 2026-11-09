@@ -16,7 +16,7 @@ import {
   Waves,
   ChevronRight,
   ClipboardList,
-} from 'lucide-react'
+} from '../components/ui/icons'
 import { useData } from '../context/DataContext'
 import { useToast } from '../context/ToastContext'
 import { downloadCsv, formatDate, formatDateTime, formatNumber } from '../utils/format'
@@ -215,11 +215,6 @@ export function Dashboard() {
     <div className="page dashboard-page">
       <PageHeader
         eyebrow={new Date().toLocaleString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-        badge={
-          <Badge tone="success" dot>
-            {SCHEDULE_SUMMARY.releasing} canal sections receiving water
-          </Badge>
-        }
         title="Dashboard"
         description={`Reservoir storage, river gauges and farmer registrations. Reservoir readings of ${formatDate(TANK_SUMMARY.latestReading)}.`}
         actions={

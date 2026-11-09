@@ -23,7 +23,7 @@ import {
   Search,
   Waves,
   X,
-} from 'lucide-react'
+} from '../components/ui/icons'
 import { TANK_STATUS_META } from '../data/tanks'
 import { useData } from '../context/DataContext'
 import { useAuth } from '../context/AuthContext'
@@ -346,7 +346,7 @@ function ReservoirForecast({ reservoir }) {
       <div className="detail-section-head">
         <div>
           <strong>14-day forecast</strong>
-          <span>Model prediction · % of full effective storage</span>
+          <span>Model prediction - % of full effective storage</span>
         </div>
         {risk && <Badge tone={risk.tone} dot>{risk.label}</Badge>}
       </div>
@@ -369,13 +369,13 @@ function ReservoirForecast({ reservoir }) {
               <span className="detail-stat-icon"><Gauge size={15} /></span>
               <span>Now</span>
               <strong>{now.toFixed(1)}%</strong>
-              <small>{formatNumber(data.storage_now_acft)} AF · {formatDate(data.from_date, { year: undefined })}</small>
+              <small>{formatNumber(data.storage_now_acft)} AF - {formatDate(data.from_date, { year: undefined })}</small>
             </div>
             <div className="detail-stat">
               <span className="detail-stat-icon"><CalendarClock size={15} /></span>
               <span>In {data.horizon_days} days</span>
               <strong>{next.toFixed(1)}%</strong>
-              <small>{formatNumber(data.predicted_storage_in_14d_acft)} AF · {formatDate(data.target_date, { year: undefined })}</small>
+              <small>{formatNumber(data.predicted_storage_in_14d_acft)} AF - {formatDate(data.target_date, { year: undefined })}</small>
             </div>
             <div className="detail-stat">
               <span className="detail-stat-icon">{change >= 0 ? <ArrowUp size={15} /> : <ArrowDown size={15} />}</span>
@@ -385,7 +385,7 @@ function ReservoirForecast({ reservoir }) {
             </div>
             <div className="detail-stat">
               <span className="detail-stat-icon"><Droplets size={15} /></span>
-              <span>Rain · last 7 days</span>
+              <span>Rain - last 7 days</span>
               <strong>{data.rain_last_7d_mm} mm</strong>
               <small>Open-Meteo, at the reservoir</small>
             </div>
@@ -416,7 +416,7 @@ export function Tanks() {
   const [district, setDistrict] = useState('all')
   const [type, setType] = useState('all')
   const [status, setStatus] = useState('all')
-  const [sort, setSort] = useState({ key: 'percent', direction: 'asc' })
+  const [sort, setSort] = useState({ key: 'district', direction: 'asc' })
   const [page, setPage] = useState(1)
   const [view, setView] = useState('table')
   const [selectedId, setSelectedId] = useState(null)
@@ -446,10 +446,13 @@ export function Tanks() {
         const direction = sort.direction === 'asc' ? 1 : -1
         const left = a[sort.key]
         const right = b[sort.key]
-        if (typeof left === 'string') return left.localeCompare(right) * direction
+        let comparison = 0
         if (left === null || left === undefined) return 1
         if (right === null || right === undefined) return -1
-        return (left - right) * direction
+        if (typeof left === 'string') comparison = left.localeCompare(right)
+        else comparison = left - right
+        if (comparison) return comparison * direction
+        return sort.key === 'district' ? a.name.localeCompare(b.name) : 0
       })
   }, [tanks, query, district, type, status, sort])
 
@@ -466,18 +469,6 @@ export function Tanks() {
   useEffect(() => {
     setPage(1)
   }, [query, district, type, status, sort])
-
-  useEffect(() => {
-    if (initialQuery) {
-      const timer = setTimeout(() => {
-        const params = new URLSearchParams(searchParams)
-        params.delete('q')
-        setSearchParams(params, { replace: true })
-      }, 400)
-      return () => clearTimeout(timer)
-    }
-    return undefined
-  }, [initialQuery, searchParams, setSearchParams])
 
   const updateParam = (value) => {
     setQuery(value)
@@ -617,11 +608,6 @@ export function Tanks() {
     <div className="page tanks-page">
       <PageHeader
         eyebrow={`Water resources - Latest readings ${formatDate(TANK_SUMMARY.latestReading)}`}
-        badge={
-          <Badge tone="info" dot>
-            {TANK_SUMMARY.total} reservoirs
-          </Badge>
-        }
         title="Tank & reservoir register"
         description={`Usable storage, spilling reservoirs and field readings for the ${TANK_SUMMARY.total} monitored reservoirs.`}
         actions={

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { X } from 'lucide-react'
+import { X } from './icons'
 import { cn } from '../../utils/format'
 import { IconButton } from './Button'
 
@@ -22,17 +22,21 @@ const useOverlayBehaviour = (open, onClose) => {
 
 export function Modal({
   open,
+  isOpen,
   onClose,
   title,
   description,
+  subtitle,
   children,
   footer,
   size = 'md',
   icon: Icon,
   className,
 }) {
-  useOverlayBehaviour(open, onClose)
-  if (!open) return null
+  const visible = Boolean(open ?? isOpen)
+  const resolvedDescription = description || subtitle
+  useOverlayBehaviour(visible, onClose)
+  if (!visible) return null
 
   return createPortal(
     <div
@@ -56,7 +60,7 @@ export function Modal({
             )}
             <div>
               <h2>{title}</h2>
-              {description && <p>{description}</p>}
+              {resolvedDescription && <p>{resolvedDescription}</p>}
             </div>
           </div>
           <IconButton label="Close dialog" onClick={onClose}>
@@ -97,7 +101,7 @@ export function Drawer({ open, onClose, title, description, children, footer, wi
             )}
             <div>
               <h2>{title}</h2>
-              {description && <p>{description}</p>}
+              {resolvedDescription && <p>{resolvedDescription}</p>}
             </div>
           </div>
           <IconButton label="Close panel" onClick={onClose}>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { BellOff, BellRing } from 'lucide-react'
+import { BellOff, BellRing } from './ui/icons'
 import { api } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'

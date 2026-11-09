@@ -1,4 +1,4 @@
-import { Loader2 } from 'lucide-react'
+import { Loader2 } from './icons'
 
 export function LoadingScreen({ label }) {
   return (

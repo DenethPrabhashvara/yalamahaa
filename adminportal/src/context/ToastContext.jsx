@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useRef, useState } from 'react'
-import { AlertTriangle, CheckCircle2, Info, X, XCircle } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Info, X, XCircle } from '../components/ui/icons'
 
 const ToastContext = createContext(null)
 
@@ -25,12 +25,25 @@ export function ToastProvider({ children }) {
   const toast = useCallback(
     (message, options = {}) => {
       const id = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`
+      let text = message
+      let opts = options
+      if (typeof message === 'object' && message !== null) {
+        text = message.message || message.text || JSON.stringify(message)
+        opts = {
+          title: message.title || options.title,
+          tone: message.tone || (message.type === 'critical' ? 'error' : message.type) || options.tone || 'info',
+          duration: message.duration || options.duration,
+        }
+      } else if (typeof text !== 'string') {
+        text = String(text ?? '')
+      }
+      const tone = opts.tone === 'critical' ? 'error' : (opts.tone || 'success')
       const next = {
         id,
-        message,
-        title: options.title || null,
-        tone: options.tone || 'success',
-        duration: options.duration || 3800,
+        message: text,
+        title: opts.title || null,
+        tone,
+        duration: opts.duration || 3800,
       }
       setToasts((current) => [...current.slice(-3), next])
       timers.current[id] = setTimeout(() => dismiss(id), next.duration)

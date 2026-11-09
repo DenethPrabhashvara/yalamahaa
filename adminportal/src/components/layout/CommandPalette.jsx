@@ -15,7 +15,7 @@ import {
   Users,
   Waves,
   X,
-} from 'lucide-react'
+} from '../ui/icons'
 import { cn } from '../../utils/format'
 import { useData } from '../../context/DataContext'
 import { api } from '../../api/client'

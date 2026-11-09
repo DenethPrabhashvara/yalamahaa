@@ -16,7 +16,7 @@ import {
   Signal,
   Waves,
   X,
-} from 'lucide-react'
+} from '../components/ui/icons'
 import { useData } from '../context/DataContext'
 import { useToast } from '../context/ToastContext'
 import { cn, csvTime, downloadCsv, formatDateTime } from '../utils/format'
@@ -192,11 +192,6 @@ export function Rivers() {
     <div className="page rivers-page">
       <PageHeader
         eyebrow={`Hydrology - Latest reading ${formatDateTime(RIVER_SUMMARY.updatedAt)}`}
-        badge={
-          <Badge tone={FLOOD_ALERTS.length ? 'warning' : 'success'} dot>
-            {FLOOD_ALERTS.length} at or above alert level
-          </Badge>
-        }
         title="River monitoring & flood watch"
         description={`Water levels against the alert, minor flood and major flood levels at ${RIVER_SUMMARY.total} river gauges.`}
         actions={

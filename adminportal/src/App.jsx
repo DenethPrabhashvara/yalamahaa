@@ -4,6 +4,7 @@ import { Dashboard } from './pages/Dashboard'
 import { Tanks } from './pages/Tanks'
 import { Rivers } from './pages/Rivers'
 import { SmsGateway } from './pages/SmsGateway'
+import { Surveys } from './pages/Surveys'
 import { FarmerPortal } from './pages/FarmerPortal'
 import { Database } from './pages/Database'
 import { Reports } from './pages/Reports'
@@ -36,6 +37,7 @@ export default function App() {
         <Route path="rivers" element={<Rivers />} />
         <Route path="reports" element={<Reports />} />
         <Route path="sms" element={<SmsGateway />} />
+        <Route path="surveys" element={<Surveys />} />
         <Route path="farmers" element={<FarmerPortal />} />
         
         <Route path="database" element={<Database />} />

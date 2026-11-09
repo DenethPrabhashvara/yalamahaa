@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
-import { AlertTriangle, RefreshCw } from 'lucide-react'
+import { AlertTriangle, RefreshCw } from '../ui/icons'
 import { cn, formatDateTime } from '../../utils/format'
 import { useData } from '../../context/DataContext'
 import { LoadingScreen } from '../ui/LoadingScreen'

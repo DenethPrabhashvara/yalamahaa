@@ -20,7 +20,7 @@ import {
   Users,
   Wheat,
   X,
-} from 'lucide-react'
+} from '../components/ui/icons'
 import { FLOOD_DEPTH_LABELS, FLOOD_HISTORY_LABELS, WATER_SOURCE_LABELS, cropName, csvPhone, farmerFromApi, formatPhone } from '../data/farmers'
 import { useData } from '../context/DataContext'
 import { useAuth } from '../context/AuthContext'
@@ -333,11 +333,6 @@ export function FarmerPortal() {
     <div className="page farmers-page">
       <PageHeader
         eyebrow="Farmer services"
-        badge={
-          <Badge tone="success" dot>
-            {formatNumber(FARMER_SUMMARY.registered)} registered
-          </Badge>
-        }
         title="Farmers & water schedule"
         description="Farmers registered through the farmer portal, and when each canal section receives water."
         actions={

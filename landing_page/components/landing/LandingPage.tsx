@@ -14,14 +14,45 @@ import SiteRelative8 from "./SiteRelative8";
 import Motion from "./Motion";
 import SmartAssistSection from "./SmartAssistSection";
 import { getDict, type Lang } from "../../lib/i18n";
+import { getSiteUrl } from "../../lib/seo";
+import { SITE } from "../../lib/site";
 
 const motion =
   '[{"id":"r1","type":"resp","mq":"(max-width: 767.98px)","add":["site-from-black-80","site-to-black-40"],"remove":["site-from-black-90","to-transparent"]},{"id":"r2","type":"resp","mq":"(max-width: 767.98px)","add":["site-from-black-90","to-transparent"],"remove":["site-from-black-80","site-to-black-40"]}]';
 
 export default function LandingPage({ lang }: { lang: Lang }) {
   const t = getDict(lang);
+  const siteUrl = getSiteUrl();
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": `${siteUrl}#website`,
+        url: siteUrl,
+        name: SITE.name,
+        inLanguage: lang,
+      },
+      {
+        "@type": "SoftwareApplication",
+        "@id": `${siteUrl}#application`,
+        name: SITE.name,
+        url: siteUrl,
+        image: new URL("/images/logo-icon.png", siteUrl).toString(),
+        description: t.meta.description,
+        applicationCategory: "UtilitiesApplication",
+        operatingSystem: "Android, iOS",
+        inLanguage: ["en", "si", "ta"],
+      },
+    ],
+  };
+
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replace(/</g, "\\u003c") }}
+      />
       <link rel="stylesheet" href="/assets/css/landing.css" precedence="default" />
       <>
         <Header t={t} lang={lang} />

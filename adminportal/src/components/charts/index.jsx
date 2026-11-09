@@ -404,7 +404,7 @@ function ForecastTooltip({ active, payload }) {
     <div className="chart-tooltip">
       <p className="chart-tooltip-label">
         {formatDate(point.date, { year: undefined })}
-        {point.isTarget ? ' · predicted' : point.isToday ? ' · latest' : ''}
+        {point.isTarget ? ' - predicted' : point.isToday ? ' - latest' : ''}
       </p>
       <div className="chart-tooltip-row">
         <span className="chart-tooltip-dot" style={{ background: point.isTarget ? CHART_COLORS.violet : CHART_COLORS.primary }} />

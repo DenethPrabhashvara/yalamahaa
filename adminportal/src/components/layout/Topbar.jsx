@@ -18,7 +18,7 @@ import {
   UserRound,
   Waves,
   CalendarDays,
-} from 'lucide-react'
+} from '../ui/icons'
 import { cn } from '../../utils/format'
 import { useTheme } from '../../context/ThemeContext'
 import { useToast } from '../../context/ToastContext'

@@ -11,12 +11,16 @@ export function Card({ className, children, interactive = false, ...props }) {
 export function CardHeader({
   title,
   subtitle,
+  description,
   icon: Icon,
   action,
+  actions,
   badge,
   className,
   children,
 }) {
+  const resolvedAction = action || actions
+  const resolvedSubtitle = subtitle || description
   return (
     <div className={cn('card-header', className)}>
       <div className="card-heading">
@@ -30,10 +34,10 @@ export function CardHeader({
             <h3 className="card-title">{title}</h3>
             {badge}
           </div>
-          {subtitle && <p className="card-subtitle">{subtitle}</p>}
+          {resolvedSubtitle && <p className="card-subtitle">{resolvedSubtitle}</p>}
         </div>
       </div>
-      {action && <div className="card-action">{action}</div>}
+      {resolvedAction && <div className="card-action">{resolvedAction}</div>}
       {children}
     </div>
   )
