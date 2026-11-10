@@ -440,11 +440,11 @@ export function Surveys() {
         description="Deploy rapid damage assessment surveys to targeted farmer groups or individual farms during climate and agrarian events."
         actions={
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <Button variant="secondary" icon={RefreshCw} onClick={loadSurveys}>
+            <Button variant="secondary" onClick={loadSurveys}>
               Refresh
             </Button>
             {canEdit && (
-              <Button variant="primary" icon={Plus} onClick={scrollToComposer}>
+              <Button variant="primary" onClick={scrollToComposer}>
                 Create survey
               </Button>
             )}
@@ -507,7 +507,7 @@ export function Surveys() {
           description="Click on any survey to view live analytics, response breakdowns and export data"
           action={
             canEdit && (
-              <Button variant="secondary" size="sm" icon={Plus} onClick={scrollToComposer}>
+              <Button variant="secondary" size="sm" onClick={scrollToComposer}>
                 New survey
               </Button>
             )
@@ -525,7 +525,7 @@ export function Surveys() {
             <strong>No surveys created yet</strong>
             <span>Scroll down or click below to build your first disaster assessment survey.</span>
             {canEdit && (
-              <Button variant="primary" icon={Plus} size="sm" onClick={scrollToComposer} style={{ marginTop: 8 }}>
+              <Button variant="primary" size="sm" onClick={scrollToComposer} style={{ marginTop: 8 }}>
                 Create survey
               </Button>
             )}
@@ -793,7 +793,7 @@ export function Surveys() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: 12, fontWeight: 600 }}>{pickedFarmers.length} Farmers Selected</span>
-                    <Button variant="outline" size="sm" icon={Users} onClick={() => setFarmerModalOpen(true)}>
+                    <Button variant="outline" size="sm" onClick={() => setFarmerModalOpen(true)}>
                       Pick Farmers
                     </Button>
                   </div>
@@ -973,7 +973,7 @@ export function Surveys() {
 
           {canEdit && (
             <div className="composer-footer" style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
-              <Button variant="primary" type="submit" icon={Send} disabled={submitting}>
+              <Button variant="primary" type="submit" disabled={submitting}>
                 {submitting ? 'Deploying to farmers…' : 'Deploy Survey'}
               </Button>
             </div>

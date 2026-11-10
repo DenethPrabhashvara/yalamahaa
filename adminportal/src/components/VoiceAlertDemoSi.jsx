@@ -51,7 +51,7 @@ export function VoiceAlertDemoSi() {
               <PhoneCall size={15} />
               <input type="tel" placeholder="0771234567" value={phone} onChange={(e) => setPhone(e.target.value)} />
             </label>
-            <Button size="sm" icon={PhoneCall} loading={calling} disabled={!phone.trim()} onClick={call}>
+            <Button size="sm" loading={calling} disabled={!phone.trim()} onClick={call}>
               Call
             </Button>
           </div>

@@ -165,7 +165,7 @@ export function Settings() {
                 />
               </label>
               <div className="span-2" style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button variant="primary" icon={Check} type="submit" loading={savingPassword}>
+                <Button variant="primary" type="submit" loading={savingPassword}>
                   Change password
                 </Button>
               </div>
@@ -292,7 +292,7 @@ export function Settings() {
                 </select>
               </label>
               <div className="span-2" style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <Button variant="primary" icon={UserPlus} type="submit" loading={creating}>
+                <Button variant="primary" type="submit" loading={creating}>
                   Create account
                 </Button>
               </div>

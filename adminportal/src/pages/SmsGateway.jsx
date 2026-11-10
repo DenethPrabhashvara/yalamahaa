@@ -452,12 +452,11 @@ export function SmsGateway() {
         description="Send flood warnings, water release notices and advisories to registered farmers, and see what was sent."
         actions={
           <>
-            <Button icon={Download} variant="secondary" onClick={handleExport} disabled={!CAMPAIGNS.length}>
+            <Button variant="secondary" onClick={handleExport} disabled={!CAMPAIGNS.length}>
               Export history
             </Button>
             {canEdit && (
               <Button
-                icon={Megaphone}
                 variant="primary"
                 onClick={() => document.getElementById('composer')?.scrollIntoView({ behavior: 'smooth' })}
               >
@@ -683,7 +682,7 @@ export function SmsGateway() {
                   </small>
                 )}
               </div>
-              <Button variant="primary" size="md" icon={Send} loading={sending} onClick={askToSend}>
+              <Button variant="primary" size="md" loading={sending} onClick={askToSend}>
                 Send message
               </Button>
             </div>
@@ -808,11 +807,11 @@ export function SmsGateway() {
             <VoiceAlertDemo />
             <VoiceAlertDemoSi />
             <div className="gateway-actions">
-              <Button variant="secondary" size="sm" icon={BellRing} loading={checkingAlert} onClick={checkTankAlert}>
+              <Button variant="secondary" size="sm" loading={checkingAlert} onClick={checkTankAlert}>
                 Check high tank alert
               </Button>
               {canEdit && (
-                <Button variant="secondary" size="sm" icon={BellRing} onClick={() => setManualAlertOpen(true)}>
+                <Button variant="secondary" size="sm" onClick={() => setManualAlertOpen(true)}>
                   Check & send due flood alerts
                 </Button>
               )}
@@ -987,7 +986,7 @@ export function SmsGateway() {
             <Button variant="ghost" onClick={() => setConfirmOpen(false)} disabled={sending}>
               Cancel
             </Button>
-            <Button variant="primary" icon={Send} loading={sending} onClick={handleSend}>
+            <Button variant="primary" loading={sending} onClick={handleSend}>
               Send to {formatNumber(activeGroup?.count || 0)} farmer{activeGroup?.count === 1 ? '' : 's'}
             </Button>
           </>
@@ -1019,7 +1018,7 @@ export function SmsGateway() {
             <Button variant="ghost" onClick={() => setManualAlertOpen(false)} disabled={sendingManualAlert}>
               Cancel
             </Button>
-            <Button variant="primary" icon={BellRing} loading={sendingManualAlert} onClick={sendManualFloodAlerts}>
+            <Button variant="primary" loading={sendingManualAlert} onClick={sendManualFloodAlerts}>
               Check gauges & send
             </Button>
           </>

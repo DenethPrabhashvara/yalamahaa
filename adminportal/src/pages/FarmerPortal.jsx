@@ -337,10 +337,10 @@ export function FarmerPortal() {
         description="Farmers registered through the farmer portal, and when each canal section receives water."
         actions={
           <>
-            <Button icon={Download} variant="secondary" onClick={handleExportFarmers}>
+            <Button variant="secondary" onClick={handleExportFarmers}>
               Export registry
             </Button>
-            <Button icon={MessageSquareText} variant="primary" onClick={() => navigate('/sms')}>
+            <Button variant="primary" onClick={() => navigate('/sms')}>
               Message farmers
             </Button>
           </>
@@ -812,7 +812,7 @@ export function FarmerPortal() {
               <Button variant="ghost" onClick={() => setConfirmDelete(false)} disabled={saving}>
                 Keep farmer
               </Button>
-              <Button variant="danger" icon={Trash2} loading={saving} onClick={deleteFarmer}>
+              <Button variant="danger" loading={saving} onClick={deleteFarmer}>
                 Delete permanently
               </Button>
             </>
@@ -820,12 +820,11 @@ export function FarmerPortal() {
             <>
               {canEdit && (
                 <>
-                  <Button variant="ghost" icon={Trash2} onClick={() => setConfirmDelete(true)}>
+                  <Button variant="ghost" onClick={() => setConfirmDelete(true)}>
                     Delete
                   </Button>
                   <Button
                     variant="secondary"
-                    icon={selected.is_active ? UserX : UserCheck}
                     loading={saving}
                     onClick={() => saveFarmer({ is_active: !selected.is_active })}
                   >
@@ -833,7 +832,6 @@ export function FarmerPortal() {
                   </Button>
                   <Button
                     variant="primary"
-                    icon={Pencil}
                     onClick={() =>
                       setEditing(
                         Object.fromEntries(

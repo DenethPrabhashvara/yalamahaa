@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   ArrowDown,
@@ -8,9 +8,6 @@ import {
   ArrowUpDown,
   Database as DatabaseIcon,
   Lock,
-  Plus,
-  RefreshCw,
-  Save,
   Table2,
   Trash2,
 } from '../components/ui/icons'
@@ -125,14 +122,14 @@ function RowEditor({ table, row, canWrite, onClose, onSaved }) {
             <Button variant="ghost" onClick={() => setConfirmDelete(false)} disabled={saving}>
               Keep row
             </Button>
-            <Button variant="danger" icon={Trash2} loading={saving} onClick={remove}>
+            <Button variant="danger" loading={saving} onClick={remove}>
               Delete permanently
             </Button>
           </>
         ) : (
           <>
             {editable && row && (
-              <Button variant="ghost" icon={Trash2} onClick={() => setConfirmDelete(true)}>
+              <Button variant="ghost" onClick={() => setConfirmDelete(true)}>
                 Delete
               </Button>
             )}
@@ -140,7 +137,7 @@ function RowEditor({ table, row, canWrite, onClose, onSaved }) {
               {editable ? 'Cancel' : 'Close'}
             </Button>
             {editable && (
-              <Button variant="primary" icon={Save} type="submit" form="db-row" loading={saving}>
+              <Button variant="primary" type="submit" form="db-row" loading={saving}>
                 {row ? 'Save changes' : 'Add row'}
               </Button>
             )}
@@ -204,6 +201,7 @@ export function Database() {
   const [page, setPage] = useState(1)
   const [sort, setSort] = useState({ key: null, direction: 'asc' })
   const [editor, setEditor] = useState(null)
+  const [reloadKey, setReloadKey] = useState(0)
   const tableName = searchParams.get('table')
   const table = tables.find((item) => item.name === tableName) || null
 
@@ -218,27 +216,53 @@ export function Database() {
     if (!tableName && tables.length) setSearchParams({ table: tables[0].name }, { replace: true })
   }, [tableName, tables, setSearchParams])
 
-  const loadRows = useCallback(async () => {
-    if (!tableName) return
+  // Clear stale results and reset pagination whenever the table changes
+  const prevTableRef = useRef(tableName)
+  useEffect(() => {
+    if (prevTableRef.current !== tableName) {
+      prevTableRef.current = tableName
+      setResult(null)
+      setPage(1)
+      setSort({ key: null, direction: 'asc' })
+    }
+  }, [tableName])
+
+  // Fetch rows for the active table, discarding out-of-order responses
+  useEffect(() => {
+    if (!tableName) {
+      setResult(null)
+      return
+    }
+
+    let active = true
     setLoading(true)
+
     const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) })
     if (sort.key) {
       params.set('sort', sort.key)
       params.set('order', sort.direction)
     }
-    try {
-      setResult(await api(`/admin/db/tables/${tableName}?${params}`))
-    } catch (error) {
-      setResult(null)
-      toast(error.message, { title: 'Rows not loaded', tone: 'error' })
-    } finally {
-      setLoading(false)
-    }
-  }, [tableName, page, sort, toast])
 
-  useEffect(() => {
-    loadRows()
-  }, [loadRows])
+    api(`/admin/db/tables/${tableName}?${params}`)
+      .then((data) => {
+        if (active && data.table === tableName) {
+          setResult(data)
+        }
+      })
+      .catch((error) => {
+        if (active) {
+          setResult(null)
+          toast(error.message, { title: 'Rows not loaded', tone: 'error' })
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false)
+      })
+
+    return () => {
+      active = false
+    }
+  }, [tableName, page, sort, reloadKey, toast])
 
   const chooseTable = (name) => {
     setPage(1)
@@ -254,7 +278,7 @@ export function Database() {
     )
   }
 
-  const totalPages = result ? Math.max(1, Math.ceil(result.total / PAGE_SIZE)) : 1
+  const totalPages = result && result.table === tableName ? Math.max(1, Math.ceil(result.total / PAGE_SIZE)) : 1
   const canWrite = canEdit && Boolean(table?.editable)
 
   return (
@@ -265,11 +289,11 @@ export function Database() {
         description="Every table in the API database. Password, token and NIC hashes are never shown."
         actions={
           <>
-            <Button icon={RefreshCw} variant="secondary" loading={loading} onClick={loadRows}>
+            <Button variant="secondary" loading={loading} onClick={() => setReloadKey((k) => k + 1)}>
               Reload
             </Button>
             {canWrite && (
-              <Button icon={Plus} variant="primary" onClick={() => setEditor({ row: null })}>
+              <Button variant="primary" onClick={() => setEditor({ row: null })}>
                 Add row
               </Button>
             )}
@@ -309,7 +333,7 @@ export function Database() {
                   }`
                 : ''
             }
-            action={result && <Badge tone="info">{formatNumber(result.total)} rows</Badge>}
+            action={result && result.table === tableName && <Badge tone="info">{formatNumber(result.total)} rows</Badge>}
           />
           <div className="table-scroll">
             <table className="data-table compact db-grid">
@@ -333,19 +357,25 @@ export function Database() {
                 </tr>
               </thead>
               <tbody>
-                {result?.data.map((row, index) => (
-                  <tr key={index} className="clickable-row" onClick={() => setEditor({ row })}>
-                    {table?.columns?.map((column) => (
-                      <td key={column.name}>
-                        <Cell value={row[column.name]} />
-                      </td>
-                    ))}
-                  </tr>
-                ))}
+                {result && result.table === tableName &&
+                  result.data.map((row, index) => (
+                    <tr key={index} className="clickable-row" onClick={() => setEditor({ row })}>
+                      {table?.columns?.map((column) => (
+                        <td key={column.name}>
+                          <Cell value={row[column.name]} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
               </tbody>
             </table>
           </div>
-          {result && result.data.length === 0 && (
+          {loading && (!result || result.table !== tableName) && (
+            <div style={{ padding: '36px', textAlign: 'center', color: 'var(--muted)' }}>
+              Loading {tableName || 'table'}…
+            </div>
+          )}
+          {result && result.table === tableName && result.data.length === 0 && (
             <div className="empty-state">
               <span className="empty-icon">
                 <Table2 size={22} />
@@ -355,7 +385,7 @@ export function Database() {
           )}
           <div className="table-footer pagination-footer">
             <span>
-              {result
+              {result && result.table === tableName
                 ? `Rows ${result.total === 0 ? 0 : (page - 1) * PAGE_SIZE + 1}–${Math.min(page * PAGE_SIZE, result.total)} of ${formatNumber(result.total)}`
                 : loading
                   ? 'Loading…'
@@ -365,7 +395,7 @@ export function Database() {
               <button
                 type="button"
                 className="page-btn"
-                disabled={page === 1}
+                disabled={page === 1 || !result || result.table !== tableName}
                 onClick={() => setPage(page - 1)}
                 aria-label="Previous page"
               >
@@ -377,7 +407,7 @@ export function Database() {
               <button
                 type="button"
                 className="page-btn"
-                disabled={page >= totalPages}
+                disabled={page >= totalPages || !result || result.table !== tableName}
                 onClick={() => setPage(page + 1)}
                 aria-label="Next page"
               >
@@ -397,7 +427,7 @@ export function Database() {
           onClose={() => setEditor(null)}
           onSaved={() => {
             setEditor(null)
-            loadRows()
+            setReloadKey((k) => k + 1)
           }}
         />
       )}

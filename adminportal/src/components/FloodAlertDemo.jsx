@@ -144,7 +144,7 @@ export function FloodAlertDemo({ open, onClose, defaultGauge }) {
             Close
           </Button>
           {canEdit && (
-            <Button variant="primary" icon={Send} loading={sending} onClick={handleSend}>
+            <Button variant="primary" loading={sending} onClick={handleSend}>
               Send Demo SMS Now
             </Button>
           )}

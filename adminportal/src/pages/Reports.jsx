@@ -246,7 +246,7 @@ export function Reports() {
         title="Canal reports"
         description="Canal problems farmers reported in the farmer portal. Check them, pass them to the Irrigation Department and record what happened. Farmers see the status and your note."
         actions={
-          <Button icon={Download} variant="secondary" onClick={handleExport} disabled={!allCount}>
+          <Button variant="secondary" onClick={handleExport} disabled={!allCount}>
             Export CSV
           </Button>
         }
@@ -428,16 +428,16 @@ export function Reports() {
               <Button variant="ghost" onClick={() => setConfirmDelete(false)} disabled={saving}>
                 Keep report
               </Button>
-              <Button variant="danger" icon={Trash2} loading={saving} onClick={remove}>
+              <Button variant="danger" loading={saving} onClick={remove}>
                 Delete permanently
               </Button>
             </div>
           ) : (
             <div className="drawer-actions">
-              <Button variant="ghost" icon={Trash2} onClick={() => setConfirmDelete(true)}>
+              <Button variant="ghost" onClick={() => setConfirmDelete(true)}>
                 Delete
               </Button>
-              <Button variant="primary" icon={Save} type="submit" form="report-update" loading={saving}>
+              <Button variant="primary" type="submit" form="report-update" loading={saving}>
                 Save changes
               </Button>
             </div>

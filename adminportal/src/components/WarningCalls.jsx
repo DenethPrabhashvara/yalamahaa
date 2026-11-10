@@ -141,7 +141,7 @@ export function WarningCalls() {
         subtitle={`Phones farmers up to ${w.daysAhead} days before very heavy rain or strong winds, and when the ML model expects their tank to spill`}
         badge={<Badge tone={state.enabled ? mode.tone : 'neutral'} dot>{state.enabled ? mode.label : 'Switched off'}</Badge>}
         action={canEdit && (
-          <Button variant="secondary" size="sm" icon={state.enabled ? PhoneOff : PhoneCall} loading={busy === 'toggle'} onClick={toggle}>
+          <Button variant="secondary" size="sm" loading={busy === 'toggle'} onClick={toggle}>
             {state.enabled ? 'Turn off' : 'Turn on'}
           </Button>
         )}
@@ -156,14 +156,14 @@ export function WarningCalls() {
       {canEdit && (
         <div style={{ padding: '12px 17px', display: 'grid', gap: 12 }}>
           <div className="gateway-actions" style={{ padding: 0, flexWrap: 'wrap' }}>
-            <Button variant="secondary" size="sm" icon={Eye} loading={busy === 'Preview'} disabled={!!busy} onClick={() => run('Preview', { dryRun: true })}>
+            <Button variant="secondary" size="sm" loading={busy === 'Preview'} disabled={!!busy} onClick={() => run('Preview', { dryRun: true })}>
               Preview (real forecast)
             </Button>
-            <Button variant="secondary" size="sm" icon={FlaskConical} loading={busy === 'Preview with a test storm'} disabled={!!busy}
+            <Button variant="secondary" size="sm" loading={busy === 'Preview with a test storm'} disabled={!!busy}
               onClick={() => run('Preview with a test storm', { dryRun: true, simulate: true })}>
               Preview with a test storm
             </Button>
-            <Button variant={state.mode === 'live' ? 'primary' : 'secondary'} size="sm" icon={Play} loading={busy === 'Check now'} disabled={!!busy || !state.enabled} onClick={runNow}>
+            <Button variant={state.mode === 'live' ? 'primary' : 'secondary'} size="sm" loading={busy === 'Check now'} disabled={!!busy || !state.enabled} onClick={runNow}>
               Check now and call
             </Button>
           </div>
@@ -180,7 +180,7 @@ export function WarningCalls() {
               <PhoneCall size={15} />
               <input type="tel" placeholder="0771234567" value={phone} onChange={(e) => setPhone(e.target.value)} />
             </label>
-            <Button size="sm" icon={PhoneCall} loading={busy === 'test'} disabled={!!busy || !phone.trim() || !state.twilio_configured} onClick={testCall}>
+            <Button size="sm" loading={busy === 'test'} disabled={!!busy || !phone.trim() || !state.twilio_configured} onClick={testCall}>
               Test call
             </Button>
           </div>

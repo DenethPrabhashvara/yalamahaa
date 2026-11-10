@@ -75,7 +75,7 @@ export function AutoFloodAlerts({ compact = false }) {
       </div>
       {canEdit && (
         <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-          <Button variant="secondary" size="sm" icon={Send} onClick={() => setDemoOpen(true)}>
+          <Button variant="secondary" size="sm" onClick={() => setDemoOpen(true)}>
             Demo risk SMS
           </Button>
           <Button variant={on ? 'secondary' : 'primary'} size="sm" loading={saving} onClick={toggle}>

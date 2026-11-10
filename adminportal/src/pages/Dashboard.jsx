@@ -219,11 +219,10 @@ export function Dashboard() {
         description={`Reservoir storage, river gauges and farmer registrations. Reservoir readings of ${formatDate(TANK_SUMMARY.latestReading)}.`}
         actions={
           <>
-            <Button icon={Download} variant="secondary" onClick={handleExport} disabled={!TANKS.length}>
+            <Button variant="secondary" onClick={handleExport} disabled={!TANKS.length}>
               Export report
             </Button>
             <Button
-              icon={RefreshCw}
               variant="primary"
               loading={loading}
               onClick={handleRefresh}
@@ -489,7 +488,7 @@ export function Dashboard() {
                   key={alert.id}
                   onClick={() => navigate(alert.path)}
                 >
-                  <span className={`alert-icon tone-${alert.severity}`}>
+                  <span className="alert-icon">
                     <Icon size={16} />
                   </span>
                   <span className="alert-copy">

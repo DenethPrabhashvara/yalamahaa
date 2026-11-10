@@ -259,7 +259,7 @@ function TankMap({ tanks: allTanks, atRisk, selected, onSelect, onHoverChange })
               <strong>{formatNumber(focus.farmlandAcres)} ac</strong>
             </div>
           </div>
-          <Button variant="secondary" size="sm" icon={ArrowRight} onClick={() => onSelect(focus)}>
+          <Button variant="secondary" size="sm" onClick={() => onSelect(focus)}>
             Open reservoir details
           </Button>
         </div>
@@ -356,7 +356,7 @@ function ReservoirForecast({ reservoir }) {
       {error && (
         <div className="forecast-problem">
           <p className="muted-cell">{forecastProblem(error)}</p>
-          <Button size="sm" icon={RefreshCw} onClick={() => setAttempt((count) => count + 1)}>
+          <Button size="sm" onClick={() => setAttempt((count) => count + 1)}>
             Try again
           </Button>
         </div>
@@ -612,11 +612,11 @@ export function Tanks() {
         description={`Usable storage, spilling reservoirs and field readings for the ${TANK_SUMMARY.total} monitored reservoirs.`}
         actions={
           <>
-            <Button icon={Download} variant="secondary" onClick={handleExport} disabled={!filtered.length}>
+            <Button variant="secondary" onClick={handleExport} disabled={!filtered.length}>
               Export CSV
             </Button>
             {canEdit && (
-              <Button icon={ClipboardPlus} variant="primary" onClick={() => openReading()}>
+              <Button variant="primary" onClick={() => openReading()}>
                 Log field reading
               </Button>
             )}
@@ -834,7 +834,7 @@ export function Tanks() {
               </span>
               <strong>No reservoirs match these filters</strong>
               <span>Try a different district, status, or search term.</span>
-              <Button variant="secondary" size="sm" icon={RotateCcw} onClick={resetFilters}>
+              <Button variant="secondary" size="sm" onClick={resetFilters}>
                 Reset filters
               </Button>
             </div>
@@ -901,13 +901,12 @@ export function Tanks() {
             <div className="drawer-actions">
               <Button
                 variant="secondary"
-                icon={MessageSquareText}
                 onClick={() => navigate('/sms')}
               >
                 Notify farmers
               </Button>
               {canEdit && (
-                <Button variant="primary" icon={ClipboardPlus} onClick={() => openReading(selected)}>
+                <Button variant="primary" onClick={() => openReading(selected)}>
                   Log reading
                 </Button>
               )}
@@ -1067,7 +1066,7 @@ export function Tanks() {
             <Button variant="ghost" onClick={() => setReadingOpen(false)}>
               Cancel
             </Button>
-            <Button variant="primary" icon={ClipboardPlus} loading={saving} onClick={saveReading}>
+            <Button variant="primary" loading={saving} onClick={saveReading}>
               Save reading
             </Button>
           </>

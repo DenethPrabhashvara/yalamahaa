@@ -176,7 +176,7 @@ export function Topbar({ onOpenSearch, onOpenMobile }) {
                       key={alert.id}
                       onClick={() => handleAlertClick(alert)}
                     >
-                      <span className={cn('notification-icon', `tone-${alert.severity}`)}>
+                      <span className="notification-icon">
                         <Icon size={16} />
                       </span>
                       <span className="notification-copy">

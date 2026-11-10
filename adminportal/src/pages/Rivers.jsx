@@ -196,10 +196,10 @@ export function Rivers() {
         description={`Water levels against the alert, minor flood and major flood levels at ${RIVER_SUMMARY.total} river gauges.`}
         actions={
           <>
-            <Button icon={Download} variant="secondary" onClick={handleExport} disabled={!RIVER_STATIONS.length}>
+            <Button variant="secondary" onClick={handleExport} disabled={!RIVER_STATIONS.length}>
               Export gauge report
             </Button>
-            <Button icon={Send} variant="primary" onClick={() => sendAdvisory()}>
+            <Button variant="primary" onClick={() => sendAdvisory()}>
               Broadcast flood alert
             </Button>
           </>

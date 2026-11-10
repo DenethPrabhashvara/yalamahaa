@@ -75,7 +75,8 @@ export function Modal({
   )
 }
 
-export function Drawer({ open, onClose, title, description, children, footer, width = 'md', icon: Icon }) {
+export function Drawer({ open, onClose, title, description, subtitle, children, footer, width = 'md', icon: Icon }) {
+  const resolvedDescription = description || subtitle
   useOverlayBehaviour(open, onClose)
   if (!open) return null
 
