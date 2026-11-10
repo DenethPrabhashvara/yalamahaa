@@ -6,6 +6,7 @@ const db = require('../config/db.js')
 const logger = require('../utils/logger.js')
 const { sendCampaign } = require('./campaignService.js')
 const { validateSriLankanMobile } = require('./smsService.js')
+const { exposureGroup, buildFloodAlertMessage } = require('./floodAlertMessages.js')
 
 const EVERY_MS = 10 * 60 * 1000
 const NEAR_KM = 20
@@ -60,8 +61,11 @@ async function gauges() {
 // nearest gauge on it is this one (or who have no farm pin). Only farmers who left SMS alerts on.
 async function relatedFarmers(gauge, allGauges) {
   const r = await db.query(
-    `SELECT f.full_name, f.phone, f.farm_latitude, f.farm_longitude, fm.water_source, fm.water_name
-     FROM farmers f LEFT JOIN farms fm ON fm.farm_id = f.farm_id
+    `SELECT f.full_name, f.phone, f.farm_latitude, f.farm_longitude,
+            fm.water_source, fm.water_name, r.category AS flood_category
+     FROM farmers f
+     LEFT JOIN farms fm ON fm.farm_id = f.farm_id
+     LEFT JOIN farm_flood_risk r ON r.farm_id = f.farm_id
      WHERE f.is_active AND f.sms_enabled`
   )
   const onRiver = allGauges.filter((g) => g.basin === gauge.basin && g.lat != null)
@@ -73,16 +77,6 @@ async function relatedFarmers(gauge, allGauges) {
     const nearest = onRiver.reduce((best, g) => (!best || km(pin, g) < km(pin, best) ? g : best), null)
     return nearest?.station === gauge.station
   })
-}
-
-// kept short so it fits one 160-character sms
-function messageFor(kind, g) {
-  const where = `${g.basin} at ${g.station}`
-  if (kind === 'major') {
-    return `Yala Maha MAJOR FLOOD: ${where} reached major flood level (${g.level.toFixed(2)}m, Irrigation Dept). Move to higher ground now.`
-  }
-  const what = g.minor != null && g.sure >= g.minor ? 'minor flood level' : 'alert level'
-  return `Yala Maha FLOOD ALERT: ${where} reached ${what} (${g.level.toFixed(2)}m, Irrigation Dept). Move livestock & pumps to high ground.`
 }
 
 // marks the message as sent before sending, so two api instances never both send it
@@ -98,9 +92,9 @@ async function claim(g, kind) {
   return r.rowCount === 1
 }
 
-async function checkGauges() {
+async function checkGauges({ manual = false } = {}) {
   const all = await gauges()
-  const on = await autoAlertsOn()
+  const on = manual || await autoAlertsOn()
   const sent = []
 
   for (const g of all) {
@@ -109,8 +103,10 @@ async function checkGauges() {
     // flood over: the next one gets its own messages
     if (g.below) {
       await db.query(
-        `UPDATE gauge_alert_state SET alert_sent_at = NULL, major_sent_at = NULL, updated_at = now()
-         WHERE basin = $1 AND station = $2 AND (alert_sent_at IS NOT NULL OR major_sent_at IS NOT NULL)`,
+        `UPDATE gauge_alert_state
+         SET alert_sent_at = NULL, major_sent_at = NULL,
+             alert_campaign_id = NULL, major_campaign_id = NULL, updated_at = now()
+         WHERE basin = $1 AND station = $2`,
         [g.basin, g.station]
       )
       continue
@@ -120,34 +116,72 @@ async function checkGauges() {
     let kind = null
     if (g.major != null && g.sure >= g.major) kind = 'major'
     else if (g.sure >= (g.alert ?? g.minor ?? Infinity)) kind = 'alert'
-    if (!kind || !(await claim(g, kind))) continue
-    // a major flood message also covers the alert one
-    if (kind === 'major') await claim(g, 'alert')
+    if (!kind) continue
 
     let farmers = await relatedFarmers(g, all)
-    if (kind === 'alert') {
-      const recent = await db.query(
-        `SELECT DISTINCT m.phone FROM sms_messages m JOIN sms_campaigns c ON c.id = m.campaign_id
-         WHERE c.audience LIKE $1 AND c.created_at > now() - $2::interval`,
-        [`${LABEL} - ${g.basin}%`, REPEAT_WINDOW]
-      )
-      const had = new Set(recent.rows.map((x) => x.phone))
-      farmers = farmers.filter((f) => !had.has(validateSriLankanMobile(f.phone).normalized))
-    }
+    const recent = await db.query(
+      `SELECT DISTINCT m.phone FROM sms_messages m JOIN sms_campaigns c ON c.id = m.campaign_id
+       WHERE c.audience LIKE $1 AND c.audience LIKE $2
+         AND c.created_at > now() - $3::interval AND m.status <> 'Failed'`,
+      [`${LABEL} - ${g.basin}%`, `% - ${kind} - %`, REPEAT_WINDOW]
+    )
+    const had = new Set(recent.rows.map((x) => x.phone))
+    farmers = farmers.filter((f) => !had.has(validateSriLankanMobile(f.phone).normalized))
     if (!farmers.length) {
       logger.info(`flood ${kind} at ${g.basin}/${g.station}: no farmers to alert`)
       continue
     }
 
-    const label = `${LABEL} - ${g.basin} at ${g.station} - ${kind === 'major' ? 'major flood' : 'alert level'}`
-    const result = await sendCampaign({ label, message: messageFor(kind, g), farmers })
-    await db.query(
-      `UPDATE gauge_alert_state SET ${kind === 'major' ? 'major_campaign_id' : 'alert_campaign_id'} = $3
-       WHERE basin = $1 AND station = $2`,
-      [g.basin, g.station, result.id]
-    )
-    logger.info(`flood ${kind} sms: ${g.basin}/${g.station} to ${result.recipients} farmer(s)`)
-    sent.push({ gauge: `${g.basin}/${g.station}`, kind, ...result })
+    if (!(await claim(g, kind))) continue
+    // a major flood message also covers the alert one
+    const claimedAlertForMajor = kind === 'major' ? await claim(g, 'alert') : false
+
+    const groups = new Map()
+    for (const farmer of farmers) {
+      const exposure = exposureGroup(farmer.flood_category)
+      if (!groups.has(exposure)) groups.set(exposure, { exposure, farmers: [] })
+      groups.get(exposure).farmers.push(farmer)
+    }
+
+    let campaignId = null
+    let recipients = 0
+    let failed = 0
+    for (const group of groups.values()) {
+      const categoryLabel = group.exposure.replaceAll('_', ' ')
+      const label = `${LABEL} - ${g.basin} at ${g.station} - ${kind} - trilingual - ${categoryLabel}`
+      const result = await sendCampaign({
+        label,
+        message: buildFloodAlertMessage(kind, g, group.farmers[0].flood_category),
+        farmers: group.farmers,
+      })
+      campaignId ??= result.id
+      recipients += result.recipients
+      failed += result.failed
+      sent.push({ gauge: `${g.basin}/${g.station}`, kind, exposure: group.exposure, ...result })
+    }
+    if (failed > 0) {
+      const col = kind === 'major' ? 'major_sent_at' : 'alert_sent_at'
+      await db.query(
+        `UPDATE gauge_alert_state SET ${col} = NULL, updated_at = now()
+         WHERE basin = $1 AND station = $2`,
+        [g.basin, g.station]
+      )
+      if (claimedAlertForMajor) {
+        await db.query(
+          `UPDATE gauge_alert_state SET alert_sent_at = NULL, updated_at = now()
+           WHERE basin = $1 AND station = $2`,
+          [g.basin, g.station]
+        )
+      }
+    }
+    if (campaignId != null) {
+      await db.query(
+        `UPDATE gauge_alert_state SET ${kind === 'major' ? 'major_campaign_id' : 'alert_campaign_id'} = $3
+         WHERE basin = $1 AND station = $2`,
+        [g.basin, g.station, campaignId]
+      )
+    }
+    logger.info(`flood ${kind} sms: ${g.basin}/${g.station} to ${recipients} farmer(s) in ${groups.size} group(s)`)
   }
   return sent
 }

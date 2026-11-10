@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useApp } from '../state/AppContext.jsx';
 import Icon from './Icon.jsx';
 import { Card } from './UI.jsx';
-import { useNews, activeNews, bannerNews, newsIcon, newsErrorText } from '../api/news.js';
+import { useNews, activeNews, bannerNews, newsIcon, newsErrorText, newsTitle } from '../api/news.js';
 import { timeAgo, fmtDateTime } from '../time.js';
 
 // Both of these call useNews with the same arguments on purpose: useApiData caches on the
@@ -22,7 +22,7 @@ export function CycloneBanner() {
     <Link to="/news" className="alert-banner" role="alert">
       <Icon name={newsIcon(item)} size={24} stroke={2.2} />
       <div className="ab-text grow">
-        <div className="ab-head">{item.headline}</div>
+        <div className="ab-head">{newsTitle(item, t)}</div>
         {item.expires && <div className="ab-sub">{t('validUntil')} {fmtDateTime(item.expires, lang)}</div>}
       </div>
       <Icon name="chevron" size={18} stroke={2.4} />
@@ -59,7 +59,7 @@ export function LatestNewsCard() {
         <Link key={n.id} to="/news" className="row gap10 news-mini">
           <div className={`icon-tile sm-tile ${n.tone}`}><Icon name={newsIcon(n)} size={18} /></div>
           <div className="grow min0">
-            <div className="f15 fw600">{n.headline}</div>
+            <div className="f15 fw600">{newsTitle(n, t)}</div>
             <div className="f13 muted">{timeAgo(n.sent, t, lang)}</div>
           </div>
         </Link>

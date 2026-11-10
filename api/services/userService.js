@@ -2,6 +2,7 @@
 const db = require('../config/db.js')
 const crypto = require('crypto')
 const { withTransaction, saveFarm, getFarm, cropSummary } = require('./farmService.js')
+const { nudgeSchemeJob } = require('./schemeJob.js')
 
 // farm_id is a random 6 hex code, retry if it clashes
 const FARM_ID_ATTEMPTS = 5
@@ -52,14 +53,14 @@ async function createFarmer(farmer) {
 }
 
 async function insertFarmer(client, farmer, hashedNic) {
-    const { full_name, phone, address, district, division, farm_latitude, farm_longitude, reservoir_id, tank_id, land_acres, primary_crop } = farmer
+    const { full_name, phone, address, district, division, preferred_lang, farm_latitude, farm_longitude, reservoir_id, tank_id, land_acres, primary_crop } = farmer
     const r = await client.query(
         `INSERT INTO farmers (
-            full_name, hashed_nic, phone, address, district, division,
+            full_name, hashed_nic, phone, address, district, division, preferred_lang,
             farm_latitude, farm_longitude, reservoir_id, tank_id,
             land_acres, primary_crop
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        RETURNING farmer_id, farm_id, full_name, phone`,
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        RETURNING farmer_id, farm_id, full_name, phone, preferred_lang`,
         [
             full_name,
             hashedNic,
@@ -67,6 +68,7 @@ async function insertFarmer(client, farmer, hashedNic) {
             address,
             district,
             division || null,
+            ['en', 'si', 'ta'].includes(preferred_lang) ? preferred_lang : 'en',
             farm_latitude ?? null,
             farm_longitude ?? null,
             reservoir_id ?? null,
@@ -78,7 +80,7 @@ async function insertFarmer(client, farmer, hashedNic) {
     return r.rows[0]
 }
 
-const FARMER_COLUMNS = 'farmer_id, farm_id, full_name,phone,address,district,division,farm_latitude, farm_longitude,reservoir_id, tank_id,land_acres, primary_crop, sms_enabled, created_at, updated_at'
+const FARMER_COLUMNS = 'farmer_id, farm_id, full_name,phone,address,district,division,preferred_lang,farm_latitude, farm_longitude,reservoir_id, tank_id,land_acres, primary_crop, sms_enabled, created_at, updated_at'
 
 // needs requireFarmer before it
 async function getFarmerDetails(req,res){
@@ -95,7 +97,7 @@ async function getFarmerDetails(req,res){
 
 // security: farmers can only change these. phone + NIC are their identity so they stay fixed
 const UPDATABLE_FIELDS = [
-    'full_name', 'address', 'district', 'division', 'farm_latitude', 'farm_longitude',
+    'full_name', 'address', 'district', 'division', 'preferred_lang', 'farm_latitude', 'farm_longitude',
     'reservoir_id', 'tank_id', 'land_acres', 'primary_crop', 'sms_enabled'
 ]
 
@@ -124,6 +126,9 @@ function validateFarmerChanges(body) {
     if (chg.sms_enabled !== undefined && typeof chg.sms_enabled !== 'boolean') {
         return { error: 'sms_enabled must be true or false.' }
     }
+    if (chg.preferred_lang !== undefined && !['en', 'si', 'ta'].includes(chg.preferred_lang)) {
+        return { error: 'preferred_lang must be en, si or ta.' }
+    }
     if (chg.reservoir_id != null && chg.tank_id != null) {
         return { error: 'A farmer can be linked to a reservoir or a tank, not both.'}
     }
@@ -143,6 +148,7 @@ async function updateFarmer(farmerId, changes, { fields: allowed = UPDATABLE_FIE
         `UPDATE farmers SET ${sets.join(', ')} WHERE farmer_id = $1 RETURNING ${FARMER_COLUMNS}`,
         [farmerId, ...flds.map(f => changes[f])]
     )
+    if (flds.includes('farm_latitude') || flds.includes('farm_longitude')) nudgeSchemeJob()   // moved pin: new scheme lookup
     return r.rows[0] || null
 }
 

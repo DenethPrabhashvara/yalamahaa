@@ -11,7 +11,15 @@ import { haversine } from './googleMaps.js';
 
 const FRESH_MS = 10 * 60 * 1000;
 // Usable storage under this is "low" everywhere in the portal.
-export const LOW_PCT = 30;
+// Tank level bands, the same boundaries as the admin portal (adminportal/src/data/tanks.js), with
+// the top split so a nearly full tank says so: [below this %, i18n key]
+export const TANK_LEVELS = [[10, 'levelVeryLow'], [25, 'levelLow'], [50, 'levelModerate'], [90, 'levelGood'], [Infinity, 'levelFull']];
+export function tankLevel(percent) {
+  if (percent == null || !Number.isFinite(Number(percent))) return null;
+  return TANK_LEVELS.find(([below]) => Number(percent) < below)[1];
+}
+// "Low" starts here: the tank-low alert, "needs water", the forecast's low-water risk and the chart line
+export const LOW_PCT = 25;
 const num = (v) => (v == null || v === '' ? null : Number(v));
 const round1 = (v) => Math.round(v * 10) / 10;
 const title = (s) => (s || '').toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
@@ -147,7 +155,37 @@ export function forecastRisk(fc) {
 }
 
 // Loads `key` once per FRESH_MS; reload() forces a new request.
+// The last answers are also kept on the phone (localStorage), so when the app opens again Home
+// shows them at once while new ones load, instead of spinners for each request to the server.
+// Only public data is kept (tanks, readings, rivers, canals, news, rain), not a farmer's reminders.
+const SAVED_KEY = 'ym-api-cache';
+const SAVED_MAX_AGE = 3 * 864e5;
+const keep = (key) => /^(farm|readings|forecast|news|rain):|^(rivers|canals)$/.test(key);
 const cache = new Map();
+try {
+  const saved = JSON.parse(localStorage.getItem(SAVED_KEY) || '{}');
+  for (const [key, hit] of Object.entries(saved)) {
+    // `at: 0` so a saved answer is shown but always fetched again
+    if (keep(key) && Date.now() - hit.at < SAVED_MAX_AGE) cache.set(key, { data: hit.data, at: 0, savedAt: hit.at });
+  }
+} catch { /* no storage, or bad JSON: start empty */ }
+let saveTimer = null;
+let cacheEpoch = 0;
+function saveCache() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    const out = {};
+    for (const [key, hit] of cache) if (keep(key)) out[key] = { data: hit.data, at: hit.savedAt ?? hit.at };
+    try { localStorage.setItem(SAVED_KEY, JSON.stringify(out)); } catch { /* full: skip */ }
+  }, 500);
+}
+export function clearSavedData() {
+  cacheEpoch += 1;
+  clearTimeout(saveTimer);
+  saveTimer = null;
+  cache.clear();
+  try { localStorage.removeItem(SAVED_KEY); } catch { /* ignore */ }
+}
 export function useApiData(key, load) {
   const [state, setState] = useState(() => ({ key, data: cache.get(key)?.data ?? null, loading: key != null, error: null }));
 
@@ -159,10 +197,18 @@ export function useApiData(key, load) {
       return () => {};
     }
     let live = true;
+    const epoch = cacheEpoch;
     setState({ key, data: hit?.data ?? null, loading: true, error: null });
     load()
-      .then((data) => { cache.set(key, { data, at: Date.now() }); if (live) setState({ key, data, loading: false, error: null }); })
-      .catch((error) => { if (live) setState({ key, data: hit?.data ?? null, loading: false, error }); });
+      .then((data) => {
+        if (epoch !== cacheEpoch) return;
+        cache.set(key, { data, at: Date.now() });
+        saveCache();
+        if (live) setState({ key, data, loading: false, error: null });
+      })
+      .catch((error) => {
+        if (live && epoch === cacheEpoch) setState({ key, data: hit?.data ?? null, loading: false, error });
+      });
     return () => { live = false; };
     // `load` is derived from `key`.
     // eslint-disable-next-line react-hooks/exhaustive-deps

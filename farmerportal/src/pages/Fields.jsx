@@ -8,10 +8,11 @@ import { waterLabel } from './register/RegWater.jsx';
 import { floodLabel } from './register/RegFlood.jsx';
 import { areaAcres, boundaryState, roundAcres } from '../fieldShape.js';
 import { COLORS } from '../theme.js';
+import { placeLabel } from '../components/GoogleFarmMap.jsx';
 
 export default function Fields() {
   const { t, farm, update } = useApp();
-  const total = farm ? farm.crops.reduce((s, c) => s + (Number(c.acres) || 0), 0) : 0;
+  const total = farm ? Math.round(farm.crops.reduce((s, c) => s + (Number(c.acres) || 0), 0) * 100) / 100 : 0;
 
   const editFarm = () => update({ draft: { ...farm, consent: false } });
   const drawn = farm && boundaryState(farm.boundary) === 'ok' ? roundAcres(areaAcres(farm.boundary)) : null;
@@ -30,7 +31,7 @@ export default function Fields() {
                 <div className="f13 muted">{t('farmId')}</div>
                 <div className="f28 fw600 brand-text">{farm.id}</div>
               </div>
-              <div className="f13 muted right lh">{land} {t('acres')}<br />{farm.nearest || 'Mahaweli B'}</div>
+              <div className="f13 muted right lh">{land} {t('acres')}<br />{placeLabel(farm.nearest, t) || farm.district}</div>
             </div>
           </Card>
           {farm.water?.source && (

@@ -15,8 +15,8 @@ import {
   Users,
   Wifi,
   X,
-} from 'lucide-react'
-import { SMS_TEMPLATES } from '../data/sms'
+} from '../components/ui/icons'
+import { renderSmsTemplate, SMS_TEMPLATES } from '../data/sms'
 import { useData } from '../context/DataContext'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
@@ -32,6 +32,7 @@ import { SmsVolumeChart } from '../components/charts'
 import { AutoFloodAlerts } from '../components/AutoFloodAlerts'
 import { VoiceAlertDemo } from '../components/VoiceAlertDemo'
 import { VoiceAlertDemoSi } from '../components/VoiceAlertDemoSi'
+import { WarningCalls } from '../components/WarningCalls'
 import { Pie, PieChart, Cell, ResponsiveContainer, Tooltip } from 'recharts'
 
 const STATUS_TONE = {
@@ -155,6 +156,8 @@ export function SmsGateway() {
   const [campaignFilter, setCampaignFilter] = useState('all')
   const [tankAlert, setTankAlert] = useState(null)
   const [checkingAlert, setCheckingAlert] = useState(false)
+  const [manualAlertOpen, setManualAlertOpen] = useState(false)
+  const [sendingManualAlert, setSendingManualAlert] = useState(false)
   // 'groups' sends to a whole group, 'pick' to farmers chosen one by one
   const [recipientMode, setRecipientMode] = useState('groups')
   const [picked, setPicked] = useState([])
@@ -235,20 +238,48 @@ export function SmsGateway() {
     const flood = station || FLOOD_ALERTS[0] || RIVER_STATIONS[0]
     const nextRelease = IRRIGATION_SCHEDULES.find((item) => item.status === 'Not started') || IRRIGATION_SCHEDULES[0]
     const tank = AT_RISK_TANKS[0]
-    // What the gauge has actually reached, so the message never overstates it
-    const reached = {
-      major: 'has reached its major flood level',
-      warning: 'has reached its minor flood level',
-      watch: 'has reached its alert level',
-    }[flood?.status] || 'is being watched for flooding'
-    return template.body
-      .replace('{{level}}', reached)
-      .replace('{{river}}', flood?.river || 'the river')
-      .replace('{{station}}', flood?.name || 'the gauge')
-      .replace('{{scheme}}', nextRelease?.system || 'your scheme')
-      .replace('{{date}}', nextRelease ? formatDate(nextRelease.start, { year: undefined }) : 'the announced date')
-      .replace('{{tank}}', tank?.name || 'Your tank')
-      .replace('{{percent}}', tank ? tank.percent.toFixed(0) : '—')
+    const levelText = {
+      major: {
+        levelEn: 'has reached the major flood level',
+        levelSi: 'ප්‍රධාන ගංවතුර මට්ටමට ළඟා වී ඇත',
+        levelTa: 'பெரு வெள்ள மட்டத்தை எட்டியுள்ளது',
+      },
+      warning: {
+        levelEn: 'has reached the minor flood level',
+        levelSi: 'සුළු ගංවතුර මට්ටමට ළඟා වී ඇත',
+        levelTa: 'சிறு வெள்ள மட்டத்தை எட்டியுள்ளது',
+      },
+      watch: {
+        levelEn: 'has reached the alert level',
+        levelSi: 'අනතුරු මට්ටමට ළඟා වී ඇත',
+        levelTa: 'எச்சரிக்கை மட்டத்தை எட்டியுள்ளது',
+      },
+      normal: {
+        levelEn: 'is below the alert level',
+        levelSi: 'අනතුරු මට්ටමට පහළින් පවතී',
+        levelTa: 'எச்சரிக்கை மட்டத்திற்குக் கீழே உள்ளது',
+      },
+      unset: {
+        levelEn: 'has no reported flood threshold',
+        levelSi: 'ගංවතුර අනතුරු සීමාවක් වාර්තා වී නැත',
+        levelTa: 'வெள்ள எச்சரிக்கை வரம்பு பதிவாகவில்லை',
+      },
+    }[flood?.status] || {
+      levelEn: 'is being monitored',
+      levelSi: 'නිරීක්ෂණය කරමින් පවතී',
+      levelTa: 'கண்காணிக்கப்படுகிறது',
+    }
+    const values = {
+      ...levelText,
+      level: flood?.level == null ? '—' : Number(flood.level).toFixed(2),
+      river: flood?.river || 'the river',
+      station: flood?.name || 'the gauge',
+      scheme: nextRelease?.system || 'your scheme',
+      date: nextRelease ? formatDate(nextRelease.start, { year: undefined }) : 'the announced date',
+      tank: tank?.name || 'Your tank',
+      percent: tank ? tank.percent.toFixed(0) : '—',
+    }
+    return renderSmsTemplate(template, values)
   }
 
   const applyTemplate = (template, station) => {
@@ -317,6 +348,30 @@ export function SmsGateway() {
       toast(error.message, { tone: 'error' })
     } finally {
       setCheckingAlert(false)
+    }
+  }
+
+  const sendManualFloodAlerts = async () => {
+    setSendingManualAlert(true)
+    try {
+      const { data } = await api('/admin/sms/auto-alerts/send-now', { method: 'POST' })
+      await reload(['campaigns'])
+      setManualAlertOpen(false)
+      if (data.gauges.length === 0) {
+        toast('No new alerts sent. No fresh gauge readings qualify, alerts may already have been sent for this flood, or no eligible farmers were found.', {
+          title: 'No due flood alerts',
+          tone: 'info',
+        })
+      } else {
+        toast(
+          `${formatNumber(data.accepted)} message${data.accepted === 1 ? '' : 's'} accepted for ${data.gauges.join(', ')}${data.failed ? `; ${formatNumber(data.failed)} failed` : ''}${data.dry_run ? ' (dry run)' : ''}.`,
+          { title: 'Flood alert check complete', tone: data.failed ? 'warning' : 'success' },
+        )
+      }
+    } catch (error) {
+      toast(error.message, { title: 'Flood alerts not sent', tone: 'error' })
+    } finally {
+      setSendingManualAlert(false)
     }
   }
 
@@ -393,11 +448,6 @@ export function SmsGateway() {
     <div className="page sms-page">
       <PageHeader
         eyebrow={`Farmer communications - ${gateway?.provider || 'SMS gateway'}`}
-        badge={
-          <Badge tone={mode.tone} dot>
-            {mode.label}
-          </Badge>
-        }
         title="SMS to farmers"
         description="Send flood warnings, water release notices and advisories to registered farmers, and see what was sent."
         actions={
@@ -761,9 +811,16 @@ export function SmsGateway() {
               <Button variant="secondary" size="sm" icon={BellRing} loading={checkingAlert} onClick={checkTankAlert}>
                 Check high tank alert
               </Button>
+              {canEdit && (
+                <Button variant="secondary" size="sm" icon={BellRing} onClick={() => setManualAlertOpen(true)}>
+                  Check & send due flood alerts
+                </Button>
+              )}
             </div>
           </Card>
         </div>
+
+        <WarningCalls />
 
         <Card className="span-8 chart-card">
           <CardHeader
@@ -948,6 +1005,31 @@ export function SmsGateway() {
         </div>
         <p className="advisory-body" style={{ marginTop: 12, whiteSpace: 'pre-wrap' }}>
           {message}
+        </p>
+      </Modal>
+
+      <Modal
+        open={manualAlertOpen}
+        onClose={() => !sendingManualAlert && setManualAlertOpen(false)}
+        title="Check and send due flood alerts?"
+        description="This runs the automated flood-alert rules immediately."
+        icon={AlertTriangle}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setManualAlertOpen(false)} disabled={sendingManualAlert}>
+              Cancel
+            </Button>
+            <Button variant="primary" icon={BellRing} loading={sendingManualAlert} onClick={sendManualFloodAlerts}>
+              Check gauges & send
+            </Button>
+          </>
+        }
+      >
+        <p className="advisory-body">
+          This can send real SMS messages to multiple eligible farmers. Only fresh gauges with two
+          consecutive readings at or above an alert threshold are considered. Recipients are limited
+          to farmers near the gauge or linked to its river, and duplicate alerts for the same flood
+          are suppressed. This manual check works even when automatic alerts are switched off.
         </p>
       </Modal>
     </div>

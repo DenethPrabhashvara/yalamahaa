@@ -12,6 +12,7 @@ const adminrouter =require('./routes/ADMIN/index.js')
 const reportrouter = require('./routes/reportroutes.js')
 const reminderrouter = require('./routes/reminderroutes.js')
 const voicedemorouter = require('./routes/voicedemoroutes.js')
+const surveyrouter = require('./routes/surveyroutes.js')
 
 // security: refuse to start unless farmer + admin jwt secrets are set and different, so tokens can't be swapped
 if (!process.env.JWT_SECRET || !process.env.JWT_ADMIN_SECRET || process.env.JWT_SECRET === process.env.JWT_ADMIN_SECRET) {
@@ -112,10 +113,10 @@ app.get('/', (req, res) => {
             mahaweliJson: '/api/data/mahaweli?format=csv', 
             mahaweliCsv: '/api/data/mahaweli/csv',
             mahaweliById: '/api/data/mahaweli/:id',
-            forecastByTankId: '/api/forecast/:id',
-            reservoir:'/api/data/reservoir',
-            resorvoirById: '/api/data/reservoir',
-            resorvoirHistoryByDays: '/api/data/reservoir/:id/history?days=30',
+            forecastByTankId: '/api/data/reservoir/:id/forecast',
+            reservoir: '/api/data/reservoir',
+            reservoirById: '/api/data/reservoir/:id',
+            reservoirHistoryByDays: '/api/data/reservoir/:id/history?days=30',
             rivers: '/api/data/rivers',
             canals: '/api/data/canals',
             news: '/api/data/news?lang=en&district=Polonnaruwa',
@@ -126,8 +127,8 @@ app.get('/', (req, res) => {
 })
 
 // Convenience alias for /mahaweli-data
-app.get('/mahaweli-data', (req, res) => {
-    res.redirect(307, '/api/mahaweli?format=csv') 
+app.get(['/mahaweli-data', '/api/mahaweli-data'], (req, res) => {
+    res.redirect(307, '/api/data/mahaweli?format=csv') 
 })
 
 
@@ -136,6 +137,7 @@ app.use('/api/data', apiroute) // for resevoirs and tanks
 app.use('/api/auth', authrouter)   //for l0gin auth
 app.use('/api/reports', reportrouter)   // canal reports
 app.use('/api/reminders', reminderrouter)   // water issue sms reminders
+app.use('/api/surveys', surveyrouter)       // disaster & damage assessment surveys
 app.use('/api/voice-demo', voicedemorouter)   // demo voice alert call to the team's own number
 
 // Error handling middleware

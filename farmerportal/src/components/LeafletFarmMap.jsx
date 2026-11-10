@@ -2,8 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import Icon from './Icon.jsx';
-import { MAP_CENTER } from '../data.js';
-import { MAPPED_TANKS, PIN_SVG } from './GoogleFarmMap.jsx';
+import { MAP_CENTER, MAP_ZOOM, SRI_LANKA_BOUNDS, TANK_LABEL_MIN_ZOOM, inSriLanka } from '../data.js';
+import { MAPPED_TANKS, nearestTank, PIN_SVG } from './GoogleFarmMap.jsx';
+import { addIrrigationLayers } from '../maps/irrigationLayers.js';
+import AllReservoirsButton from '../maps/AllReservoirsButton.jsx';
+import { dataTanks } from '../maps/tankFilter.js';
+import IrrigationLegend from '../maps/IrrigationLegend.jsx';
 
 // Free map: no account, key or billing.
 // Satellite: Esri World Imagery (+ Esri place labels). Map: OpenStreetMap. Search: OSM Nominatim.
@@ -13,23 +17,60 @@ import { MAPPED_TANKS, PIN_SVG } from './GoogleFarmMap.jsx';
 // Esri has no zoom-19 imagery for most of rural Sri Lanka and sends a grey "Map data not yet
 // available" tile instead, so zoom 19 enlarges the zoom-18 tiles rather than requesting them.
 const ESRI_NATIVE_ZOOM = 18;
+const B = SRI_LANKA_BOUNDS;
+export const sriLanka = () => L.latLngBounds([B.south, B.west], [B.north, B.east]);
+
+// Keeps a map on Sri Lanka: no panning past the box, and no zooming out further than the box filling
+// the map (worked out for the map's size, again whenever it changes), so nothing outside it is shown.
+export function lockToSriLanka(map) {
+  map.setMaxBounds(sriLanka());
+  map.options.maxBoundsViscosity = 1;
+  const fit = () => {
+    const size = map.getSize();
+    if (!size.x || !size.y) return;   // not laid out yet: the 'resize' after invalidateSize() does it
+    const z = map.getBoundsZoom(sriLanka(), true);
+    map.setMinZoom(z);
+    if (map.getZoom() < z) map.setZoom(z);
+  };
+  map.on('resize', fit);
+  fit();
+}
+
+// tiles are only requested inside the box
 export const makeBaseLayers = () => ({
   satellite: [
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 19, maxNativeZoom: ESRI_NATIVE_ZOOM, attribution: 'Imagery © Esri, Maxar, Earthstar Geographics',
+      maxZoom: 19,
+      maxNativeZoom: ESRI_NATIVE_ZOOM,
+      bounds: sriLanka(),
+      attribution: 'Imagery © Esri, Maxar, Earthstar Geographics',
+      updateWhenIdle: false,
+      updateInterval: 200,
+      keepBuffer: 3,
     }),
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-      maxZoom: 19, maxNativeZoom: ESRI_NATIVE_ZOOM,
+    L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+      maxZoom: 19,
+      maxNativeZoom: ESRI_NATIVE_ZOOM,
+      bounds: sriLanka(),
+      updateWhenIdle: false,
+      updateInterval: 200,
+      keepBuffer: 3,
     }),
   ],
   map: [
     L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+      bounds: sriLanka(),
+      attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      updateWhenIdle: false,
+      updateInterval: 200,
+      keepBuffer: 3,
     }),
   ],
 });
 
 export const pinIcon = L.divIcon({ className: 'lf-pin', html: PIN_SVG, iconSize: [40, 52], iconAnchor: [20, 48] });
+export function hideTankNamesWhenFar() {}
 export const tankIcon = (name, mine = false) => L.divIcon({ className: 'lf-tank', html: `<span class="gm-tank-label${mine ? ' mine' : ''}">${name}</span>`, iconSize: [0, 0] });
 
 /**
@@ -40,7 +81,10 @@ export default function LeafletFarmMap({ pin, onPin, onLocate, onFail, autoLocat
   const boxRef = useRef();
   const mapRef = useRef();
   const markerRef = useRef();
+  const irrigationLayersRef = useRef(null);
+  const selectionRef = useRef({ names: [], points: [] });
   const onPinRef = useRef(onPin);
+  const placedByHand = useRef(false);
   onPinRef.current = onPin;
   const layersRef = useRef(null);
   if (!layersRef.current) layersRef.current = makeBaseLayers();
@@ -51,30 +95,50 @@ export default function LeafletFarmMap({ pin, onPin, onLocate, onFail, autoLocat
   const [q, setQ] = useState('');
   const [searching, setSearching] = useState(false);
   const [searchError, setSearchError] = useState('');
+  const [layerStatus, setLayerStatus] = useState({ loading: true, error: false, zoomedOut: false });
+  // highlight the tank nearest the pin; with no pin yet there is nothing to highlight
+  const nearest = pin?.lat != null ? nearestTank(pin) : null;
+  const selectedTank = MAPPED_TANKS.find((tank) => tank.name === nearest?.name);
+  selectionRef.current = selectedTank
+    ? { names: [selectedTank.name, selectedTank.aka, selectedTank.name.match(/\(([^)]+)\)/)?.[1]].filter(Boolean), points: [selectedTank.pos] }
+    : { names: [], points: [] };
 
   useEffect(() => {
     if (typeof navigator !== 'undefined' && navigator.onLine === false) { onFail(); return undefined; }
+    // a pin saved outside Sri Lanka (an old test, a bad GPS fix) would open the locked map at its edge, out at sea
+    const startPin = inSriLanka(pin) ? pin : null;
     const map = L.map(boxRef.current, {
-      center: pin?.lat != null ? [pin.lat, pin.lng] : [MAP_CENTER.lat, MAP_CENTER.lng],
-      zoom: pin?.lat != null ? 17 : 14,
+      center: startPin ? [startPin.lat, startPin.lng] : [MAP_CENTER.lat, MAP_CENTER.lng],
+      zoom: startPin ? 17 : MAP_ZOOM,
       zoomControl: false,
       attributionControl: true,
     });
-    L.control.zoom({ position: 'topright' }).addTo(map);
+    L.control.zoom({ position: 'topright', zoomInTitle: t('a11yZoomIn'), zoomOutTitle: t('a11yZoomOut') }).addTo(map);
+    lockToSriLanka(map);
     map.attributionControl.setPrefix(false);
+    map.attributionControl.addAttribution('Reservoir, bund & canal data © Sri Lanka Irrigation Department');
     layersRef.current.satellite.forEach((l) => l.addTo(map));
     MAPPED_TANKS.forEach((tk) => L.marker([tk.pos.lat, tk.pos.lng], { icon: tankIcon(tk.name), interactive: false, keyboard: false }).addTo(map));
+    hideTankNamesWhenFar(map);
+    // not tappable: a tap on an irrigable area or reservoir has to place the pin, not open a popup
+    irrigationLayersRef.current = addIrrigationLayers(map, () => selectionRef.current, setLayerStatus, { interactive: false, dataTanks: dataTanks(MAPPED_TANKS) });
 
-    const marker = L.marker([0, 0], { icon: pinIcon, draggable: true, title: 'Your field', autoPan: true });
-    marker.on('dragend', () => { const p = marker.getLatLng(); onPinRef.current({ lat: p.lat, lng: p.lng }); });
-    map.on('click', (e) => onPinRef.current({ lat: e.latlng.lat, lng: e.latlng.lng }));
+    const marker = L.marker([0, 0], { icon: pinIcon, draggable: true, title: t('myPlot'), autoPan: true });
+    marker.on('dragend', () => { const p = marker.getLatLng(); placedByHand.current = true; onPinRef.current({ lat: p.lat, lng: p.lng }); });
+    map.on('click', (e) => { placedByHand.current = true; onPinRef.current({ lat: e.latlng.lat, lng: e.latlng.lng }); });
 
     markerRef.current = marker;
     mapRef.current = map;
     // The container is sized by CSS after first paint; let Leaflet re-measure.
     setTimeout(() => map.invalidateSize(), 0);
     setReady(true);
-    return () => { map.remove(); mapRef.current = null; markerRef.current = null; };
+    return () => {
+      irrigationLayersRef.current?.remove();
+      irrigationLayersRef.current = null;
+      map.remove();
+      mapRef.current = null;
+      markerRef.current = null;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -89,6 +153,7 @@ export default function LeafletFarmMap({ pin, onPin, onLocate, onFail, autoLocat
     } else if (map.hasLayer(marker)) {
       marker.remove();
     }
+    map.fire('irrigationselectionchange');
   }, [pin, ready]);
 
   const switchBase = (next) => {
@@ -99,7 +164,9 @@ export default function LeafletFarmMap({ pin, onPin, onLocate, onFail, autoLocat
     setBase(next);
   };
 
-  const useGps = () => {
+  // auto: the request made when the map opens. If the farmer taps their field before it answers,
+  // their pin wins; pressing "Use my location" still moves it.
+  const useGps = (auto = false) => {
     // Browsers only allow location on https:// (or localhost).
     if (!window.isSecureContext) { setGpsError(t('needHttps')); return; }
     if (!navigator.geolocation) { setGpsError(t('gpsUnavailable')); return; }
@@ -108,19 +175,23 @@ export default function LeafletFarmMap({ pin, onPin, onLocate, onFail, autoLocat
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setLocating(false);
+        if (auto && placedByHand.current) return;
         const p = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: Math.round(pos.coords.accuracy) };
+        // A laptop's location comes from Wi-Fi or the IP address and can be another country (or a VPN's).
+        // The map is locked to Sri Lanka, so going there showed the sea at the island's edge.
+        if (!inSriLanka(p)) { setGpsError(t('gpsOutsideSriLanka')); return; }
         onPinRef.current(p);
         onLocate?.(p);
         mapRef.current?.setView([p.lat, p.lng], 17);
       },
-      (err) => { setLocating(false); setGpsError(err.code === 1 ? t('gpsDenied') : t('gpsUnavailable')); },
+      (err) => { setLocating(false); if (!(auto && placedByHand.current)) setGpsError(err.code === 1 ? t('gpsDenied') : t('gpsUnavailable')); },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 },
     );
   };
 
   // Ask for location as soon as the map is up (this is what shows the browser's permission prompt).
   useEffect(() => {
-    if (ready && autoLocate) useGps();
+    if (ready && autoLocate) useGps(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready]);
 
@@ -148,18 +219,20 @@ export default function LeafletFarmMap({ pin, onPin, onLocate, onFail, autoLocat
       <form className="search" onSubmit={search}>
         <Icon name="search" size={20} />
         <input aria-label={t('searchVillage')} placeholder={t('searchVillage')} value={q} onChange={(e) => setQ(e.target.value)} enterKeyHint="search" />
-        {q && <button type="button" className="icon-btn soft sm" aria-label="Clear" onClick={() => { setQ(''); setSearchError(''); }}><Icon name="close" size={14} /></button>}
+        {q && <button type="button" className="icon-btn soft sm" aria-label={t('a11yClear')} onClick={() => { setQ(''); setSearchError(''); }}><Icon name="close" size={14} /></button>}
       </form>
       {searchError && <div className="f13 err-text">{searchError}</div>}
 
       <div className="gmap-wrap">
-        <div ref={boxRef} className="gmap" role="application" aria-label={t('pinTitle')} />
-        <div className="seg-mini map-base" role="radiogroup" aria-label="Map type">
-          <button type="button" role="radio" aria-checked={base === 'satellite'} className={base === 'satellite' ? 'on' : ''} onClick={() => switchBase('satellite')}>Satellite</button>
-          <button type="button" role="radio" aria-checked={base === 'map'} className={base === 'map' ? 'on' : ''} onClick={() => switchBase('map')}>Map</button>
+        <div ref={boxRef} className="gmap" data-base={base} role="application" aria-label={t('pinTitle')} />
+        <IrrigationLegend t={t} status={layerStatus} collapsible selectedLabel={t('mapNearestTank')} selectedAreaLabel={t('mapNearestTankFields')} showSelected={Boolean(selectedTank)} />
+        <div className="seg-mini map-base" role="radiogroup" aria-label={t('a11yMapType')}>
+          <button type="button" role="radio" aria-checked={base === 'satellite'} className={base === 'satellite' ? 'on' : ''} onClick={() => switchBase('satellite')}>{t('mapSatellite')}</button>
+          <button type="button" role="radio" aria-checked={base === 'map'} className={base === 'map' ? 'on' : ''} onClick={() => switchBase('map')}>{t('mapStreet')}</button>
         </div>
+        <AllReservoirsButton layers={irrigationLayersRef} body={t('mapAllBodyReg')} t={t} className="under-base" />
         {ready && !pin?.lat && <div className="tap-hint"><Icon name="target" size={16} />{t('tapField')}</div>}
-        <button type="button" className="gps-btn" onClick={useGps} disabled={locating || !ready}>
+        <button type="button" className="gps-btn" onClick={() => useGps()} disabled={locating || !ready}>
           <Icon name="target" size={18} stroke={2.4} />{locating ? t('locating') : t('useMyLocation')}
         </button>
       </div>

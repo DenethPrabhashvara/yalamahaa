@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   ArrowDown,
   ArrowUp,
+  ClipboardCheck,
   ClipboardList,
   CornerDownLeft,
   Database,
@@ -15,7 +16,7 @@ import {
   Users,
   Waves,
   X,
-} from 'lucide-react'
+} from '../ui/icons'
 import { cn } from '../../utils/format'
 import { useData } from '../../context/DataContext'
 import { api } from '../../api/client'
@@ -27,6 +28,7 @@ const PAGES = [
   { id: 'page-rivers', label: 'River Monitoring', hint: 'Gauges and flood thresholds', to: '/rivers', icon: Waves, type: 'Page' },
   { id: 'page-reports', label: 'Canal Reports', hint: 'Canal problems reported by farmers', to: '/reports', icon: ClipboardList, type: 'Page' },
   { id: 'page-sms', label: 'SMS Gateway', hint: 'Campaigns and delivery reports', to: '/sms', icon: MessageSquareText, type: 'Page' },
+  { id: 'page-surveys', label: 'Surveys', hint: 'Disaster & damage polls', to: '/surveys', icon: ClipboardCheck, type: 'Page' },
   { id: 'page-farmers', label: 'Farmer Portal', hint: 'Registry and water issue schedule', to: '/farmers', icon: Users, type: 'Page' },
   { id: 'page-database', label: 'Database', hint: 'Browse and edit every table', to: '/database', icon: Database, type: 'Page' },
   { id: 'page-settings', label: 'My account', hint: 'Your account and password', to: '/settings/account', icon: Settings, type: 'Page' },

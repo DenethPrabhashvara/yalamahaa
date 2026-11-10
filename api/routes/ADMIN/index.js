@@ -7,6 +7,7 @@ const dbrouter = require('./dbroutes.js')
 const smsrouter = require('./alertroutes.js')
 const datarouter = require('./dataroutes.js')
 const adminreportrouter = require('./reportroutes.js')
+const surveyAdminRouter = require('./surveyroutes.js')
 
 const adminrouter =express.Router()
 
@@ -16,6 +17,9 @@ adminrouter.use('/farmers', requireAdmin, farmerrouter)
 adminrouter.use('/db',requireAdmin, dbrouter)     //admin auth middleware
 adminrouter.use('/data', requireAdmin, datarouter)
 adminrouter.use('/reports', requireAdmin, adminreportrouter)
+
+// officers can read surveys but not create/delete
+adminrouter.use('/surveys', requireAdmin, (req, res, next) => (req.method === 'GET' ? next() : canEdit(req, res, next)), surveyAdminRouter)
 
 // officers can read sms history but not send
 adminrouter.use('/sms', requireAdmin, (req, res, next) => (req.method === 'GET' ? next() : canEdit(req, res, next)), smsrouter)

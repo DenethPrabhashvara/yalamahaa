@@ -174,21 +174,36 @@
   }
 
   section.min-h-screen .max-w-5xl {
-    height: 16rem;
-    margin-top: 2.5rem;
+    margin-top: 2rem;
     gap: 0;
   }
 
-  section.min-h-screen .max-w-5xl img:first-child,
-  section.min-h-screen .max-w-5xl img:last-child {
-    display: none;
+  /* floating cards sit side by side above the phone, not on top of it */
+  section.min-h-screen .hero-card {
+    top: 0;
   }
 
-  section.min-h-screen .max-w-5xl img:nth-child(2) {
+  section.min-h-screen .hero-card:first-child {
+    width: 7rem;
+    height: 7rem;
+  }
+
+  section.min-h-screen .hero-card:first-child .text-2xl {
+    font-size: 1.25rem;
+  }
+
+  section.min-h-screen .hero-card:last-child {
+    width: min(12rem, calc(100% - 7.75rem));
+  }
+
+  section.min-h-screen .hero-card:last-child > div {
+    padding: 0.75rem;
+  }
+
+  section.min-h-screen .hero-phone {
     width: min(72vw, 17rem);
     height: auto;
-    margin-top: 0;
-    z-index: 1 !important;
+    margin-top: 8rem;
   }
 
   #features {
@@ -268,6 +283,7 @@
     min-width: 0;
     padding: 1rem;
     gap: 1.5rem;
+    justify-content: flex-start;
   }
 
   #smart-assist .site-grid.grid-cols-2 h4 {
@@ -382,6 +398,34 @@
 }
 
 @media (max-width: 380px) {
+  /* hero buttons stack instead of squashing their text onto two lines */
+  section.min-h-screen .hero-in.site-flex {
+    flex-wrap: wrap;
+  }
+
+  section.min-h-screen .hero-in.site-flex > a {
+    white-space: nowrap;
+  }
+
+  section.min-h-screen .hero-phone {
+    margin-top: 9.75rem;
+  }
+
+  /* feature tiles: one per row, icon beside the text */
+  #smart-assist .site-grid.grid-cols-2 {
+    grid-template-columns: 1fr;
+  }
+
+  #smart-assist .site-grid.grid-cols-2 > div {
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  #smart-assist .site-grid.grid-cols-2 > div > :first-child {
+    flex-shrink: 0;
+  }
+
   header .site-fixed > .site-container > .site-flex {
     gap: 0.5rem;
   }

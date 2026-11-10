@@ -7,7 +7,7 @@ import { login } from '../api/auth.js';
 
 // Second step for a number that already has an account: the API signs in with phone + NIC.
 export default function SignIn() {
-  const { t, pendingPhone, user, update, showToast } = useApp();
+  const { t, lang, pendingPhone, user, update, showToast } = useApp();
   const navigate = useNavigate();
   const [nic, setNic] = useState('');
   const [error, setError] = useState('');
@@ -22,7 +22,12 @@ export default function SignIn() {
     try {
       const farmer = await login(pendingPhone, nic);
       const next = await loadFarm(farmer);
-      update({ user: { phone: pendingPhone, farmerId: farmer.farmer_id }, farm: next, pendingPhone: null });
+      update({
+        user: { phone: pendingPhone, farmerId: farmer.farmer_id },
+        farm: next,
+        lang: farmer.preferred_lang || lang,
+        pendingPhone: null,
+      });
       showToast(t('signedIn'));
       navigate('/home', { replace: true });
     } catch (err) {

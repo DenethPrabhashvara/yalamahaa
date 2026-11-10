@@ -3,7 +3,7 @@ import { useApp } from '../state/AppContext.jsx';
 import { IconBtn } from '../components/UI.jsx';
 import Icon from '../components/Icon.jsx';
 import Sheet from '../components/Sheet.jsx';
-import { useNews, newsIcon, instructionSteps, newsErrorText } from '../api/news.js';
+import { useNews, newsIcon, instructionSections, bodyText, newsErrorText, newsTitle } from '../api/news.js';
 import { timeAgo, fmtDateTime } from '../time.js';
 
 // Official weather warnings from the Department of Meteorology. "My area" filters to the
@@ -74,13 +74,13 @@ export default function News() {
             <div className={`icon-tile ${n.tone}`}><Icon name={newsIcon(n)} size={22} /></div>
             <div className="grow" style={{ textAlign: 'left' }}>
               <div className="row between gap8">
-                <span className="f15 fw600">{n.headline}</span>
+                <span className="f15 fw600">{newsTitle(n, t)}</span>
                 <span className="f12 muted nowrap">{n.expired ? t('ended') : timeAgo(n.sent, t, lang)}</span>
               </div>
-              {n.body && <div className="f15 muted lh" style={{ marginTop: 2 }}>{n.body}</div>}
+              {bodyText(n.body) && <div className="f15 muted lh" style={{ marginTop: 2 }}>{bodyText(n.body)}</div>}
               <div className="f12 muted" style={{ marginTop: 4 }}>{areaLine(n, t)}</div>
             </div>
-            {!read.has(n.id) && !n.expired && <span className="unread-dot" aria-label="Unread" />}
+            {!read.has(n.id) && !n.expired && <span className="unread-dot" aria-label={t('a11yUnread')} />}
           </button>
         ))}
       </div>
@@ -90,26 +90,27 @@ export default function News() {
       <Sheet open={Boolean(open)} onClose={() => setOpen(null)} title={open?.event || t('news')}>
         {open && (
           <>
-            <div className="f17 fw600 lh">{open.headline}</div>
+            <div className="f17 fw600 lh">{newsTitle(open, t)}</div>
             {open.langFallback && <div className="f12 muted">{t('englishOnly')}</div>}
             <div className="f15 muted lh">
               {t('issued')} {fmtDateTime(open.sent, lang)}
               {open.expires ? ` - ${t('validUntil')} ${fmtDateTime(open.expires, lang)}` : ''}
             </div>
-            {open.body && <div className="f15 lh">{open.body}</div>}
+            {/* the description, without the feed's "Warning Description:" label */}
+            {bodyText(open.body) && <div className="f15 lh">{bodyText(open.body)}</div>}
 
-            {instructionSteps(open.instruction).length > 0 && (
-              <>
-                <div className="f15 fw600">{t('whatToDo')}</div>
-                <ol className="steps light">
-                  {instructionSteps(open.instruction).map((step, i) => (
-                    <li key={step}><span className="num-badge">{i + 1}</span>{step}</li>
-                  ))}
-                </ol>
-              </>
-            )}
+            {/* each section of the instruction under its own heading ("Action Required", "Damage Expected"),
+                its points as a bulleted list; a section with no heading of its own is "What to do" */}
+            {instructionSections(open.instruction).map((sec, i) => (
+              <section key={`${i}-${sec.title}`} className="col gap8">
+                <h3 className="f15 fw600">{sec.title || t('whatToDo')}</h3>
+                <ul className="bullets">
+                  {sec.items.map((item, j) => <li key={j}>{item}</li>)}
+                </ul>
+              </section>
+            ))}
 
-            <div className="f15 fw600">{t('affectedAreas')}</div>
+            <h3 className="f15 fw600">{t('affectedAreas')}</h3>
             <div className="f15 muted lh">{areaDetail(open, t, farm)}</div>
 
             {open.web && (

@@ -7,11 +7,15 @@ import { ISSUE_TYPES } from '../data.js';
 import { useCanals, withTankDistance } from '../api/canals.js';
 import { MAX_PHOTOS, REPORT_STATUS, fetchMyReports, fetchReportPhoto, shrinkPhoto, submitReport } from '../api/reports.js';
 import { formatDistance } from '../components/GoogleFarmMap.jsx';
+import { localizedDate } from '../time.js';
 
 // Only types the camera and gallery give us that the API accepts
 const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/heic,image/heif';
 
-const when = (iso, lang) => new Date(iso).toLocaleDateString(lang === 'en' ? 'en-GB' : lang, { day: 'numeric', month: 'short' });
+const when = (iso, lang) => {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime()) ? '' : localizedDate(date, lang, { day: 'numeric', month: 'short' });
+};
 
 // Canals from the water issue schedule, nearest to the farm first, with search and "Not listed"
 function CanalSheet({ open, onClose, value, onPick, pin, t }) {
@@ -201,7 +205,7 @@ export default function Report() {
             <div className="f15 fw600">{t('received')} - {justSent.code}</div>
             <div className="f13 dim lh">{t('reportSaved')}</div>
           </div>
-          <button type="button" className="icon-btn glass sm" aria-label="Dismiss" onClick={() => setJustSent(null)}><Icon name="close" size={16} /></button>
+          <button type="button" className="icon-btn glass sm" aria-label={t('a11yDismiss')} onClick={() => setJustSent(null)}><Icon name="close" size={16} /></button>
         </div>
       )}
 
@@ -241,13 +245,13 @@ export default function Report() {
       <label htmlFor="notes" className="f15 fw600">{t('tellMore')}</label>
       <div className="card tight">
         <textarea id="notes" className="textarea" rows={3} value={note} maxLength={1000} onChange={(e) => setNote(e.target.value)}
-          placeholder="e.g. Mud and weeds blocking the channel about 50 m after gate 7" />
+          placeholder={t('reportNoteExample')} />
         {photos.length > 0 && (
           <div className="row gap8 wrap">
             {photos.map((p) => (
               <div key={p.url} className="photo-prev">
                 <img src={p.url} alt={t('photo')} />
-                <button type="button" className="icon-btn dark sm" aria-label="Remove photo" onClick={() => removePhoto(p.url)}><Icon name="close" size={14} /></button>
+                <button type="button" className="icon-btn dark sm" aria-label={t('a11yRemovePhoto')} onClick={() => removePhoto(p.url)}><Icon name="close" size={14} /></button>
               </div>
             ))}
           </div>

@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, startTransition, useEffect, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Glass, TabBar as GlisseTabBar } from 'glisse';
 import Icon from './Icon.jsx';
@@ -45,6 +45,8 @@ const STATUS = {
   watch: ['warn', 'warn'], low: ['warn', 'warn'], lowWater: ['warn', 'warn'], inProgress: ['warn', 'clock'],
   critical: ['danger', 'stop'], spill: ['danger', 'stop'],
   received: ['info', 'inbox'],
+  // tank level bands (tankLevel in api/reservoirs.js)
+  levelVeryLow: ['danger', 'stop'], levelLow: ['warn', 'warn'], levelModerate: ['info', 'info'], levelGood: ['ok', 'checkCircle'], levelFull: ['ok', 'checkCircle'],
   forwarded: ['info', 'send'], reportClosed: ['warn', 'close'],
 };
 
@@ -58,22 +60,25 @@ export function StatusPill({ status, t }) {
 }
 
 export function LangSwitch({ compact }) {
-  const { lang, update } = useApp();
+  const { lang, setLanguage, t } = useApp();
   if (compact) {
-    const idx = LANGS.findIndex((l) => l.code === lang);
-    const nextLang = LANGS[(idx + 1) % LANGS.length];
     return (
-      <button type="button" className="lang-chip" onClick={() => update({ lang: nextLang.code })} aria-label="Change language">
-        <b>{LANGS[idx].short}</b>
-        <span>{LANGS.filter((l) => l.code !== lang).map((l) => l.short).join(' - ')}</span>
-      </button>
+      <div className="lang-switch-compact" role="group" aria-label={t('language')}>
+        {LANGS.map((l) => (
+          <button key={l.code} type="button" aria-label={l.label} aria-pressed={lang === l.code}
+            className={lang === l.code ? 'active' : ''} onClick={() => setLanguage(l.code)}
+            style={{ fontFamily: l.code === 'si' ? 'Noto Sans Sinhala' : l.code === 'ta' ? 'Noto Sans Tamil' : undefined }}>
+            {l.short}
+          </button>
+        ))}
+      </div>
     );
   }
   return (
-    <div className="seg seg-white" role="radiogroup" aria-label="Language">
+    <div className="seg seg-white" role="radiogroup" aria-label={t('language')}>
       {LANGS.map((l) => (
         <button key={l.code} type="button" role="radio" aria-checked={lang === l.code}
-          className={lang === l.code ? 'on-accent' : ''} onClick={() => update({ lang: l.code })}
+          className={lang === l.code ? 'on-accent' : ''} onClick={() => setLanguage(l.code)}
           style={{ fontFamily: l.code === 'si' ? 'Noto Sans Sinhala' : l.code === 'ta' ? 'Noto Sans Tamil' : undefined }}>
           {l.label}
         </button>
@@ -82,7 +87,7 @@ export function LangSwitch({ compact }) {
   );
 }
 
-export function StepHeader({ step, total = 4, title, backTo, closeTo, onClose, closeLabel = 'Close', right }) {
+export function StepHeader({ step, total = 4, title, backTo, closeTo, onClose, closeLabel, right }) {
   const { t } = useApp();
   const navigate = useNavigate();
   const done = Math.floor(step);
@@ -90,9 +95,9 @@ export function StepHeader({ step, total = 4, title, backTo, closeTo, onClose, c
     <>
       <div className="row gap10">
         {onClose
-          ? <IconBtn icon="close" label={closeLabel} onClick={onClose} />
+          ? <IconBtn icon="close" label={closeLabel || t('close')} onClick={onClose} />
           : closeTo
-          ? <IconBtn icon="close" label="Close" to={closeTo} />
+          ? <IconBtn icon="close" label={t('close')} to={closeTo} />
           : <IconBtn icon="back" label={t('back')} onClick={() => (backTo ? navigate(backTo) : navigate(-1))} />}
         <div className="grow center fw600 f15">{title || t('registerFarm')}</div>
         {right || <span className="chip-dark">{Math.ceil(step)} / {total}</span>}
@@ -106,9 +111,26 @@ export function StepHeader({ step, total = 4, title, backTo, closeTo, onClose, c
   );
 }
 
-// Glisse renders tabs with an `href` through this, so they navigate inside the router.
-const RouterLink = forwardRef(function RouterLink({ href, ...props }, ref) {
-  return <Link ref={ref} to={href} {...props} />;
+let tabNavigationTimer;
+
+// Keep route rendering interruptible and avoid animating the incoming page under the glass lens.
+const RouterLink = forwardRef(function RouterLink({ to, href, onClick, ...props }, ref) {
+  const navigate = useNavigate();
+  const target = to ?? href;
+  const go = (e) => {
+    onClick?.(e);
+    if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    const root = document.documentElement;
+    root.classList.add('tab-nav-navigating');
+    window.clearTimeout(tabNavigationTimer);
+    tabNavigationTimer = window.setTimeout(() => {
+      root.classList.remove('tab-nav-navigating');
+      tabNavigationTimer = undefined;
+    }, 300);
+    startTransition(() => navigate(target));
+  };
+  return <Link ref={ref} to={target} onClick={go} {...props} />;
 });
 
 export function BottomNav() {
@@ -120,13 +142,16 @@ export function BottomNav() {
     { value: '/report', icon: 'pencil', label: t('report') },
     { value: '/fields', icon: 'map', label: t('fields') },
     { value: '/profile', icon: 'user', label: t('profile') },
-  ].map((it) => ({ ...it, href: it.value, icon: <Icon name={it.icon} size={24} stroke={2} /> }));
-  // Every item is a section people navigate to; the bar never carries actions.
-  // Glisse's iOS 26 tab bar: the selection springs between tabs, follows a drag and lifts into a lens while held.
+  ];
+  const glisseItems = items.map((item) => ({
+    ...item,
+    href: item.value,
+    icon: <Icon name={item.icon} size={24} stroke={2} />,
+  }));
   return (
     <div className="bottom-nav">
-      <GlisseTabBar aria-label="Main" items={items} link={RouterLink}
-        value={items.some((it) => it.value === pathname) ? pathname : null} />
+      <GlisseTabBar aria-label={t('a11yMainMenu')} items={glisseItems} link={RouterLink}
+        value={items.some((item) => item.value === pathname) ? pathname : null} />
     </div>
   );
 }

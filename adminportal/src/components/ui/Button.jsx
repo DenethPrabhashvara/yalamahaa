@@ -1,4 +1,4 @@
-import { Loader2 } from 'lucide-react'
+import { Loader2 } from './icons'
 import { cn } from '../../utils/format'
 
 export function Button({

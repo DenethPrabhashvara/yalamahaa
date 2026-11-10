@@ -26,6 +26,7 @@ import RegFlood from './pages/register/RegFlood.jsx';
 import RegReview from './pages/register/RegReview.jsx';
 import RegDone from './pages/register/RegDone.jsx';
 import NotFound from './pages/NotFound.jsx';
+import { useAndroidBack } from './useAndroidBack.js';
 import ErrorScreen from './pages/ErrorScreen.jsx';
 
 function RequireAuth({ children }) {
@@ -49,14 +50,20 @@ const NAV_ROUTES = ['/home', '/water', '/report', '/fields', '/profile', '/alert
 export default function App() {
   const { pathname } = useLocation();
   const showNav = NAV_ROUTES.includes(pathname);
-  const lang = useApp().lang;
+  const { lang, user, farm } = useApp();
+  // The assistant is for signed-in farmers only, on the main pages (where it sits above the
+  // bottom bar, clear of each step's Continue button). It is outside the per-page error boundary,
+  // so changing page doesn't wipe the conversation; signing out unmounts it and clears it.
+  const signedIn = Boolean(user?.farmerId && farm);
+  const showChat = signedIn && showNav;
+  useAndroidBack(signedIn);
 
   return (
     <div className="stage">
       <div className={`device lang-${lang}`} data-theme="light">
         <OfflineBanner />
         <ErrorBoundary key={pathname}>
-          <main className={`viewport ${showNav ? 'has-nav' : ''}`} key={pathname}>
+          <main className={`viewport ${showNav ? 'has-nav' : ''} ${showChat ? 'has-chat' : ''}`} key={pathname}>
             <Routes>
               <Route path="/" element={<Splash />} />
               <Route path="/welcome" element={<Welcome />} />
@@ -86,8 +93,9 @@ export default function App() {
               <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
-          <ChatBubble />
         </ErrorBoundary>
+        {/* stays mounted on the other pages (e.g. editing the farm), just hidden, so the chat is still there on return */}
+        {signedIn && <ErrorBoundary fallback={null}><ChatBubble hidden={!showChat} /></ErrorBoundary>}
         {showNav && <BottomNav />}
         <Toast />
       </div>

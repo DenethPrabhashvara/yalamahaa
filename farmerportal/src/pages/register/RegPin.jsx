@@ -4,24 +4,27 @@ import { useApp } from '../../state/AppContext.jsx';
 import { PrimaryBtn, StepHeader } from '../../components/UI.jsx';
 import Icon from '../../components/Icon.jsx';
 import { GOOGLE_MAPS_KEY } from '../../api/googleMaps.js';
-import GoogleFarmMap, { formatDistance, nearestTank } from '../../components/GoogleFarmMap.jsx';
+import GoogleFarmMap, { formatDistance, nearestTank, placeLabel } from '../../components/GoogleFarmMap.jsx';
 import { farFromPin } from '../../fieldShape.js';
+import { inSriLanka } from '../../data.js';
 
 // Leaflet (~150 KB) only downloads when this step opens.
 const LeafletFarmMap = lazy(() => import('../../components/LeafletFarmMap.jsx'));
 
 const LIVE_MAP = GOOGLE_MAPS_KEY ? 'google' : 'free';
 
-// Pinning the farm is required: the step asks for location access on open,
-// and Continue stays off until the phone's GPS has given a position.
+// Pinning the farm is required: the step asks for location access on open, and the farmer can
+// also tap or drag the pin onto the field by hand (location off, or GPS far from the field).
+// Continue turns on as soon as there is a pin, whichever way it was placed.
 export default function RegPin() {
   const { t, draft, update, lang } = useApp();
   const navigate = useNavigate();
   // Google satellite map when a key is set, otherwise the free Leaflet/OpenStreetMap map.
   const [mapMode, setMapMode] = useState(typeof navigator !== 'undefined' && navigator.onLine === false ? 'offline' : LIVE_MAP);
-  const geoPin = draft.pin?.lat != null ? draft.pin : null;
+  // a pin outside Sri Lanka (an old test, a laptop's guessed location) is no pin: the farmer places it again
+  const geoPin = inSriLanka(draft.pin) ? draft.pin : null;
   const set = (patch) => update((s) => ({ draft: { ...s.draft, ...patch } }));
-  const canNext = Boolean(geoPin && draft.located);
+  const canNext = Boolean(geoPin);
 
   // Bring the map back by itself when the connection returns.
   useEffect(() => {
@@ -37,6 +40,8 @@ export default function RegPin() {
     set({
       pin: p,
       boundary,
+      located: true,   // a pin placed by hand counts too; also stops the open-time GPS prompt coming back
+      // English on purpose: it is the API's location_label; placeLabel() shows it in the farmer's language
       nearest: n ? `${formatDistance(n.meters)} from ${n.name}` : `${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}`,
       nearWater: n ? { name: n.name, type: 'tank' } : null,
     });
@@ -72,7 +77,7 @@ export default function RegPin() {
             )}
           {geoPin && (
             <div className="dist-chip static">
-              {draft.nearWater ? `${t('about')} ${draft.nearest}` : draft.nearest}
+              {draft.nearWater ? `${t('about')} ${placeLabel(draft.nearest, t)}` : draft.nearest}
               {geoPin.accuracy ? ` - GPS ±${geoPin.accuracy} m` : ''}
             </div>
           )}

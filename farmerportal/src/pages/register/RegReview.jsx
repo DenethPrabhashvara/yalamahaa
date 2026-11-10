@@ -10,9 +10,10 @@ import { findReservoirId, register, saveFarmDetails, updateProfile } from '../..
 import { canalScheme } from '../../api/reservoirs.js';
 import { areaAcres, boundaryState, roundAcres } from '../../fieldShape.js';
 import { floodLabel } from './RegFlood.jsx';
+import { placeLabel } from '../../components/GoogleFarmMap.jsx';
 
 export default function RegReview() {
-  const { t, draft, update, user, alerts, showToast } = useApp();
+  const { t, lang, draft, update, user, alerts, showToast } = useApp();
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -20,20 +21,23 @@ export default function RegReview() {
   // A registered farmer's NIC is already on file and cannot change.
   if ((!user.farmerId && !info.valid) || !draft.address?.trim() || !draft.district) return <Navigate to="/register/identity" replace />;
   // The farm location is required; it must come from the phone's GPS.
-  if (draft.pin?.lat == null || !draft.located) return <Navigate to="/register/pin" replace />;
+  if (draft.pin?.lat == null) return <Navigate to="/register/pin" replace />;
   // The total land area is required; the field step asks it.
   if (!(Number(draft.totalAcres) > 0)) return <Navigate to="/register/field" replace />;
 
   const total = draft.crops.reduce((s, c) => s + (Number(c.acres) || 0), 0);
   const drawn = boundaryState(draft.boundary) === 'ok' ? roundAcres(areaAcres(draft.boundary)) : null;
 
+  // farmerId: set for a new registration only. Editing an existing farm saves without a new note.
   const saveFarm = (id, farmerId, reservoirId) => {
     const farm = { ...draft, id, reservoirId, phone: user.phone, registeredAt: draft.registeredAt || Date.now() };
+    // The note keeps the facts, not the words: useAlerts writes it in the farmer's current language.
+    const note = { id: `f${Date.now()}`, kind: 'farm', farmId: id, acres: Number(draft.totalAcres) || Math.round(total * 100) / 100, at: Date.now(), read: false };
     update({
       user: farmerId ? { phone: user.phone, farmerId } : user,
       farm,
       draft: emptyDraft(),
-      alerts: [{ id: `f${Date.now()}`, kind: 'farm', title: `Farm registered - ${id}`, body: `${total} acres registered.`, when: 'Just now', read: false }, ...alerts],
+      ...(farmerId ? { alerts: [note, ...alerts] } : {}),
     });
     navigate('/register/done', { replace: true, state: { id } });
   };
@@ -50,6 +54,7 @@ export default function RegReview() {
         address: draft.address.trim(),
         district: draft.district,
         division: draft.division?.trim() || null,
+        preferred_lang: lang,
         farm_latitude: Number(draft.pin.lat.toFixed(6)),
         farm_longitude: Number(draft.pin.lng.toFixed(6)),
         reservoir_id: await findReservoirId(tank).catch(() => null),
@@ -112,7 +117,7 @@ export default function RegReview() {
 
       <div className="card row-card static">
         <div className="icon-tile mint"><Icon name="pin" size={22} color={COLORS.pin} /></div>
-        <div className="grow"><div className="f12 muted">{t('location')}</div><div className="f15 fw600">{draft.nearest}</div></div>
+        <div className="grow"><div className="f12 muted">{t('location')}</div><div className="f15 fw600">{placeLabel(draft.nearest, t)}</div></div>
         <Link to="/register/pin" className="f15 fw600 ink">{t('edit')}</Link>
       </div>
 

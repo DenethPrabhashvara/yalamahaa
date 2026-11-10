@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { PhoneCall } from 'lucide-react'
+import { PhoneCall } from './ui/icons'
 import { api } from '../api/client'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'

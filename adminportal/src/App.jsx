@@ -4,6 +4,7 @@ import { Dashboard } from './pages/Dashboard'
 import { Tanks } from './pages/Tanks'
 import { Rivers } from './pages/Rivers'
 import { SmsGateway } from './pages/SmsGateway'
+import { Surveys } from './pages/Surveys'
 import { FarmerPortal } from './pages/FarmerPortal'
 import { Database } from './pages/Database'
 import { Reports } from './pages/Reports'
@@ -12,6 +13,7 @@ import { Login } from './pages/Login'
 import { useAuth } from './context/AuthContext'
 import { DataProvider } from './context/DataContext'
 import { LoadingScreen } from './components/ui/LoadingScreen'
+import { ErrorBoundary } from './components/ui/ErrorBoundary'
 
 // Everything except the sign-in page needs a signed-in admin
 function SignedIn() {
@@ -20,9 +22,11 @@ function SignedIn() {
   if (status === 'loading') return <LoadingScreen label="Checking your session…" />
   if (status === 'out') return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />
   return (
-    <DataProvider>
-      <AppLayout />
-    </DataProvider>
+    <ErrorBoundary>
+      <DataProvider>
+        <AppLayout />
+      </DataProvider>
+    </ErrorBoundary>
   )
 }
 
@@ -36,6 +40,7 @@ export default function App() {
         <Route path="rivers" element={<Rivers />} />
         <Route path="reports" element={<Reports />} />
         <Route path="sms" element={<SmsGateway />} />
+        <Route path="surveys" element={<Surveys />} />
         <Route path="farmers" element={<FarmerPortal />} />
         
         <Route path="database" element={<Database />} />

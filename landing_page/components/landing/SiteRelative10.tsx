@@ -22,7 +22,7 @@ export default function SiteRelative10({ t }: { t: Dict }) {
         {"  "}
         <div className="site-relative site-flex flex-col items-center justify-center site-mb-7-5 site-z-20-2">
           <div className="site-relative site-md-inline-flex items-center">
-            <h3 className="lg:text-[120px] md:text-[100px] text-4xl font-black leading-none tracking-normal text-primary-1 site-md-ms-0 site-ms-8">
+            <h3 className="lg:text-[120px] md:text-[100px] text-7xl font-black leading-none tracking-normal text-primary-1 text-center">
               <span data-count={SITE.reservoirs}>{SITE.reservoirs}</span>
             </h3>
             <div className="site-md-absolute md:top-20 -inset-e-12 md:-right-20 md:rotate-8 bg-white site-py-2 site-md-px-5 site-px-2 rounded-2xl whitespace-nowrap site-mt-1 [box-shadow:var(--tw-inset-shadow),_var(--tw-inset-ring-shadow),_var(--tw-ring-offset-shadow),_var(--tw-ring-shadow),_var(--tw-shadow)] [--tw-shadow:0_20px_25px_-5px_var(--tw-shadow-color,#0000001a),_0_8px_10px_-6px_var(--tw-shadow-color,#0000001a)]">
@@ -59,7 +59,7 @@ export default function SiteRelative10({ t }: { t: Dict }) {
               className="site-absolute lg:h-112 h-75 lg:-bottom-25 md:-bottom-5 bottom-3 lg:-inset-e-62.5 -inset-e-25 top-auto inset-s-auto site-z-20-2 w-full"
             />
           </div>
-          <div className="site-grid md:grid-cols-3 grid-cols-2 gap-6 lg:gap-17.5 items-start text-center md:w-3xl site-mx-auto site-z-40 site-lg--mt-0 site-md--mt-60 site-mt-50">
+          <div className="site-grid md:grid-cols-3 grid-cols-2 gap-6 px-4 md:px-0 lg:gap-17.5 items-start text-center md:w-3xl site-mx-auto site-z-40 site-lg--mt-0 site-md--mt-60 site-mt-50">
             <div className="site-flex flex-col items-center">
               <div className="site-flex items-baseline gap-[calc(var(--spacing)_*_1)]">
                 <h3 className="text-3xl md:text-5xl lg:text-7xl font-medium site-text-default-900 tracking-normal">

@@ -14,7 +14,7 @@ const forecast = require('../../models/forecastModel.js')
 const datarouter = express.Router()
 
 const HISTORY_DAYS = 30
-// days with fewer reservoirs reporting than this are skipped in the network average
+// days with fewer reservoirs having usable storage percentages than this are skipped
 const MIN_DAILY_READINGS = 20
 
 datarouter.get('/reservoirs', async(req, res, next)=>{
@@ -42,7 +42,7 @@ datarouter.get('/reservoirs', async(req, res, next)=>{
     // not every reservoir reports daily, so each day takes each reservoir's latest reading from the week before.
     // rainfall = highest reported that day
     const daily = await db.query(
-      `SELECT to_char(d, 'YYYY-MM-DD') AS date, count(*)::int AS reservoirs,
+      `SELECT to_char(d, 'YYYY-MM-DD') AS date, count(l.usable_storage_percent)::int AS reservoirs,
               round(avg(l.usable_storage_percent), 1) AS storage,
               count(*) FILTER (WHERE l.is_spilling = 'Yes' AND l.reading_date = d)::int AS spilling,
               (SELECT max(rainfall_prev_day_mm) FROM reservoir_levels WHERE reading_date = d) AS rainfall
@@ -50,11 +50,16 @@ datarouter.get('/reservoirs', async(req, res, next)=>{
        CROSS JOIN LATERAL (SELECT g.day::date AS d) dd
        CROSS JOIN reservoirs r
        JOIN LATERAL (
-         SELECT usable_storage_percent, is_spilling, reading_date FROM reservoir_levels
-         WHERE reservoir_id = r.id AND reading_date <= d AND reading_date > d - 7
-         ORDER BY reading_date DESC LIMIT 1
+         SELECT COALESCE(
+                  rl.usable_storage_percent,
+                  rl.usable_storage_acft / NULLIF(r.active_capacity_acft, 0) * 100
+                ) AS usable_storage_percent,
+                rl.is_spilling, rl.reading_date
+         FROM reservoir_levels rl
+         WHERE rl.reservoir_id = r.id AND rl.reading_date <= d AND rl.reading_date > d - 7
+         ORDER BY rl.reading_date DESC LIMIT 1
        ) l ON true
-       GROUP BY d HAVING count(*) >= $2
+       GROUP BY d HAVING count(l.usable_storage_percent) >= $2
        ORDER BY d`,
       [HISTORY_DAYS, MIN_DAILY_READINGS]
     )

@@ -2,6 +2,7 @@ import { NavLink } from 'react-router-dom'
 import {
   ChevronRight,
   ChevronsLeft,
+  ClipboardCheck,
   ClipboardList,
   Database,
   Droplets,
@@ -11,7 +12,7 @@ import {
   ShieldCheck,
   Users,
   Waves,
-} from 'lucide-react'
+} from '../ui/icons'
 import { cn } from '../../utils/format'
 import { useData } from '../../context/DataContext'
 import { useAuth } from '../../context/AuthContext'
@@ -53,6 +54,12 @@ const navItems = ({ TANK_SUMMARY, FLOOD_ALERTS, REPORT_COUNTS }) => [
     label: 'SMS Gateway',
     hint: 'Alerts & campaigns',
     icon: MessageSquareText,
+  },
+  {
+    to: '/surveys',
+    label: 'Surveys',
+    hint: 'Disaster & damage polls',
+    icon: ClipboardCheck,
   },
   {
     to: '/farmers',

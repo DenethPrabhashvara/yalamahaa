@@ -13,7 +13,7 @@ import {
   Save,
   Table2,
   Trash2,
-} from 'lucide-react'
+} from '../components/ui/icons'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../context/ToastContext'
 import { api } from '../api/client'
@@ -263,11 +263,6 @@ export function Database() {
         eyebrow="Administration"
         title="Database"
         description="Every table in the API database. Password, token and NIC hashes are never shown."
-        badge={
-          <Badge tone={canEdit ? 'warning' : 'info'} dot>
-            {canEdit ? 'Changes are saved immediately' : 'View only'}
-          </Badge>
-        }
         actions={
           <>
             <Button icon={RefreshCw} variant="secondary" loading={loading} onClick={loadRows}>
@@ -340,7 +335,7 @@ export function Database() {
               <tbody>
                 {result?.data.map((row, index) => (
                   <tr key={index} className="clickable-row" onClick={() => setEditor({ row })}>
-                    {table.columns.map((column) => (
+                    {table?.columns?.map((column) => (
                       <td key={column.name}>
                         <Cell value={row[column.name]} />
                       </td>

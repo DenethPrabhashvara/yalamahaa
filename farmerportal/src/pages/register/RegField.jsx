@@ -17,7 +17,7 @@ export default function RegField() {
   const { t, draft, update } = useApp();
   const navigate = useNavigate();
   const [offline, setOffline] = useState(typeof navigator !== 'undefined' && navigator.onLine === false);
-  if (draft.pin?.lat == null || !draft.located) return <Navigate to="/register/pin" replace />;
+  if (draft.pin?.lat == null) return <Navigate to="/register/pin" replace />;
 
   const points = draft.boundary || [];
   const set = (patch) => update((s) => ({ draft: { ...s.draft, ...patch } }));
@@ -26,10 +26,18 @@ export default function RegField() {
   const cropTotal = roundAcres(draft.crops.reduce((s, c) => s + (Number(c.acres) || 0), 0));
 
   // Until the farmer types a number, the total follows the drawn area (or the crops' total).
-  const typed = draft.totalAcres != null && draft.totalAcres !== '';
+  // Only their own typing counts: Continue saves the box's value, which may be the crops' total,
+  // and that must not later be shown back to them as a number they "entered".
+  const typed = Boolean(draft.totalTyped) && draft.totalAcres != null && draft.totalAcres !== '';
   const total = typed ? draft.totalAcres : String(drawn ?? cropTotal);
   const totalNum = Number(total);
-  const setTotal = (v) => set({ totalAcres: v });
+  const setTotal = (v) => set({ totalAcres: v, totalTyped: true });
+  // Moving, adding or removing a corner puts the total back on the marked area, even if the farmer
+  // typed one earlier. While the shape isn't complete (under 3 corners, crossing edges) the box keeps
+  // whatever it showed; once it is a field again it follows the new area. Typing after that still wins.
+  const changeCorners = (next) => set(boundaryState(next) === 'ok'
+    ? { boundary: next, totalAcres: String(roundAcres(areaAcres(next))), totalTyped: false }
+    : { boundary: next, totalAcres: total, totalTyped: true });
   const step = (d) => setTotal(String(Math.max(0.25, Math.round(((Number(total) || 0) + d) * 4) / 4)));
   const mismatch = drawn != null && totalNum > 0 && Math.abs(drawn - totalNum) > MISMATCH * Math.max(drawn, totalNum) && Math.abs(drawn - totalNum) > 0.5;
 
@@ -59,7 +67,7 @@ export default function RegField() {
         </div>
       ) : (
         <Suspense fallback={<div className="gmap-wrap tall"><div className="gmap-loading"><Icon name="map" size={20} />{t('loadingMap')}</div></div>}>
-          <FieldBoundaryMap pin={draft.pin} points={points} onChange={(next) => set({ boundary: next })} onFail={() => setOffline(true)} t={t} />
+          <FieldBoundaryMap pin={draft.pin} points={points} onChange={changeCorners} onFail={() => setOffline(true)} t={t} />
         </Suspense>
       )}
 
@@ -72,20 +80,25 @@ export default function RegField() {
       <div className="field">
         <span className="label">{t('totalLand')}</span>
         <div className="row gap10">
-          <button type="button" className="round-step soft" aria-label="Less" onClick={() => step(-0.25)}>−</button>
+          <button type="button" className="round-step soft" aria-label={t('a11yLess')} onClick={() => step(-0.25)}>−</button>
           <div className="acre-box">
             <input aria-label={t('totalLand')} inputMode="decimal" value={total}
               onChange={(e) => setTotal(e.target.value.replace(/[^\d.]/g, '').slice(0, 7))} />
             <span>{t('acres')}</span>
           </div>
-          <button type="button" className="round-step dark" aria-label="More" onClick={() => step(0.25)}>+</button>
+          <button type="button" className="round-step dark" aria-label={t('a11yMore')} onClick={() => step(0.25)}>+</button>
         </div>
         <div className="f13 muted lh">{t('totalLandHint')}</div>
       </div>
 
       {mismatch && (
         <div className="note-box amber"><Icon name="info" size={18} stroke={2.2} style={{ flex: 'none' }} />
-          {t('areaMismatch').replace('{drawn}', drawn).replace('{total}', roundAcres(totalNum))}
+          <div className="col gap8">
+            <span>{t('areaMismatch').replace('{drawn}', drawn).replace('{total}', roundAcres(totalNum))}</span>
+            <button type="button" className="pill-btn outline sm self-start" onClick={() => setTotal(String(drawn))}>
+              {t('useMarkedArea').replace('{drawn}', drawn)}
+            </button>
+          </div>
         </div>
       )}
 

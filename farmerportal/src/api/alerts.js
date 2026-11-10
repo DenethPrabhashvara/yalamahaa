@@ -4,11 +4,23 @@ import { useMemo } from 'react';
 import { useApp } from '../state/AppContext.jsx';
 import { fmtDay } from '../components/ForecastChart.jsx';
 import { LOW_PCT } from './reservoirs.js';
-import { useNews, activeNews, instructionSteps } from './news.js';
-import { hhmm } from '../time.js';
+import { useNews, activeNews, instructionSteps, bodyText, newsTitle } from './news.js';
+import { hhmm, timeAgo } from '../time.js';
 
 const DATE = { day: 'numeric', month: 'short' };
 const daysBetween = (a, b) => Math.round((Date.parse(b) - Date.parse(a)) / 864e5);
+
+// The app's own notes. "Farm registered" notes carry farmId/acres/at and are written here, in the
+// farmer's current language; older ones were saved with English title/body and are shown as they are.
+export function noteText(n, t, lang) {
+  if (n.kind !== 'farm' || !n.farmId) return n;
+  return {
+    ...n,
+    title: `${t('farmRegisteredNote')} - ${n.farmId}`,
+    body: n.acres ? `${n.acres} ${t('acres')}` : '',
+    when: Number.isFinite(n.at) ? timeAgo(new Date(n.at).toISOString(), t, lang) : '',
+  };
+}
 
 export function useAlerts(live) {
   const { t, lang, farm, alerts: notes, readAlerts, readNews } = useApp();
@@ -33,9 +45,9 @@ export function useAlerts(live) {
     if (own && tank?.id === own.id && latest) {
       const when = fmtDay(latest.date, lang, DATE);
       if (latest.spilling) {
-        list.push({ id: `spill:${own.id}:${latest.date}`, kind: 'tank', title: `${own.name} - ${t('spilling')}`, body: `${Math.round(latest.percent)}% ${t('full')}${latest.spillRate != null ? ` - ${latest.spillRate} cusec` : ''}.`, when });
+        list.push({ id: `spill:${own.id}:${latest.date}`, kind: 'tank', title: `${own.name} - ${t('spilling')}`, body: `${t('pctFull').replace('{p}', Math.round(latest.percent))}${latest.spillRate != null ? ` - ${latest.spillRate} cusec` : ''}.`, when });
       } else if (latest.percent < LOW_PCT) {
-        list.push({ id: `low:${own.id}:${latest.date}`, kind: 'tank', title: `${own.name} - ${t('tankLow')}`, body: `${Math.round(latest.percent)}% ${t('full')}. ${t('adviceLow')}`, when });
+        list.push({ id: `low:${own.id}:${latest.date}`, kind: 'tank', title: `${own.name} - ${t('tankLow')}`, body: `${t('pctFull').replace('{p}', Math.round(latest.percent))}. ${t('adviceLow')}`, when });
       }
     }
     if (issue) {
@@ -55,13 +67,14 @@ export function useAlerts(live) {
       .map((n) => ({
         id: `cap:${n.id}`,
         kind: 'advisory',
-        title: n.headline,
-        body: instructionSteps(n.instruction)[0] || n.body || '',
+        title: newsTitle(n, t),
+        body: instructionSteps(n.instruction)[0] || bodyText(n.body),
         when: hhmm(n.sent),
         read: readAdvisories.has(`cap:${n.id}`),
       }));
 
     const read = new Set(readAlerts);
-    return [...capAlerts, ...list.map((a) => ({ ...a, read: read.has(a.id) })), ...notes];
+    const appNotes = notes.map((n) => noteText(n, t, lang));
+    return [...capAlerts, ...list.map((a) => ({ ...a, read: read.has(a.id) })), ...appNotes];
   }, [flood, own, tank, latest, issue, issueStatus, today, notes, readAlerts, readNews, advisories, t, lang]);
 }

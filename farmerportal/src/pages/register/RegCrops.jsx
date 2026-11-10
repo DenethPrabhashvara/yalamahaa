@@ -21,7 +21,7 @@ function CropEditor({ crop, index, onChange, onRemove, canRemove, t }) {
     <div className="card editing">
       <div className="row between">
         <div className="f16 fw600">{t('crop')} {index + 1}</div>
-        {canRemove && <button type="button" className="icon-btn soft" style={{ width: 44, height: 44 }} aria-label={`Remove crop ${index + 1}`} onClick={onRemove}><Icon name="trash" size={18} /></button>}
+        {canRemove && <button type="button" className="icon-btn soft" style={{ width: 44, height: 44 }} aria-label={t('a11yRemoveCrop').replace('{n}', index + 1)} onClick={onRemove}><Icon name="trash" size={18} /></button>}
       </div>
 
       <div className="field">
@@ -58,13 +58,13 @@ function CropEditor({ crop, index, onChange, onRemove, canRemove, t }) {
       <div className="field">
         <span className="label">{t('landArea')}</span>
         <div className="row gap10">
-          <button type="button" className="round-step soft" aria-label="Less" onClick={() => stepAcres(-0.25)}>−</button>
+          <button type="button" className="round-step soft" aria-label={t('a11yLess')} onClick={() => stepAcres(-0.25)}>−</button>
           <div className="acre-box">
             <input aria-label={t('landArea')} inputMode="decimal" value={crop.acres}
               onChange={(e) => onChange({ acres: e.target.value.replace(/[^\d.]/g, '').slice(0, 6) })} />
             <span>{t('acres')}</span>
           </div>
-          <button type="button" className="round-step dark" aria-label="More" onClick={() => stepAcres(0.25)}>+</button>
+          <button type="button" className="round-step dark" aria-label={t('a11yMore')} onClick={() => stepAcres(0.25)}>+</button>
         </div>
       </div>
 
@@ -72,7 +72,7 @@ function CropEditor({ crop, index, onChange, onRemove, canRemove, t }) {
         <label className="label" htmlFor={`yd-${crop.id}`}>{t('lastYield')}</label>
         <input id={`yd-${crop.id}`} className="input big" inputMode="numeric" placeholder="e.g. 1800"
           value={crop.yield} onChange={(e) => onChange({ yield: e.target.value.replace(/[^\d.,]/g, '').slice(0, 8) })} />
-        <div className="seg seg-soft" role="radiogroup" aria-label="Yield unit">
+        <div className="seg seg-soft" role="radiogroup" aria-label={t('a11yYieldUnit')}>
           {YIELD_UNITS.map((u) => (
             <button key={u.id} type="button" role="radio" aria-checked={crop.unit === u.id} className={crop.unit === u.id ? 'on' : ''} onClick={() => onChange({ unit: u.id })}>{u.label}</button>
           ))}
@@ -91,7 +91,7 @@ function CropSummary({ crop, index, onEdit, t }) {
         <div className="f15 fw600 ellipsis">{t('crop')} {index + 1} - {crop.type}</div>
         <div className="f13 muted ellipsis">{cat.short || cat.label} - {crop.variety.split(' (')[0]} - {crop.acres} ac{crop.yield ? ` - ${crop.yield} ${crop.unit}/ac` : ''}</div>
       </div>
-      <button type="button" className="icon-btn soft" style={{ width: 44, height: 44 }} aria-label={`Edit crop ${index + 1}`} onClick={onEdit}><Icon name="pencil" size={18} /></button>
+      <button type="button" className="icon-btn soft" style={{ width: 44, height: 44 }} aria-label={t('a11yEditCrop').replace('{n}', index + 1)} onClick={onEdit}><Icon name="pencil" size={18} /></button>
     </div>
   );
 }
@@ -106,7 +106,7 @@ export default function RegCrops() {
 
   const add = () => { const c = newCrop(); setCrops([...crops, c]); setOpenId(c.id); };
   const next = () => {
-    if (crops.some((c) => !(Number(c.acres) > 0))) { showToast('Enter land area for every crop', 'error'); return; }
+    if (crops.some((c) => !(Number(c.acres) > 0))) { showToast(t('cropAcresNeeded'), 'error'); return; }
     navigate('/register/pin');
   };
 

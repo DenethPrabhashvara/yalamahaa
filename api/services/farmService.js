@@ -1,5 +1,6 @@
 const db = require('../config/db.js')
 const { checkBoundary, nearPin, MAX_KM_FROM_PIN } = require('./fieldShape.js')
+const { nudgeSchemeJob } = require('./schemeJob.js')
 
 const WATER_SOURCES = ['tank', 'canal', 'river', 'well', 'rain']
 const YIELD_UNITS = ['kg', 'bu', 't']
@@ -182,6 +183,7 @@ async function saveFarm(client, farmId, farm) {
             hasFlood, flood.history ?? null, flood.depth ?? null, flood.last_year ?? null
         ]
     )
+    nudgeSchemeJob()   // looks up the irrigation scheme for a new or moved pin once this commits
     if (!farm.crops) return
 
     await client.query('DELETE FROM farm_crops WHERE farm_id = $1', [farmId])
@@ -201,6 +203,7 @@ async function getFarm(farmId, client = db) {
     const farm = await client.query(
         `SELECT farm_id, water_source, water_name, location_label,
                 total_acres, boundary, boundary_acres, flood_history, flood_depth, flood_last_year,
+                scheme_name, scheme_type, scheme_division, scheme_irrigable_ha, scheme_distance_m,
                 created_at, updated_at
          FROM farms WHERE farm_id = $1`,
         [farmId]

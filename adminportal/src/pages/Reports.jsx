@@ -19,7 +19,7 @@ import {
   UserRound,
   X,
   XCircle,
-} from 'lucide-react'
+} from '../components/ui/icons'
 import { useAuth } from '../context/AuthContext'
 import { useData } from '../context/DataContext'
 import { useToast } from '../context/ToastContext'
@@ -243,11 +243,6 @@ export function Reports() {
     <div className="page reports-page">
       <PageHeader
         eyebrow="Farmer services"
-        badge={
-          <Badge tone={REPORT_COUNTS.new ? 'warning' : 'success'} dot>
-            {REPORT_COUNTS.new} new
-          </Badge>
-        }
         title="Canal reports"
         description="Canal problems farmers reported in the farmer portal. Check them, pass them to the Irrigation Department and record what happened. Farmers see the status and your note."
         actions={
@@ -504,7 +499,12 @@ export function Reports() {
                 <div>
                   <span>Location</span>
                   <strong>
-                    {selected.latitude !== null ? (
+                    {selected.latitude !== null &&
+                    selected.longitude !== null &&
+                    Number(selected.latitude) !== 0 &&
+                    Number(selected.longitude) !== 0 &&
+                    !Number.isNaN(Number(selected.latitude)) &&
+                    !Number.isNaN(Number(selected.longitude)) ? (
                       <a
                         className="text-btn"
                         href={`https://www.google.com/maps?q=${Number(selected.latitude)},${Number(selected.longitude)}`}

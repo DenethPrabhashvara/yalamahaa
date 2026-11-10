@@ -1,6 +1,6 @@
 import { useMemo, useRef } from 'react';
 import { COLORS } from '../theme.js';
-import { LOCALES } from '../time.js';
+import { LOCALES, localizedDate } from '../time.js';
 
 const W = 350;
 const H = 210;
@@ -11,7 +11,8 @@ const PAD = { l: 30, r: 10, t: 14, b: 24 };
 export { LOCALES };
 export function fmtDay(dateStr, lang, opts = { weekday: 'short', day: 'numeric' }) {
   const d = new Date(`${dateStr}T00:00:00`);
-  try { return d.toLocaleDateString(LOCALES[lang] || 'en-GB', opts); } catch { return dateStr; }
+  if (Number.isNaN(d.getTime())) return dateStr;
+  try { return localizedDate(d, lang, opts); } catch { return dateStr; }
 }
 
 // Observed readings (solid, broken over long gaps) + the model's single 14-day prediction (a point),

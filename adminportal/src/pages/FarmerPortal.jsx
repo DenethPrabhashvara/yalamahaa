@@ -20,7 +20,7 @@ import {
   Users,
   Wheat,
   X,
-} from 'lucide-react'
+} from '../components/ui/icons'
 import { FLOOD_DEPTH_LABELS, FLOOD_HISTORY_LABELS, WATER_SOURCE_LABELS, cropName, csvPhone, farmerFromApi, formatPhone } from '../data/farmers'
 import { useData } from '../context/DataContext'
 import { useAuth } from '../context/AuthContext'
@@ -333,11 +333,6 @@ export function FarmerPortal() {
     <div className="page farmers-page">
       <PageHeader
         eyebrow="Farmer services"
-        badge={
-          <Badge tone="success" dot>
-            {formatNumber(FARMER_SUMMARY.registered)} registered
-          </Badge>
-        }
         title="Farmers & water schedule"
         description="Farmers registered through the farmer portal, and when each canal section receives water."
         actions={
@@ -676,8 +671,8 @@ export function FarmerPortal() {
                       IRRIGATION_SCHEDULES.map((schedule) => ({
                         Scheme: schedule.scheme,
                         Section: schedule.section ?? '',
-                        'Water from': schedule.start.toLocaleDateString('en-CA'),
-                        'Water until': schedule.end.toLocaleDateString('en-CA'),
+                        'Water from': schedule.start instanceof Date ? schedule.start.toLocaleDateString('en-CA') : (schedule.start ?? ''),
+                        'Water until': schedule.end instanceof Date ? schedule.end.toLocaleDateString('en-CA') : (schedule.end ?? ''),
                         'Duration (days)': schedule.durationDays,
                         'Paddy target (ha)': schedule.paddyArea,
                         'Total target (ha)': schedule.totalArea,
@@ -731,7 +726,7 @@ export function FarmerPortal() {
                     <strong>{schedule.system}</strong>
                     <span>{formatNumber(schedule.extent)} ha initial extent</span>
                     <div className="schedule-crops">
-                      {schedule.crops.map((crop) => (
+                      {schedule.crops?.map((crop) => (
                         <span className="crop-pill" key={`${schedule.id}-${crop.name}`}>
                           {crop.name}
                           {crop.duration ? ` - ${crop.duration}d` : ''}

@@ -37,6 +37,11 @@ authrouter.post('/send-otp', async (req, res, next) => {
       return res.status(400).json({ status: 'fail', message: phoneCheck.error })
     }
 
+    const cooldownKey = `otp:cooldown:${phoneCheck.normalized}`
+    if (await redisClient.get(cooldownKey)) {
+      return res.status(429).json({ status: 'fail', message: 'Please wait a minute before requesting another verification code.' })
+    }
+
     // otp from a crypto random source, kept in redis for 3 min only
     const otp = crypto.randomInt(0, 1_000_000).toString().padStart(6, '0')
     await sendSms(
@@ -44,6 +49,8 @@ authrouter.post('/send-otp', async (req, res, next) => {
       `Yala Maha verification code: ${otp}.expires in 3 minutes.`
     )
     await redisClient.set(`otp:${phoneCheck.normalized}`, otp, 'EX', OTP_TTL_SECONDS)
+    await redisClient.set(cooldownKey, '1', 'EX', 60)
+    await redisClient.del(`otp:attempts:${phoneCheck.normalized}`)
 
     return res.status(200).json({ status: 'success', message: 'OTP sent.' })
     
@@ -78,15 +85,30 @@ authrouter.post('/verify-otp', async (req, res, next) => {
       return res.status(400).json({ status: 'fail', message: 'OTP is invalid or has expired.' })
     }
 
-   //constant time compare so timing doesn't leak the otp
+    const attemptKey = `otp:attempts:${phoneCheck.normalized}`
+    const attempts = Number(await redisClient.get(attemptKey)) || 0
+    if (attempts >= 5) {
+      await redisClient.del(key)
+      await redisClient.del(attemptKey)
+      return res.status(429).json({ status: 'fail', message: 'Too many incorrect attempts. Please request a new code.' })
+    }
+
+    // constant time compare so timing doesn't leak the otp
     const isValid = submittedOtp.length === storedOtp.length &&
       crypto.timingSafeEqual(Buffer.from(submittedOtp), Buffer.from(storedOtp))
     if (!isValid) {
+      const nextAttempts = attempts + 1
+      await redisClient.set(attemptKey, String(nextAttempts), 'EX', OTP_TTL_SECONDS)
+      if (nextAttempts >= 5) {
+        await redisClient.del(key)
+        return res.status(429).json({ status: 'fail', message: 'Too many incorrect attempts. Please request a new code.' })
+      }
       return res.status(400).json({ status: 'fail', message: 'OTP is invalid or has expired.' })
     }
 
     const existingFarmer = await findFarmerByPhone(phoneCheck.normalized)
     await redisClient.del(key)
+    await redisClient.del(attemptKey)
 
     if (existingFarmer) {
       // security: /login needs this key, so only whoever has the phone can sign in
@@ -128,6 +150,7 @@ authrouter.post('/register', async (req, res, next) => {
       address,
       district,
       division,
+      preferred_lang = 'en',
       farm_latitude,
       farm_longitude,
       reservoir_id,
@@ -150,6 +173,9 @@ authrouter.post('/register', async (req, res, next) => {
 
     if (division != null && typeof division !== 'string') {
       return res.status(400).json({ status: 'fail', message: 'Division must be text.' })
+    }
+    if (!['en', 'si', 'ta'].includes(preferred_lang)) {
+      return res.status(400).json({ status: 'fail', message: 'Preferred language must be en, si or ta.' })
     }
 
     if (!/^([0-9]{9}[VvXx]|[0-9]{12})$/.test(nic.trim())) {
@@ -188,6 +214,7 @@ authrouter.post('/register', async (req, res, next) => {
       address: address.trim(),
       district: district.trim(),
       division: division?.trim(),
+      preferred_lang,
       farm_latitude,
       farm_longitude,
       reservoir_id,

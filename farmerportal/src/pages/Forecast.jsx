@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApp } from '../state/AppContext.jsx';
 import { IconBtn, StatusLabel } from '../components/UI.jsx';
 import Icon from '../components/Icon.jsx';
@@ -17,6 +17,11 @@ const RISK = {
 export default function Forecast() {
   const { t, lang, farm } = useApp();
   const [params, setParams] = useSearchParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  // back to where the farmer came from (Home's tank card or the Water page); straight to Water when
+  // Forecast was the first page opened (a link or a reload: nothing in the app's history to go back to)
+  const goBack = () => (location.key !== 'default' ? navigate(-1) : navigate('/water'));
   const tanks = useFarmReservoirs(farm);
   const tankList = tanks.data || [];
   const wanted = Number(params.get('reservoir'));
@@ -30,13 +35,15 @@ export default function Forecast() {
   // sel >= 0 is the prediction, negative values are observed days counted back from today.
   const point = data && (sel >= 0 ? data.forecast[0] : data.history[data.history.length + sel]);
   const loadError = tanks.error || (!data && error);
+  // the farm's tank list came back empty: there is nothing to forecast (not "still loading")
+  const noTank = !tanks.error && Boolean(tanks.data) && tankList.length === 0;
 
   return (
     <div className="screen">
       <div className="row gap10">
-        <IconBtn icon="back" label={t('back')} to="/water" />
+        <IconBtn icon="back" label={t('back')} onClick={goBack} />
         <div className="grow" />
-        <button type="button" className={`chip-white btn ${loading ? 'spinning' : ''}`} onClick={() => (tanks.error ? tanks.reload() : reload())} aria-label="Refresh forecast">
+        <button type="button" className={`chip-white btn ${loading ? 'spinning' : ''}`} onClick={() => (tanks.error || noTank ? tanks.reload() : reload())} aria-label={t('a11yRefreshForecast')}>
           <Icon name="refresh" size={14} stroke={2.4} />{t('readingsTo')} {data ? fmtDay(data.from, lang, { day: 'numeric', month: 'short' }) : '…'}
         </button>
       </div>
@@ -48,7 +55,15 @@ export default function Forecast() {
 
       {tankList.length > 1 && <TankPicker tanks={tankList} value={reservoir?.id} onChange={(id) => setParams({ reservoir: id }, { replace: true })} />}
 
-      {!data && !loadError && (
+      {noTank && (
+        <div className="card center" style={{ minHeight: 160 }}>
+          <Icon name="info" size={24} />
+          <div className="f15 muted lh">{t('noTankForFarm')}</div>
+          <button type="button" className="pill-btn outline sm" onClick={tanks.reload}>{t('tryAgain')}</button>
+        </div>
+      )}
+
+      {!data && !loadError && !noTank && (
         <div className="card center" style={{ minHeight: 200 }}>
           <Icon name="refresh" size={24} className="spin" />
           <div className="f15 muted">{t('loadingForecast')}</div>

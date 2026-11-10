@@ -1,5 +1,5 @@
 import {
-  ArrowRight, Bell, CircleCheck, CloudSun, Inbox, OctagonAlert, Camera, Carrot, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Clock, Cloud,
+  ArrowRight, Bell, CircleCheck, ClipboardList, CloudSun, Inbox, OctagonAlert, Camera, Carrot, Check, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, Clock, Cloud,
   CloudLightning, CloudRain, Construction, Droplet, Droplets, Ellipsis, ExternalLink, Fence, Globe, House, Info, Leaf,
   LocateFixed, Lock, LogOut,
   Map, MapPin, MessageSquareText, Mic, Newspaper, Plus, RefreshCw, Search, Send, Sparkles, SquarePen, Sun,
@@ -61,6 +61,7 @@ const P = {
   undo: Undo2,
   walk: Footprints,
   shape: Pentagon,
+  survey: ClipboardList,
 };
 
 export default function Icon({ name, size = 20, color = 'currentColor', stroke = 2, style, className }) {

@@ -37,9 +37,9 @@ export default function RegIdentity() {
       <div className="card">
         <div className="field">
           <label htmlFor="nm" className="label">{t('fullName')}</label>
-          <input id="nm" className={`input ${touched && !nameOk ? 'error' : ''}`} autoComplete="name" placeholder="e.g. Sunil Kumara Bandara"
+          <input id="nm" className={`input ${touched && !nameOk ? 'error' : ''}`} autoComplete="name" placeholder={t('nameExample')}
             value={draft.name} onChange={(e) => set({ name: e.target.value })} />
-          {touched && !nameOk && <div className="err-text">Enter your first and last name</div>}
+          {touched && !nameOk && <div className="err-text">{t('nameNeeded')}</div>}
         </div>
 
         {nicLocked ? (
@@ -71,7 +71,7 @@ export default function RegIdentity() {
 
         <div className="field">
           <label htmlFor="addr" className="label">{t('address')}</label>
-          <input id="addr" className={`input ${touched && !addressOk ? 'error' : ''}`} autoComplete="street-address" placeholder="e.g. No. 12, Canal Road, Dehiattakandiya"
+          <input id="addr" className={`input ${touched && !addressOk ? 'error' : ''}`} autoComplete="street-address" placeholder={t('addressExample')}
             value={draft.address || ''} onChange={(e) => set({ address: e.target.value })} />
           {touched && !addressOk && <div className="err-text">{t('addressNeeded')}</div>}
         </div>

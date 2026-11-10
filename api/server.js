@@ -10,6 +10,8 @@ const app = require('./app.js')
 const { startReminderJob } = require('./services/reminderJob.js')
 const { startFloodAlertJob } = require('./services/floodAlertJob.js')
 const { startWeatherFeedJob } = require('./services/weatherFeedJob.js')
+const { startSchemeJob } = require('./services/schemeJob.js')
+const { startStormCallJob } = require('./services/stormCallJob.js')
 
 const PORT = process.env.API_PORT || 8005
 
@@ -20,6 +22,8 @@ try{
         startReminderJob()
         startFloodAlertJob()
         startWeatherFeedJob()
+        startSchemeJob()
+        startStormCallJob()
     })
 
 } catch(error) {

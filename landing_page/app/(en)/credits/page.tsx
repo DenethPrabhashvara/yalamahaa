@@ -3,6 +3,8 @@ import { SITE } from "../../../lib/site";
 
 export const metadata: Metadata = {
   title: `Photo credits | ${SITE.name}`,
+  description: `Photo attributions and licence information for images used on the ${SITE.name} landing page.`,
+  alternates: { canonical: "/credits" },
   icons: [{ rel: "icon", url: "/images/favicon.png" }],
 };
 

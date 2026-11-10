@@ -68,11 +68,11 @@ export default function Water() {
             <button type="button" className="link-btn" onClick={() => (tanks.error ? tanks.reload() : reload())}>{t('tryAgain')}</button>
           </div>
         )}
-        {!loadError && !data && <div className="f15 dim">{t('loadingReadings')}</div>}
+        {!loadError && !data && <div className="f15 dim">{tanks.data && !tankList.length ? t('noTankForFarm') : t('loadingReadings')}</div>}
         {data && !week.length && <div className="f15 dim">{t('noReadings')}</div>}
         {week.length > 0 && (
           <>
-            <div className="chart" role="img" aria-label={`${name} level over the last ${week.length} readings, now ${week[week.length - 1].percent}%`}>
+            <div className="chart" role="img" aria-label={t('a11yTankChart').replace('{name}', name).replace('{n}', week.length).replace('{p}', Math.round(week[week.length - 1].percent))}>
               <div className="chart-line" style={{ bottom: `${LOW_PCT}%` }}><span>{LOW_PCT}%</span></div>
               {week.map((h, i) => {
                 const last = i === week.length - 1;
@@ -115,6 +115,12 @@ export default function Water() {
             );
           })}
         </div>
+        {canRemind && reminders.error && !reminders.data && (
+          <div className="row between gap8 f15">
+            <span className="dim">{t('remindersFailed')}</span>
+            <button type="button" className="link-btn" onClick={reminders.reload}>{t('tryAgain')}</button>
+          </div>
+        )}
         {canRemind && (
           <button type="button" className={`pill-btn ${remind ? 'accent' : 'white'} big`} onClick={toggleRemind} disabled={saving || !reminders.data}>
             {remind ? t('reminderOn') : t('remindSms')}

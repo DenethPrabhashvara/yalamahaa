@@ -6,7 +6,7 @@ export default function SiteContainer({ t }: { t: Dict }) {
   return (
     <div className="site-container w-full [@media_(width>=48rem)]:px-[calc(var(--spacing)_*_5)] [@media_(width>=64rem)]:px-[calc(var(--spacing)_*_0)]">
       {"  "}
-      <div className="site-flex flex-col md:flex-row justify-between items-end md:gap-8 gap-4 site-md-mb-12-5 site-mb-8">
+      <div className="site-flex flex-col md:flex-row justify-between items-start md:items-end md:gap-8 gap-4 site-md-mb-12-5 site-mb-8">
         <h2 data-reveal="up" className="text-3xl md:text-4xl lg:text-5xl font-medium tracking-tight site-text-default-900 leading-tight md:w-lg">
           {t.helps.title}
         </h2>

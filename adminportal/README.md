@@ -49,7 +49,7 @@ npm run preview
 | `/` | Dashboard | KPIs, 30-day average storage, farmers by district, rainfall and spilling reservoirs, alerts |
 | `/tanks` | Tank & Reservoir | Reservoir register with latest readings, map view, 30-day history, field-reading form, CSV export |
 | `/rivers` | River | River gauges with alert, minor and major flood levels, 24-hour hydrographs |
-| `/sms` | SMS Gateway | Send to all farmers, a district, reservoir or tank; templates; campaign history; high tank alert check |
+| `/sms` | SMS Gateway | Trilingual English/Sinhala/Tamil templates; send campaigns; manually check and send due flood alerts; campaign history; high tank alert check |
 | `/farmers` | Farmer Portal | Farmer registry (search, profile, farm and crops, edit, deactivate, delete) and the water issue schedule |
 | `/database` | Database | Every table: browse, sort, edit, add and delete rows (password, token and NIC hashes are hidden) |
 | `/settings` | Settings | Account, change password, create admins (super_admin), theme |
