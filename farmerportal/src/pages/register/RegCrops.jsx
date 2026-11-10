@@ -82,11 +82,13 @@ function CropEditor({ crop, index, onChange, onRemove, canRemove, t }) {
   );
 }
 
+const CROP_ICONS = { paddy: 'paddy', vegetables: 'vegetables', fruit: 'fruit', mixed: 'mixed' };
+
 function CropSummary({ crop, index, onEdit, t }) {
   const cat = CROP_CATALOG[crop.category];
   return (
     <div className="card row-card static">
-      <div className="icon-tile" style={{ background: `${cat.color}22` }}><Icon name={crop.category === 'paddy' ? 'leaf' : 'chilli'} size={22} color={cat.color} /></div>
+      <div className="icon-tile" style={{ background: `${cat.color}22` }}><Icon name={CROP_ICONS[crop.category] || 'paddy'} size={22} color={cat.color} /></div>
       <div className="grow min0">
         <div className="f15 fw600 ellipsis">{t('crop')} {index + 1} - {crop.type}</div>
         <div className="f13 muted ellipsis">{cat.short || cat.label} - {crop.variety.split(' (')[0]} - {crop.acres} ac{crop.yield ? ` - ${crop.yield} ${crop.unit}/ac` : ''}</div>

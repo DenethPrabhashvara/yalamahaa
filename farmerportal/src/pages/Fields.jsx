@@ -10,6 +10,8 @@ import { areaAcres, boundaryState, roundAcres } from '../fieldShape.js';
 import { COLORS } from '../theme.js';
 import { placeLabel } from '../components/GoogleFarmMap.jsx';
 
+const CROP_ICONS = { paddy: 'paddy', vegetables: 'vegetables', fruit: 'fruit', mixed: 'mixed' };
+
 export default function Fields() {
   const { t, farm, update } = useApp();
   const total = farm ? Math.round(farm.crops.reduce((s, c) => s + (Number(c.acres) || 0), 0) * 100) / 100 : 0;
@@ -52,7 +54,7 @@ export default function Fields() {
             <Card key={c.id}>
               <div className="row gap12">
                 <div className="icon-tile" style={{ background: `${CROP_CATALOG[c.category].color}22` }}>
-                  <Icon name={c.category === 'paddy' ? 'leaf' : 'chilli'} size={22} color={CROP_CATALOG[c.category].color} />
+                  <Icon name={CROP_ICONS[c.category] || 'paddy'} size={22} color={CROP_CATALOG[c.category].color} />
                 </div>
                 <div className="grow min0">
                   <div className="f12 muted">{t('crop')} {i + 1} - {CROP_CATALOG[c.category].label}</div>
